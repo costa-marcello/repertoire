@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+- Refocused the project from a coding-agent skill kit into a smaller general-purpose collection of 13 skills
+- Rewrote the README intro, quick start, and category descriptions for the 13 skills and renamed the "AI and Research" category to "Research"
+- Aligned create-skill with review-skill criteria by adding a review-criteria mirror reference, a two-layer validation gate before packaging, and expanded `quick_validate.py` checks for fork class, weak verbs, bare excepts, and path references
+- Extended the review-skill evaluation checklist with a four-class `context: fork` taxonomy (autonomous, orchestrator, interactive, mode-style reasoning)
+- Dropped the research skill's `agent_allocation.md` reference and expanded its sub-agent prompts reference
+- Polished wording and examples across the changelog, claude-md, docx, frontend-design, pdf, pptx, readme-md, and xlsx skills, including sharper changelog filter rules and one `<example>` tag per xlsx example
+- Replaced the smart-merge example with frontend-design in the skill naming guidance of create-skill and review-skill
+
+### Removed
+- **BREAKING**: Removed 10 skills that fall outside the new scope: ci-cd, smart-merge, shadcn-ui, debug, review-code, codex, gemini, ultrathink, cc-hooks, and production-audit
+
 ## [0.8.0] - 2026-02-13
 
 ### Added
@@ -156,6 +170,7 @@ All notable changes to this project will be documented in this file.
 - Fixed script invocations and variable names after skill rename
 - Fixed review-skill over-specification and deduplicated steps
 
+[Unreleased]: https://github.com/costa-marcello/skillkit/compare/v0.8.0...HEAD
 [0.8.0]: https://github.com/costa-marcello/skillkit/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/costa-marcello/skillkit/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/costa-marcello/skillkit/compare/v0.6.0...v0.6.1

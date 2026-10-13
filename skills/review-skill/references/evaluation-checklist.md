@@ -10,7 +10,7 @@ Complete checklist based on [official Anthropic best practices](https://platform
   - Max 64 characters
   - Lowercase letters, numbers, hyphens only
   - No reserved words (anthropic, claude)
-  - Noun or short-phrase form preferred (pdf, changelog, smart-merge)
+  - Noun or short-phrase form preferred (pdf, changelog, frontend-design)
 
 - [ ] `description` field present and valid
   - Non-empty

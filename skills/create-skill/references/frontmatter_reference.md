@@ -17,7 +17,7 @@ allowed-tools: Read, Grep, Bash(git *)
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `name` | No | Display name for the skill. If omitted, uses the directory name. Lowercase letters, numbers, and hyphens only (max 64 characters). No reserved words (anthropic, claude). Noun or short-phrase form preferred (pdf, changelog, smart-merge). |
+| `name` | No | Display name for the skill. If omitted, uses the directory name. Lowercase letters, numbers, and hyphens only (max 64 characters). No reserved words (anthropic, claude). Noun or short-phrase form preferred (pdf, changelog, frontend-design). |
 | `description` | Recommended | What the skill does and when to use it. Claude uses this to decide when to apply the skill. If omitted, uses the first paragraph of markdown content. **Max 1024 characters.** |
 | `context` | No | Set to `fork` ONLY for autonomous skills that run end-to-end without dispatching sub-agents and without pausing for the user. DO NOT set it on orchestrator skills (those that dispatch sub-agents via `Task`, `TeamCreate`, `TaskCreate`, or `SendMessage`) or interactive skills (those that present a report, plan, or prompt to the user and resume on the user's response). See "When to Use `context: fork`" below. Without fork, skills run inline and cannot be used by subagents. |
 | `agent` | No | Which subagent type to use when `context: fork` is set. Options: `Explore`, `Plan`, `general-purpose`, or custom agents from `.claude/agents/`. Default: `general-purpose`. |

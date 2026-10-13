@@ -20,7 +20,7 @@ Skills extend Claude's capabilities with specialized workflows, tool integration
 
 See `references/frontmatter_reference.md` for the complete field reference table. Key fields:
 
-- **`name`**: Lowercase, hyphens only (max 64 chars). No reserved words (anthropic, claude). Noun or short-phrase form preferred (pdf, changelog, smart-merge).
+- **`name`**: Lowercase, hyphens only (max 64 chars). No reserved words (anthropic, claude). Noun or short-phrase form preferred (pdf, changelog, frontend-design).
 - **`description`**: Third-person verb + triggers (max 1024 chars)
 - **`context: fork`**: Set ONLY for Class A (autonomous) skills — those that run end-to-end without dispatching sub-agents, without pausing for the user, and without relying on the lead's reasoning context. See `references/frontmatter_reference.md` for the full four-class taxonomy. Class B (orchestrator), C (interactive), and D (mode-style reasoning) must run inline.
 

@@ -1,22 +1,22 @@
 <div align="center">
   <img src="assets/logo.svg" alt="skillkit" width="80" />
   <h1>skillkit</h1>
-  <p><strong>Skills for AI coding agents</strong></p>
+  <p><strong>General-purpose skills for AI agents</strong></p>
 
   [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-  [![Skills](https://img.shields.io/badge/Skills-23-8B5CF6)](skills/)
+  [![Skills](https://img.shields.io/badge/Skills-13-8B5CF6)](skills/)
   [![Context Intelligence Hooks](https://img.shields.io/badge/Context_Intelligence_Hooks-3-3B82F6)](context-intelligence-hooks/)
 </div>
 
 ---
 
-## The problem with AI coding agents
+## The problem with AI agents
 
-AI coding agents are powerful out of the box. But ask one to create a Word document with tracked changes, build a CI/CD pipeline, generate a PowerPoint deck from a topic, or audit your codebase for production readiness, and you hit the same wall: the agent has general knowledge about these tasks but lacks the deep, step-by-step workflows that produce professional results.
+AI agents are powerful out of the box. But ask one to create a Word document with tracked changes, generate a PowerPoint deck from a topic, build a financial model that recalculates without errors, or research a topic across community and official sources, and you hit the same wall: the agent has general knowledge about these tasks but lacks the deep, step-by-step workflows that produce professional results.
 
 You end up writing long prompts, correcting mistakes, and re-doing work. Every session starts from zero.
 
-**Skillkit fixes this.** It gives your agent 23 specialist skills, each containing the exact workflows, decision trees, reference materials, and quality checks needed to do one job well. Instead of hoping the agent figures out the right approach, you give it a battle-tested playbook. Works with Claude Code, Cursor, Windsurf, and any agent that supports the skills protocol.
+**Skillkit fixes this.** It gives your agent 13 specialist skills, each containing the exact workflows, decision trees, reference materials, and quality checks needed to do one job well. Instead of hoping the agent figures out the right approach, you give it a battle-tested playbook. Works with Claude Code, Cursor, Windsurf, and any agent that supports the skills protocol.
 
 ## Why these skills are different
 
@@ -28,7 +28,7 @@ Most agent skills are thin wrappers around a single prompt. Skillkit skills are 
 | **Bundled reference materials** | Skills carry their own documentation. The frontend-design skill includes 99 UX rules, 25+ chart types, style guides by industry, and 10 tech stack references. The pptx skill bundles a 9-stage content workflow with intake forms, rubrics, and design templates. This knowledge loads on demand without bloating your context window. |
 | **Enforced quality gates** | Every skill must pass the review-skill, which checks against Anthropic's best practices. SKILL.md files stay under 500 lines. Descriptions follow a strict verb + trigger format so Claude can auto-invoke the right skill at the right time. |
 | **Fork context by default** | Skills run in isolated subagent contexts. They do not pollute your main conversation. When a skill finishes, you get clean results without the noise of its internal reasoning. |
-| **Multi-agent orchestration** | The research skill dispatches 6-10 parallel sub-agents across Reddit, X, Hacker News, official docs, and academic papers. The production-audit skill spawns 4 specialist agents to cover security, scalability, API completeness, and architecture simultaneously. These are not single-prompt tools. |
+| **Multi-agent orchestration** | The research skill dispatches 6-10 parallel sub-agents across Reddit, X, Hacker News, official docs, and academic papers. It then cross-references what they find. This is not a single-prompt tool. |
 | **Self-improving ecosystem** | The create-skill and review-skill form a feedback loop. Create a new skill, review it against the quality standard, fix issues automatically. The find-skills skill discovers and installs more skills from the open ecosystem. |
 
 ## Quick start
@@ -38,19 +38,19 @@ Most agent skills are thin wrappers around a single prompt. Skillkit skills are 
 npx skills add costa-marcello/skillkit -s changelog
 
 # Install several at once
-npx skills add costa-marcello/skillkit -s pdf -s docx -s ci-cd
+npx skills add costa-marcello/skillkit -s pdf -s docx -s xlsx
 
 # Use it in your agent
 /changelog
 /pdf
-/ci-cd
+/research
 ```
 
 That is the full setup. No configuration files, no environment variables, no build step. Install and use.
 
 ---
 
-## All 23 skills
+## All 13 skills
 
 ### Documents and Data
 
@@ -107,7 +107,7 @@ Creates, edits, and analyses spreadsheets with a focus on getting formulas right
 
 ### Development
 
-Eight skills that cover the development lifecycle from CI/CD setup through to branch management, UI implementation, visual documentation, and systematic debugging.
+Three skills that cover releases, UI implementation, and visual documentation.
 
 <table>
 <tr>
@@ -115,16 +115,6 @@ Eight skills that cover the development lifecycle from CI/CD setup through to br
 <th>What it does</th>
 <th>How to use</th>
 <th>Install</th>
-</tr>
-<tr>
-<td><strong>ci-cd</strong></td>
-<td>
-
-Creates production-ready GitHub Actions workflows. Covers test workflows, matrix builds across multiple OS and language versions, Docker image builds with registry pushes, security vulnerability scanning, deployment pipelines with approval gates, and reusable workflow patterns for monorepos. Includes reference YAML templates you can use as starting points and an anti-patterns guide that flags common mistakes. Scoped to GitHub Actions only, with clear guidance on when not to use it (GitLab, CircleCI, Jenkins, or one-off deployments).
-
-</td>
-<td><code>/ci-cd</code> + describe task<br/>"test workflow with Node 18 and 20 matrix"<br/>"Docker build and push to ECR"<br/>"deployment pipeline with staging gate"</td>
-<td><code>npx skills add costa-marcello/skillkit -s ci-cd</code></td>
 </tr>
 <tr>
 <td><strong>changelog</strong></td>
@@ -135,26 +125,6 @@ Generates changelogs and manages the full release lifecycle. Three modes: `/chan
 </td>
 <td><code>/changelog</code> — update + commit<br/><code>/changelog push</code> — also push<br/><code>/changelog release</code> — version, tag, push<br/><code>/changelog release v2.0.0</code> — explicit ver</td>
 <td><code>npx skills add costa-marcello/skillkit -s changelog</code></td>
-</tr>
-<tr>
-<td><strong>smart-merge</strong></td>
-<td>
-
-Merges branches with comprehensive pre-merge validation. Runs tests, lint, CI checks, and reviews PR comments before merging. Supports two modes: sync (pull main into your feature branch) and PR merge (merge feature into main via GitHub PR). The key behaviour is that it never deletes your feature branch and always returns you to your working branch. A safety-first approach that prevents the "I accidentally deleted my branch" problem.
-
-</td>
-<td><code>/smart-merge</code> from feature branch<br/>Auto-detects mode: sync main into branch, or merge via PR. Runs tests and lint first. Never deletes your branch.</td>
-<td><code>npx skills add costa-marcello/skillkit -s smart-merge</code></td>
-</tr>
-<tr>
-<td><strong>shadcn-ui</strong></td>
-<td>
-
-Installs, configures, and implements shadcn/ui components with full accessibility support. Integrates with the shadcn MCP tools for component discovery and installation as the preferred workflow, falling back to CLI commands when MCP is unavailable. Covers React Hook Form with Zod validation for forms, Tailwind CSS variable theming, and advanced patterns. Bundled references include Next.js integration specifics, extended component patterns, CLI reference, configuration guide, and a learning path.
-
-</td>
-<td><code>/shadcn-ui</code> + describe task<br/>"add a data table with sorting"<br/>"login form with Zod validation"<br/>"set up custom theme with dark mode"</td>
-<td><code>npx skills add costa-marcello/skillkit -s shadcn-ui</code></td>
 </tr>
 <tr>
 <td><strong>frontend-design</strong></td>
@@ -176,31 +146,11 @@ Creates professional software diagrams using Mermaid syntax. Covers class diagra
 <td><code>/mermaid-diagrams</code> + describe diagram<br/>"sequence diagram for the auth flow"<br/>"ERD for user and orders tables"<br/>"flowchart of the deployment pipeline"</td>
 <td><code>npx skills add costa-marcello/skillkit -s mermaid-diagrams</code></td>
 </tr>
-<tr>
-<td><strong>debug</strong></td>
-<td>
-
-Guides systematic root-cause debugging through four phases: observe (gather evidence without assumptions), hypothesise (form testable theories ranked by likelihood), test (run the cheapest decisive experiment first), and fix (address the root cause, not the symptom). Enforces an iron law: no fixes without root cause investigation first. Works for any technical issue including test failures, runtime errors, performance regressions, integration failures, and deployment problems. Prevents the common anti-pattern of random fixes that waste time and mask underlying issues.
-
-</td>
-<td><code>/debug</code> + describe symptom<br/>"tests pass locally but fail in CI"<br/>"getting a 500 on the /users endpoint"<br/>"memory usage spikes after 10 minutes"</td>
-<td><code>npx skills add costa-marcello/skillkit -s debug</code></td>
-</tr>
-<tr>
-<td><strong>review-code</strong></td>
-<td>
-
-Reviews git changes with a senior engineer lens across six dimensions: SOLID principles, engineering best practices (YAGNI, DRY, KISS, Law of Demeter, composition over inheritance, fail fast), removal candidates, security vulnerabilities, and code quality (error handling, performance, boundary conditions). Grades every finding by severity (P0 critical through P3 low) and asks before implementing any fixes. Handles large diffs by batching reviews by module. Bundles five reference checklists for SOLID smells, best practices, security risks, code quality, and removal planning.
-
-</td>
-<td><code>/review-code</code><br/>"review my changes before I push"<br/>"check this PR for security issues"<br/>"audit the diff for SOLID violations"</td>
-<td><code>npx skills add costa-marcello/skillkit -s review-code</code></td>
-</tr>
 </table>
 
-### AI and Research
+### Research
 
-Four skills that connect your agent to other AI models and deep research workflows. These turn your agent into an orchestrator that delegates to the best tool for each job.
+A single skill that turns your agent into a research orchestrator: it fans out parallel sub-agents across community and official sources, then reports where they agree and disagree.
 
 <table>
 <tr>
@@ -208,26 +158,6 @@ Four skills that connect your agent to other AI models and deep research workflo
 <th>What it does</th>
 <th>How to use</th>
 <th>Install</th>
-</tr>
-<tr>
-<td><strong>codex</strong></td>
-<td>
-
-Invokes OpenAI's Codex CLI for tasks where Codex excels: tricky debugging (race conditions, edge cases), security analysis and vulnerability discovery, comprehensive code reviews, and large-scale refactoring. Runs as a forked subagent so Codex operates in its own sandbox. Supports configurable reasoning effort (xhigh, high, medium, low), three sandbox modes (read-only, workspace-write, full access), and session resumption for multi-turn tasks. Suppresses thinking tokens by default for clean output.
-
-</td>
-<td><code>/codex</code> + describe task<br/>"find the race condition in payment handler"<br/>"security review the auth module"<br/>Requires Codex CLI: <code>npm i -g @openai/codex</code></td>
-<td><code>npx skills add costa-marcello/skillkit -s codex</code></td>
-</tr>
-<tr>
-<td><strong>gemini</strong></td>
-<td>
-
-Invokes Google's Gemini CLI for tasks that benefit from Gemini's 1M-token context window. Best for frontend development (Gemini 3 Pro produces high-quality UI code), code reviews spanning many files, architectural plan analysis, and processing entire codebases or documentation sets in a single pass. When the frontend-design skill is also installed, its guidelines are automatically passed to Gemini for design-driven results. Supports multiple approval modes for different execution contexts.
-
-</td>
-<td><code>/gemini</code> + describe task<br/>"review entire src/ for code quality"<br/>"build a settings page with tabs and forms"<br/>Requires Gemini CLI installed separately.</td>
-<td><code>npx skills add costa-marcello/skillkit -s gemini</code></td>
 </tr>
 <tr>
 <td><strong>research</strong></td>
@@ -239,21 +169,11 @@ Dispatches 6-10 parallel sub-agents to research any topic from the last 30 days.
 <td><code>/research</code> + topic<br/><code>/research best practices for RAG pipelines</code><br/><code>/research what's new with React 19</code><br/><code>/research Claude Code tips and tricks</code></td>
 <td><code>npx skills add costa-marcello/skillkit -s research</code></td>
 </tr>
-<tr>
-<td><strong>ultrathink</strong></td>
-<td>
-
-Performs exhaustive multi-lens analysis through four universal perspectives: human, structural, inclusivity, and sustainability. Detects the domain of your question (software engineering, strategy, legal, ethics, research, design, data, learning, writing, problem-solving) and loads domain-specific reference material to augment the universal framework. Suspends brevity constraints so depth takes priority over conciseness. Every conclusion follows explicitly from stated premises. Use it for complex decisions where getting the reasoning chain right matters more than getting a quick answer.
-
-</td>
-<td><code>/ultrathink</code> + question<br/><code>/ultrathink should we migrate to GraphQL?</code><br/><code>/ultrathink evaluate microservices split</code><br/>Or type <code>ULTRATHINK</code> before any question.</td>
-<td><code>npx skills add costa-marcello/skillkit -s ultrathink</code></td>
-</tr>
 </table>
 
 ### Meta (Skills about Skills)
 
-Seven skills that manage the skillkit ecosystem itself: creating, reviewing, discovering, auditing, documenting, and automating hooks.
+Five skills that manage the files and skills around your project: creating, reviewing, and discovering skills, and keeping CLAUDE.md and README files accurate.
 
 <table>
 <tr>
@@ -303,16 +223,6 @@ Reviews and automatically fixes skills against Anthropic's official best practic
 <td><code>npx skills add costa-marcello/skillkit -s review-skill</code></td>
 </tr>
 <tr>
-<td><strong>cc-hooks</strong></td>
-<td>
-
-Creates and improves event-driven hooks for Claude Code automation. Covers all lifecycle events: PreToolUse guards that block dangerous commands, PostToolUse formatters and linters, Stop hooks for testing and notifications, and SessionStart/SessionEnd for environment setup and teardown. Includes patterns for agent-based verification gates and headless CI/CD integration. Bundles comprehensive reference material covering the hook API, stdin/stdout contracts, error handling, and real-world examples for each event type. Use it when you need to extend Claude Code's behaviour with custom automation.
-
-</td>
-<td><code>/cc-hooks</code> + describe task<br/>"guard that blocks force-push"<br/>"run eslint after file edits"<br/>"run tests before session ends"</td>
-<td><code>npx skills add costa-marcello/skillkit -s cc-hooks</code></td>
-</tr>
-<tr>
 <td><strong>find-skills</strong></td>
 <td>
 
@@ -321,16 +231,6 @@ Discovers and installs skills from two registries: the open agent skills ecosyst
 </td>
 <td><code>/find-skills</code> + keyword<br/><code>/find-skills terraform</code><br/><code>/find-skills database migration</code><br/>Searches skills.sh and CCPM registries.</td>
 <td><code>npx skills add costa-marcello/skillkit -s find-skills</code></td>
-</tr>
-<tr>
-<td><strong>production-audit</strong></td>
-<td>
-
-Audits a codebase for production readiness across six dimensions: API completeness, frontend-backend sync, security, scalability, infrastructure, and dead code/architecture. Spawns 4 parallel audit agents, each with detailed checklists loaded from reference files. Produces a structured report with severity levels (blocker, warning, improvement), file paths, line numbers, and evidence. Findings get IDs (B-001, W-001) that work as ticket references. Adapts to any stack: the examples cover Next.js monorepos, Django REST APIs, and backend-only services. Pairs with Semgrep MCP for automated vulnerability scanning.
-
-</td>
-<td><code>/production-audit</code> — full codebase<br/><code>/production-audit src/api</code> — scoped<br/>Spawns 4 parallel agents. Report has severity levels and file refs you can use as tickets.</td>
-<td><code>npx skills add costa-marcello/skillkit -s production-audit</code></td>
 </tr>
 </table>
 
@@ -395,7 +295,7 @@ The `references/` pattern is what keeps skills fast. The SKILL.md stays under 50
 
 ## Prerequisites
 
-- **An AI coding agent** that supports the skills protocol (Claude Code, Cursor, Windsurf, etc.)
+- **An AI agent** that supports the skills protocol (Claude Code, Cursor, Windsurf, etc.)
 - **Node.js 18+**
 - For hooks: a **Qdrant Cloud** account and a **Voyage AI** API key
 
