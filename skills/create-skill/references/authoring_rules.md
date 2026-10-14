@@ -15,7 +15,7 @@ These are the rules `review-skill` grades against, written as instructions for t
 
 Grade A means 0 Major and 0 Minor findings. Style findings are Repertoire house conventions; they are reported but never graded. create-skill still aims for zero Style notes, so that its output matches the kit. Each rule ID counts once per skill. Some checks are definitive (the validator decides) and others heuristic (a reviewer confirms them with quoted evidence), so a clean `quick_validate.py` run is necessary but not sufficient.
 
-The default target, `claude-code`, means Claude Code and Cowork: the skill ships in a plugin, may use every Claude Code frontmatter field, and must also run in Cowork (M11). The `portable` target is for single-skill uploads to claude.ai and the API, which accept only six frontmatter fields; Cowork gets skills through the plugin, not through such uploads.
+The default platform target, `claude-code`, means Claude Code and Cowork: the skill ships in a plugin, may use every Claude Code frontmatter field, and must also run in Cowork (M11). The `portable` platform target is for single-skill uploads to claude.ai and the API, which accept only six frontmatter fields; Cowork gets skills through the plugin, not through such uploads.
 
 ## Rule index
 
@@ -83,7 +83,7 @@ When forking, set `agent` only if the default `general-purpose` agent is wrong, 
   - Name rules: 1-64 characters of `a-z`, `0-9`, and single hyphens, equal to the directory name. Avoid the directory names `synced` and `anthropic-skills*`.
   - The description is at most 1024 characters and contains no angle brackets.
   - Replace every `[TODO` placeholder before validating. Skills made from older templates may also hold `scripts/example.py`, `references/api_reference.md`, or `assets/example_asset.txt`; delete them.
-  - For the portable target (claude.ai, the API, other clients), also include `name` and use only the portable keys.
+  - For the portable platform target (claude.ai, the API, other clients), also include `name` and use only the portable keys.
 - **M10:** keep secrets in environment variables. When a script uses the network, say so in SKILL.md and give the purpose. Never instruct the model to reveal its hidden reasoning.
 - **M11:** write every skill so it also runs in Cowork:
   - Keep dynamic context injection (`` !`cmd` `` or a fence opened with three backticks and `!`) out of SKILL.md, code fences included; write "Run `cmd`" as a step instead.

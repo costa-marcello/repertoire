@@ -64,14 +64,14 @@ gitleaks version
 
 ## Commands
 
-With `<dir>` set to the folder found above, and each placeholder kept inside its single quotes (on Windows, run these with the Bash tool, which is Git Bash):
+With `<dir>` set to the absolute path of the folder found above, `<target>` set to the skill folder under review, and each placeholder kept inside its single quotes (on Windows, run these with the Bash tool, which is Git Bash, or with PowerShell, where they run unchanged):
 
 ```bash
-python '<dir>/quick_validate.py' '<target-skill>' [--portable]
-python '<dir>/security_scan.py' '<target-skill>' --verbose --no-marker
+python '<dir>/quick_validate.py' '<target>' [--portable]
+python '<dir>/security_scan.py' '<target>' --verbose --no-marker
 ```
 
-Leave out `--portable` for the default target, `claude-code`, which covers Claude Code and Cowork: plugin skills, with every Claude Code frontmatter field. Add it only for the portable target, a single-skill upload to claude.ai or the Claude API, which accepts only six frontmatter fields.
+Leave out `--portable` for the default platform target, `claude-code`, which covers Claude Code and Cowork: plugin skills, with every Claude Code frontmatter field. Add it only for the portable platform target, a single-skill upload to claude.ai or the Claude API, which accepts only six frontmatter fields.
 
 `--no-marker` keeps security_scan from writing its pass marker into the target, which review-skill relies on in every mode. security_scan ends with `RESULT secrets=<n> leads=<n>`; exit 1 or 2 means secrets only when that line shows `secrets` above 0.
 

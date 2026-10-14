@@ -18,9 +18,9 @@ The report format, one full sample report, and three before/after Auto-Fix runs.
 
 | Field | Value |
 |-------|-------|
-| Target | <path> |
+| Target | <the skill folder's path> |
 | Mode | <Review Only, Review + Auto-Fix, or Auto-Fix>, plus "with regression" when `regression` was given |
-| Graded for | <claude-code (Claude Code and Cowork) or portable (single-skill uploads to claude.ai and the API)> |
+| Graded for | <the platform target: claude-code (Claude Code and Cowork) or portable (single-skill uploads to claude.ai and the API)> |
 | quick_validate | <ran, exit N (meaning)> or <not run (reason)> |
 | security_scan | <ran with --no-marker, exit N (RESULT secrets=<n> leads=<n>)> or <secret scan not run (reason)> |
 | Regression | <only when a regression run was requested or triggered: ran, with case counts, or not run (reason)> |
@@ -244,7 +244,7 @@ No regression run: the folder is not in the user's own repository, and the skill
 |-------|-------|
 | Passes | 2 of 3 |
 | Backup | /tmp/tmp.k3J9qA/api-tester-backup (the folder was not in a git repository) |
-| Files changed | SKILL.md (720 -> 298 lines), added api-patterns.md and schema-validation.md |
+| Files changed | SKILL.md (720 -> 279 lines), added api-patterns.md and schema-validation.md |
 | Fixed | M1, M2, M7, M8, m1, and m9 (introduced in pass 1, fixed in pass 2); S3 and S6 cleared as side effects of the M1 move and the M8 rewrite |
 | Still open | none |
 | Grade | F -> A |

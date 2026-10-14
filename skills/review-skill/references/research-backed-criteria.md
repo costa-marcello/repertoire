@@ -97,7 +97,7 @@ These questions, adapted from Stanford HELM's multi-metric view, help a reviewer
 | Robustness: would a reworded request still trigger the skill? | trigger review (advisory), M8 |
 | Maintainability: can one fact change without breaking another file? | M5, m3, m11 |
 | Safety: are destructive steps checked, and are boundaries stated? | M4, M10 |
-| Portability: does it run in Cowork as well as in Claude Code? | M11; M9 for the portable target |
+| Portability: does it run in Cowork as well as in Claude Code? | M11; M9 for the portable platform target |
 
 ## Quick checklist
 

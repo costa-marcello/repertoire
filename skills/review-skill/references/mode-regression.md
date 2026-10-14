@@ -24,6 +24,7 @@ Run it only when every check below passes. Otherwise record "regression: not run
 | The target is in the user's own repository | not in your own repository |
 | `evals/evals.json` parses and has at least one case | no evals |
 | The Agent tool is available | no subagents |
+| A POSIX shell is available (the Bash tool; on Windows, Git Bash), because the checks and workspace commands below are POSIX shell | no POSIX shell |
 
 **Inside an eval run or a review gate.** You are inside one when your prompt confines you to an inputs folder and an output folder, tells you not to use the Skill tool, or asks you to run this skill and return the full report (create-skill's Layer 3 gate). A regression run there would start eval runs inside eval runs: the cost multiplies, review-skill's own evals would recurse, and no user can answer the Review Only question.
 

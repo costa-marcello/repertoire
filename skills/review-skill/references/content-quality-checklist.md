@@ -152,7 +152,7 @@ Look for date-conditional logic, "currently" or "at the time of writing", and pi
 
 ## 9. Runs in Cowork (M11)
 
-The default target, `claude-code`, covers Claude Code and Cowork, and the portable target shares the same limits, so this lens applies to every review. Cowork runs the Claude Code engine with the plugin's skills, inside a desktop VM or a cloud container. It has no display, never reads `~/.claude/skills`, and does not run dynamic context injection; cloud sessions also cannot reach local stdio MCP servers or `localhost`.
+The default platform target, `claude-code`, covers Claude Code and Cowork, and the portable platform target shares the same limits, so this lens applies to every review. Cowork runs the Claude Code engine with the plugin's skills, inside a desktop VM or a cloud container. It has no display, never reads `~/.claude/skills`, and does not run dynamic context injection; cloud sessions also cannot reach local stdio MCP servers or `localhost`.
 
 Check SKILL.md, every Markdown file under `references/`, and every bundled script. Skip `<example>` blocks for the path check.
 
@@ -187,7 +187,7 @@ Anthropic's skill and prompting guidance adds four points. Report a gap as an ad
 
 - **Gotchas.** The most valuable content in a skill is often the list of places where Claude goes wrong without it: an API quirk, a file format edge case, a command that fails on Windows. A skill with no gotchas section gets an advisory note naming the likeliest failure point.
 - **Defaults, not menus.** Prefer one recommended path with an escape hatch over a list of equal choices. Three or more choices with no default is m2; two equal choices is advisory.
-- **Key instructions near the top.** After compaction, Claude Code re-attaches only the first 5,000 tokens of a recently invoked skill. Safety rules, the main workflow, and the arguments belong near the top; background and long tables go later or in references. A safety rule buried after a long section gets an advisory note.
+- **Key instructions near the top.** After compaction, Claude Code re-attaches only the first 5,000 tokens of a recently invoked skill (verify the figure against the [Claude Code skills docs](https://code.claude.com/docs/en/skills), since it can change). Safety rules, the main workflow, and the arguments belong near the top; background and long tables go later or in references. A safety rule buried after a long section gets an advisory note.
 - **Reasons over emphasis.** Newer models over-apply shouted rules. Three or more all-caps directives without a reason is m15; fewer is advisory.
 
 ## Quick reference

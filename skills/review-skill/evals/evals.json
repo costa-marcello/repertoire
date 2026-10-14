@@ -7,7 +7,7 @@
       "expected_output": "A Review Only report graded for claude-code, Grade B: one Minor finding (m2, three readers with no default) with file:line, quoted evidence, and a concrete fix such as 'Default to the csv module; use pandas for files over 1 GB'. Style notes (S1, S2, S5) appear in their own section and do not affect the grade. The header says whether quick_validate and security_scan ran.",
       "files": [],
       "expectations": [
-        "The report states the mode as Review Only and the target as claude-code",
+        "The report states the mode as Review Only, and its Graded for row names the claude-code platform target",
         "The report header states whether the automated checks ran, and gives the reason if they did not",
         "The grade is B, computed as 0 Major and 1 Minor",
         "The m2 finding cites SKILL.md with a line number and quotes 'pandas, polars, or the csv module'",
@@ -17,7 +17,7 @@
       ]
     },
     {
-      "id": 3,
+      "id": 2,
       "prompt": "Fix my skill. Put this in api-tester/SKILL.md in a scratch folder (it is not in git) and run /review-skill on it with fix:\n\n---\nname: api-tester\ndescription: \"Test your APIs\"\ncontext: fork\nagent: general-purpose\n---\n\n# API Tester\n\n1. Ask the user which environment to test against.\n2. Send a request to each endpoint listed in endpoints.txt.\n3. Handle errors appropriately.\n4. Ensure the responses are valid.\n5. Retry as needed.\n6. Report the failures.\n",
       "expected_output": "Auto-Fix: the folder is outside any git repository, so a backup of api-tester is copied to a mktemp folder with a command that checks SKILL.md exists in the copy and prints the path, which is reported; context: fork and agent are removed (M2); the description is rewritten in the third person with a 'Use when...' clause (M8); the weak-verb steps get concrete defaults or checks (M7); the validator is re-run after the fixes; the loop stops within 3 passes; no regression run starts, because the folder is not in the user's own repository; the summary shows the before grade (D or F, from at least M2 and M8), the after grade, and the backup path.",
       "files": [],
@@ -33,7 +33,7 @@
       ]
     },
     {
-      "id": 4,
+      "id": 3,
       "prompt": "Save this as changelog-helper/SKILL.md in a scratch folder (not in git), then run /review-skill on it. Just grade it, don't fix anything.\n\n---\nname: changelog-helper\ndescription: \"Writes changelog entries from commit messages. Use when the user asks for a changelog entry or release notes.\"\n---\n\n# Changelog Helper\n\nRead the commits since the last tag with git log.\n\nGroup them under Added, Changed, and Fixed, and write one line per change.\n",
       "expected_output": "Review Only, chosen because the request says not to fix anything, although it contains the words 'fix' and 'grade'. The report is graded for claude-code and its header states whether the automated checks ran. No file in changelog-helper/ changes, no backup is made, and no fix loop starts.",
       "files": [],
@@ -46,7 +46,7 @@
       ]
     },
     {
-      "id": 5,
+      "id": 4,
       "prompt": "I changed my word-count skill and want to know if its evals still pass. In a scratch folder (not in git), save the two files below as word-count/SKILL.md and word-count/evals/evals.json, and save word-count/evals/files/notes.txt with the text \"one two three four five six\\tseven eight nine ten eleven twelve\". Then run /review-skill on word-count with report only regression.\n\nword-count/SKILL.md:\n\n---\nname: word-count\ndescription: \"Counts the words in a text file and writes the total to count.txt. Use when the user asks how many words a file has.\"\n---\n\n# Word Count\n\nCount the words in the given file, splitting on spaces, and write the total to count.txt.\n\nword-count/evals/evals.json:\n\n{\"skill_name\": \"word-count\", \"evals\": [{\"id\": 1, \"prompt\": \"how many words are in notes.txt?\", \"expected_output\": \"count.txt holds 12.\", \"files\": [\"evals/files/notes.txt\"], \"expectations\": [\"count.txt contains 12\"]}]}\n",
       "expected_output": "Review Only with a regression request. The regression run does not start, because word-count sits in a scratch folder outside the user's own repository (and, when this case runs as an eval, because a regression run never starts inside an eval run). The report header gives that reason, nobody is asked whether to run the evals, no subagent runs word-count's eval case, no M12 finding appears, and no file in word-count/ changes.",
       "files": [],

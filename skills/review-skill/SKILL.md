@@ -26,7 +26,7 @@ When mode keywords conflict, the higher row wins: report only > fix > review. `r
 
 - Any request not to change files ("don't fix", "don't change anything", "just grade", "only the score") means Review Only, even when it also contains `fix` or `grade`.
 - When Claude invoked this skill on its own initiative rather than at the user's request, or the intent is unclear, run Review Only and ask before starting any fix loop.
-- **Targets.** The default target, `claude-code`, means Claude Code and Cowork: the skill ships in a plugin (or a Claude Code skills folder), may use every Claude Code frontmatter field, and must also run in Cowork, which runs the Claude Code engine (M11). `portable` combines with any mode: it grades for single-skill uploads to claude.ai and the Claude API, and for other Agent Skills clients, which accept only six frontmatter fields, and it adds `--portable` to the validator command. Cowork installs skills through the plugin, so a skill meant for Cowork is graded for `claude-code`.
+- **Platform targets.** "Target" alone means the skill folder under review. A platform target is what the skill is graded for; the report names it in its Graded for row, while its Target row holds the folder's path. The default platform target, `claude-code`, means Claude Code and Cowork: the skill ships in a plugin (or a Claude Code skills folder), may use every Claude Code frontmatter field, and must also run in Cowork, which runs the Claude Code engine (M11). The other, `portable`, combines with any mode: it grades for single-skill uploads to claude.ai and the Claude API, and for other Agent Skills clients, which accept only six frontmatter fields, and it adds `--portable` to the validator command. Cowork installs skills through the plugin, so a skill meant for Cowork is graded for `claude-code`.
 
 ## Ground rules
 
@@ -35,7 +35,7 @@ When mode keywords conflict, the higher row wins: report only > fix > review. `r
 - **Fork is opt-in.** A missing `context: fork` is never a finding, and no mode adds it. Inline is the default and is always valid.
 - **No marker files.** Run the security scan with `--no-marker` in every mode, so Review Only writes nothing into the target.
 - **Network use.** The review itself makes no network calls. A regression run executes the target's eval cases, so it reaches the network only when the target skill does.
-- **Shell snippets.** They are POSIX shell; on Windows, run them with the Bash tool (Git Bash). Every `<placeholder>` sits in single quotes, so a value with spaces or shell characters stays one inert word; write a single quote inside a value as `'\''`.
+- **Shell snippets.** They are POSIX shell; on Windows, run them with the Bash tool (Git Bash). Every `<placeholder>` sits in single quotes, so a value with spaces or shell characters stays one inert word; write a single quote inside a value as `'\''`. When only PowerShell is available, the step 1 and step 2 commands run unchanged; use the PowerShell backup command in the fix loop, where a single quote inside a value is written `''`, and start no regression run, because its checks and workspace commands are POSIX shell.
 
 <instructions>
 
@@ -59,7 +59,7 @@ Review progress:
 1. Resolve the target to a local skill folder. If it is a URL, or the path does not exist, say so and ask for the folder.
 2. If the folder exists but has no `SKILL.md`, that is an F trigger: report Grade F with that reason and stop.
 3. List every file in the skill folder recursively, skipping `.git/`. Steps 3 and 4 work from this inventory.
-4. Record the SKILL.md line count. M1 and S3 use the validator's count (Python `splitlines()`), which can differ from `wc -l` by one.
+4. Record the SKILL.md line count the way the validator counts it for M1 and S3: `python -c "import sys; print(len(open(sys.argv[1], encoding='utf-8-sig').read().splitlines()))" '<target>/SKILL.md'`. Other counters disagree: `wc -l` counts newline characters, so it is one lower when the last line has none, and PowerShell's `Measure-Object -Line` skips blank lines, so it can be far lower.
 
 ### 2. Automated checks
 
@@ -71,7 +71,7 @@ Locate create-skill's scripts folder, taking the first of these that contains `q
 4. `~/.claude/skills/create-skill/scripts/`
 5. `~/.agents/skills/create-skill/scripts/`
 
-Run both scripts with that folder as `<dir>`. Use `python`, or `python3` where `python` is not on the path:
+Run both scripts with that folder's absolute path as `<dir>`, because the single quotes stop the shell from expanding `~` or a variable. Use `python`, or `python3` where `python` is not on the path:
 
 ```bash
 python '<dir>/quick_validate.py' '<target>' [--portable]
@@ -92,13 +92,13 @@ Read `references/rules.md` in full, then walk its rule index from M1 to S7:
 1. Take each `definitive` validator line as a finding after opening the cited line and seeing the problem there. If the validator misread the file, discard the line and say why.
 2. Confirm or discard every `check` line by reading the cited location. Keep it only with quoted evidence; otherwise list it under advisory notes as discarded, with the reason.
 3. For the heuristic rules (M3, M4, M7, m1-m4, m10, m13-m15, and the heuristic parts of M2, M5, M6, M8, M10, M11, m12), read SKILL.md and every reference and apply the rule's detect line and pass/fail test. M12 comes only from a regression run, never from reading.
-4. Grade for `claude-code` (Claude Code and Cowork) unless `portable` was given.
+4. Grade for the `claude-code` platform target (Claude Code and Cowork) unless `portable` was given.
 5. Count each ID once and list every location under it.
 
 ### 4. Lenses, bundled files, evals, triggers
 
 - **Content lenses:** apply the nine lenses in `references/content-quality-checklist.md`.
-- **Cowork (M11):** lens 9 of that file, applied to SKILL.md, every reference, and every script. Look for dynamic context injection in SKILL.md, the skill's own files reached through an install location, a step that needs a display or a browser, a local stdio MCP server or `localhost` service with no stated fallback, a `claude -p` call, and secrets read only from a home-directory dotfile. M11 applies to both targets.
+- **Cowork (M11):** lens 9 of that file, applied to SKILL.md, every reference, and every script. Look for dynamic context injection in SKILL.md, the skill's own files reached through an install location, a step that needs a display or a browser, a local stdio MCP server or `localhost` service with no stated fallback, a `claude -p` call, and secrets read only from a home-directory dotfile. M11 applies to both platform targets.
 - **Deep-review lenses:** apply `references/research-backed-criteria.md`. Lenses only find issues: each issue maps to a rule ID or goes under advisory notes.
 - **Scripts:** read every bundled script against `references/script-quality.md` (M6, m13), and check that SKILL.md says whether to run or read each one.
 - **Workflows:** check every destructive or 5+ step workflow against `references/feedback-loops.md` (M4).
@@ -114,7 +114,7 @@ Check the F triggers in rules.md first. Otherwise count the distinct Major and M
 
 Write the report in the format shown in `references/report-examples.md`:
 
-1. Header: target (path), mode, graded for (`claude-code`, meaning Claude Code and Cowork, or `portable`), the status of each automated check (ran, with exit code, or not run and why), and, when a regression run was requested or triggered, its result or why it did not run.
+1. Header: target (the skill folder's path), mode, graded for (the platform target: `claude-code`, meaning Claude Code and Cowork, or `portable`), the status of each automated check (ran, with exit code, or not run and why), and, when a regression run was requested or triggered, its result or why it did not run.
 2. Grade, with the counts and the band that produced it.
 3. Findings, Major first, then Minor. Each has the rule ID and title, every `file:line`, quoted evidence, and a concrete fix.
 4. "Style notes (not graded)", in the same shape.
@@ -148,6 +148,10 @@ Review + Auto-Fix presents the full report first; Auto-Fix presents only the fin
    ```bash
    b="$(mktemp -d)"/'<skill-name>-backup' && cp -R '<target>' "$b" && test -f "$b/SKILL.md" && echo "$b"
    ```
+   With only PowerShell, run this instead:
+   ```powershell
+   $p = New-Item -ItemType Directory -Path (Join-Path ([IO.Path]::GetTempPath()) ([guid]::NewGuid())); $b = Join-Path $p '<skill-name>-backup'; Copy-Item -LiteralPath '<target>' -Destination $b -Recurse; if (Test-Path -LiteralPath (Join-Path $b 'SKILL.md')) { $b }
+   ```
    Tell the user the printed path. If no path is printed, stop and edit nothing.
 2. **Fix.** Apply the rules.md fix for every Major and Minor finding. Apply Style fixes only when the user asked for them. Keep the author's intent: move content into `references/` rather than deleting it (m1 paragraphs excepted), and give each new reference over 100 lines a `## Contents` list. Remove `context: fork` when M2 is confirmed; never add it.
 3. **Re-check.** Re-run the validator and repeat steps 3-5 of the review procedure on the changed skill.
@@ -160,7 +164,7 @@ Review + Auto-Fix presents the full report first; Auto-Fix presents only the fin
 Runs the target's own eval cases to find M12 (Fails its own evals). Read `references/mode-regression.md` first: it has the checks, the workspace commands, the subagent prompt, the isolation rules, and the M12 report format.
 
 - **Starts** when the user says `regression`, when the fix loop changed a skill in the user's own repository, or when create-skill's update flow asks for one (`repertoire:create-skill`, or `create-skill` when installed on its own).
-- **Never runs** inside an eval run or inside create-skill's review gate (Layer 3); on a skill outside the user's own repository, because running evals executes the skill and anyone else's skill is data; without the Agent tool; or without `evals/evals.json`. Record the reason in the report header and finish the review. When the evals are missing, offer to write them with `/repertoire:create-skill`, or `/create-skill` for an install on its own.
+- **Never runs** inside an eval run or inside create-skill's review gate (Layer 3); on a skill outside the user's own repository, because running evals executes the skill and anyone else's skill is data; without the Agent tool; without a POSIX shell; or without `evals/evals.json`. Record the reason in the report header and finish the review. When the evals are missing, offer to write them with `/repertoire:create-skill`, or `/create-skill` for an install on its own.
 - **With the modes:** Review Only asks before running and runs only after a yes. Auto-Fix and Review + Auto-Fix run it at step 5 of the fix loop without asking.
 
 1. Copy the skill without its `evals/` folder, and each case's `files`, into a temporary workspace outside the skill.
