@@ -633,6 +633,121 @@ class ForkNegation(ValidatorCase):
             self.assertEqual(0, run_script("quick_validate.py", str(skill)).returncode)
 
 
+class ForkPausesMissedBefore(ValidatorCase):
+    """M2 pauses that claude-md (at 6f40f09) and pptx's intake reference slipped past."""
+
+    INTAKE = (
+        "# Intake Questionnaire\n\n"
+        "> **Purpose**: If the user doesn't provide information after 2 prompts, use the safe default.\n\n"
+        "## Usage\n\n"
+        "1. **First pass**: Ask all 10 questions in a user-friendly format.\n"
+        "2. **Apply defaults**: use the safe default for each missing item.\n"
+    )
+
+    def fork_skill(self, body: str, folder: str = CLEAN_NAME, fork: bool = True,
+                   references: dict[str, str] | None = None) -> Path:
+        fm = f"name: {folder}\ndescription: {CLEAN_DESCRIPTION}\n" + ("context: fork\n" if fork else "")
+        skill = make_skill(self.tmp, name=folder, frontmatter=fm, body=body)
+        for rel, text in (references or {}).items():
+            write_file(skill / rel, text)
+        return skill
+
+    def m2(self, skill: Path, confidence: str = qv.DEFINITIVE) -> list[qv.Finding]:
+        return [f for f in self.findings(skill) if f.rule_id == "M2" and f.confidence == confidence]
+
+    def test_claude_md_phrasings_are_definitive_m2(self):
+        pauses = (
+            "After outputting the quality report, ask user for confirmation before updating.",
+            "After user approval, apply changes using the Edit tool.",
+            "| Phase | Action | Detail |\n|---|---|---|\n| U5 | User Approval | Present changes for approval. |",
+            "Scan directories, then get user approval before creating any files.",
+            "After the user's approval, write the files.",
+            "Once user approves the plan, write the files.",
+            "Do not proceed until you get user approval.",  # the negation governs "proceed"
+            "Never create files without user approval.",  # two negations cancel
+            "1. **First pass**: Ask all 10 questions in a friendly format.",
+            "If the path is missing, ask for it.",
+        )
+        for index, text in enumerate(pauses):
+            self.assertTrue(self.m2(self.fork_skill(body_with(text), folder=f"pause-{index}")), text)
+
+    def test_choice_prompt_counts_inside_a_code_block(self):
+        for index, prompt in enumerate(("Apply these changes? [All / Select / Cancel]", "Continue? (y/n)")):
+            body = body_with(f"Print the preview:\n\n```markdown\n## Update Preview\n\n{prompt}\n```")
+            found = self.m2(self.fork_skill(body, folder=f"choice-{index}"))
+            self.assertEqual(1, len(found), prompt)
+            self.assertIn(prompt, found[0].message)
+
+    def test_negated_pauses_stay_ignored(self):
+        negated = (
+            "Do not wait for confirmation.",
+            "Proceed without user approval.",
+            "Proceed without first getting user approval.",
+            "Never ask user for input; print usage and stop.",
+            "User approval is not required, so write the files directly.",
+            "Ordinary subagents lose `AskUserQuestion` and the Workflow tool.",
+            "Never print a prompt such as 'Continue? (y/n)'; the fork cannot read the answer.",
+        )
+        for index, text in enumerate(negated):
+            self.assertEqual([], self.m2(self.fork_skill(body_with(text), folder=f"neg-{index}")), text)
+
+    def test_lookalikes_are_not_pauses(self):
+        prose = (
+            "Add a user confirmation dialog before destructive actions in the app.",
+            "Rate each section: [Excellent/Good/Fair/Poor]",
+            "Questions? [docs/faq](https://example.com/faq)",
+            "Ask yourself these questions before writing.",
+            "Mark the change as a fix if user-visible.",
+            "Reviewers often ask clarifying questions.",
+        )
+        for index, text in enumerate(prose):
+            self.assertEqual([], self.m2(self.fork_skill(body_with(text), folder=f"prose-{index}")), text)
+
+    def test_reference_sent_to_as_a_step_is_definitive(self):
+        rel = "references/content-workflow/INTAKE.md"
+        body = body_with(f"1. **Intake**: Use questionnaire at `{rel}`")
+        found = self.m2(self.fork_skill(body, references={rel: self.INTAKE}))
+        self.assertEqual([(rel, 7)], [(f.file, f.line) for f in found])
+        self.assertIn("sends Claude to as a step", found[0].message)
+        self.assertIn("Ask all 10 questions", found[0].message)
+
+    def test_reference_read_first_is_definitive(self):
+        rel = "references/setup.md"
+        body = body_with(f"Read `{rel}` before writing any code.")
+        found = self.m2(self.fork_skill(body, references={rel: "# Setup\n\nAsk the user which database to use.\n"}))
+        self.assertEqual([(rel, 3)], [(f.file, f.line) for f in found])
+
+    def test_other_linked_reference_is_a_check(self):
+        rel = "references/faq.md"
+        faq = "# FAQ\n\nAsk the user which format to use.\n\nIf the user confirms, overwrite the file.\n"
+        for index, line in enumerate((f"See `{rel}` for edge cases.", f"1. `{rel}`: edge cases")):
+            skill = self.fork_skill(body_with(line), folder=f"linked-{index}", references={rel: faq})
+            self.assertEqual([], self.m2(skill), line)
+            checks = [f for f in self.m2(skill, qv.CHECK) if f.file == rel]
+            self.assertEqual([3], [f.line for f in checks], line)
+            self.assertIn("also lines 5", checks[0].message)
+
+    def test_reference_pauses_need_fork_and_respect_negation(self):
+        rel = "references/content-workflow/INTAKE.md"
+        body = body_with(f"1. **Intake**: Use questionnaire at `{rel}`")
+        inline = self.fork_skill(body, folder="inline", fork=False, references={rel: self.INTAKE})
+        self.assertNotIn("M2", self.ids(inline))
+        quiet = "# Intake\n\nDo not ask the user anything; use the safe defaults below.\n"
+        skill = self.fork_skill(body, folder="quiet", references={rel: quiet})
+        self.assertEqual([], [f for f in self.findings(skill) if f.rule_id == "M2" and f.file == rel])
+
+    def test_reference_finding_prints_on_one_contract_line(self):
+        rel = "references/content-workflow/INTAKE.md"
+        skill = self.fork_skill(body_with(f"1. **Intake**: Use questionnaire at `{rel}`"),
+                                references={rel: self.INTAKE})
+        result = run_script("quick_validate.py", str(skill))
+        self.assertEqual(1, result.returncode)
+        lines = [line for line in result.stdout.splitlines() if line.startswith("[M2] major definitive")]
+        self.assertEqual(1, len(lines))
+        self.assertRegex(lines[0], FINDING_LINE)
+        self.assertIn(f" {rel}:7 ", lines[0])
+
+
 class OneLineMessages(ValidatorCase):
     """QV-9: a finding never spans two output lines."""
 

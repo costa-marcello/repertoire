@@ -33,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - Fixed package_skill.py zipping `__pycache__`, the scan marker, and evals
 - Fixed all four scripts crashing on Windows when output is piped, and documented running `python`, with `python3` only where `python` is not on the path
 - Fixed pptx's `inventory.py` and `rearrange.py` silently swallowing errors (M6): they now catch specific exceptions and print an actionable warning on stderr before falling back to the same defaults
+- Fixed quick_validate.py missing M2 pauses on forked skills: it now catches "ask user" without an article, "user approval", "after user approval", questionnaires ("Ask all 10 questions"), and choice prompts such as "[All / Select / Cancel]", reports pauses in references that SKILL.md sends Claude to as a step (pptx's intake questionnaire), and prints a `check` lead for pauses in other linked references
 - Fixed M2 across the kit by removing `context: fork` (and any `agent` key) from nine skills that cannot work forked: find-skills and readme-md ask the user, claude-md waits for approval, pptx runs an intake questionnaire, and docx, frontend-design, mermaid-diagrams, pdf, and xlsx are guidelines or toolkits whose task comes from the conversation. changelog stays forked
 - Fixed the README's changelog description, which still listed the push and update modes removed in 0.7.0, a broken Contents link in pptx's content-workflow WORKFLOW.md, and pptx warnings that did not name the slide or layout
 

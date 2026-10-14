@@ -185,23 +185,31 @@ PATH_SUFFIX_RE = re.compile(r"(?::\d+(?:-\d+)?(?::\d+)?|::?[A-Za-z_][\w.]*(?:\(\
 PATH_PLACEHOLDER_CHARS = "<>{}*$"
 MARKDOWN_LINK_RE = re.compile(r"\]\(([^)\s\[\]()]+)\)")
 
+# "the user" or "user" with no article ("ask user for confirmation"); not "user-facing".
+_THE_USER = r"(?:the\s+)?user(?![\w-])"
 ASK_USER_RE = re.compile(
     "|".join((
         r"\bAskUserQuestion\b",
-        r"\bask(?:s|ing)?\s+the\s+user\b",
+        r"\bask(?:s|ing)?\s+" + _THE_USER,
         r"\basks\s+for\s+(?:confirmation|approval|permission|clarification|input)\b",
-        r"\b(?:confirm|check)(?:s|ing)?\s+with\s+the\s+user\b",
-        r"\bprompt(?:s|ing)?\s+the\s+user\b",
+        r"\b(?:confirm|check)(?:s|ing)?\s+with\s+" + _THE_USER,
+        r"\bprompt(?:s|ing)?\s+" + _THE_USER,
         r"\bwait(?:s|ing)?\s+for\s+(?:the\s+)?user(?:'s|\u2019s)?\b",
         r"\bwait(?:s|ing)?\s+for\s+(?:your|their)\s+"
         r"(?:confirmation|approval|permission|response|reply|input|answer)\b",
         r"\bwait(?:s|ing)?\s+for\s+(?:confirmation|approval|permission|a\s+reply|a\s+response|an\s+answer)\b",
         r"\bhave\s+the\s+user\s+(?:choose|pick|select|decide|confirm|approve)\b",
         r"\b(?:get|obtain|request)s?\s+the\s+user(?:'s|\u2019s)\s+(?:confirmation|approval)\b",
-        r"\b(?:after|once|when|if|until|before|unless)\s+the\s+user\s+"
+        r"\b(?:after|once|when|if|until|before|unless)\s+" + _THE_USER + r"\s+"
         r"(?:confirms|approves|responds|replies|agrees|answers)\b",
         # Not "unless the user selects otherwise", which names a default rather than a wait.
-        r"\b(?:after|once|when|if|until)\s+the\s+user\s+(?:chooses|selects)\b",
+        r"\b(?:after|once|when|if|until)\s+" + _THE_USER + r"\s+(?:chooses|selects)\b",
+        # "After user approval", "get user approval", "the user's confirmation"; the time
+        # word is part of the match so that TEMPORAL_ASK_RE sees it. Not a UI element
+        # being built ("a user confirmation dialog").
+        r"\b(?:(?:after|once|when|until|upon|pending|before|unless)\s+)?(?:the\s+)?"
+        r"user(?:'s|\u2019s)?\s+(?:approval|confirmation)\b"
+        r"(?!\s+(?:dialog|modal|screen|page|form|button|flow|component|endpoint)s?\b)",
     )),
     re.IGNORECASE,
 )
@@ -211,19 +219,43 @@ IMPERATIVE_ASK_RE = re.compile(
     "|".join((
         r"\bask\s+(?:which|whether|what|for)\b",
         r"\b(?:get|obtain|request)\s+(?:confirmation|approval)\b",
+        # A questionnaire: "Ask all 10 questions", "ask clarifying questions". Not
+        # "ask yourself these questions", a self-check, or "ask each subagent ...".
+        r"\bask\s+(?:(?:all|the|these|those|following|clarifying|follow-up|a|few|some|any|more|several"
+        r"|key|quick|short|targeted|intake|up|to|\d+(?:-\d+)?)\s+){0,4}questions?\b",
     )),
     re.IGNORECASE,
 )
 # What may precede an instruction on its line: nothing, a list marker or step label,
-# emphasis, sentence or clause punctuation, or a joining word ("then ask which ...").
+# emphasis, sentence or clause punctuation, or a joining word ("then ask which ...",
+# "If the path is missing, ask for it").
 IMPERATIVE_PREFIX_RE = re.compile(
-    r"(?:^|[.:;!?]|\b(?:then|and|or|first|next|always|please|to)\b|^\s*(?:[-*+]|\d+[.)])"
+    r"(?:^|[.:;!?,]|\b(?:then|and|or|first|next|always|please|to)\b|^\s*(?:[-*+]|\d+[.)])"
     r"|\*\*|__)\s*$",
     re.IGNORECASE,
 )
+# An explicit choice prompt: a question followed by options in square brackets separated
+# by slashes ("Apply these changes? [All / Select / Cancel]"), or by "(y/n)". It is
+# searched in code blocks too, because a skill shows the prompt it prints as literal output.
+# Not a Markdown link ("Questions? [docs/faq](faq.md)").
+_CHOICE = r"[A-Za-z][\w'-]*(?:[ \t]+[A-Za-z][\w'-]*){0,2}"
+CHOICE_PROMPT_RE = re.compile(
+    r"\?[ \t]*(?:\*\*|`)?"
+    r"(?:\[[ \t]*" + _CHOICE + r"(?:[ \t]*/[ \t]*" + _CHOICE + r")+[ \t]*\](?!\()"
+    r"|(?i:\((?:y|yes)[ \t]*/[ \t]*(?:n|no)\)))"
+)
+# Where the question of a choice prompt starts: after a sentence end or an opening quote.
+QUESTION_START_RE = re.compile(r"[.!?](?=\s)|[\"'`\u201c\u2018>|]")
 # A match that is itself a time or condition clause ("until the user approves")
 # is not negated by a negation that governs another verb ("Do not proceed until ...").
-TEMPORAL_ASK_RE = re.compile(r"(?:after|once|when|if|until|before|unless)\b", re.IGNORECASE)
+TEMPORAL_ASK_RE = re.compile(r"(?:after|once|when|if|until|before|unless|upon|pending)\b", re.IGNORECASE)
+# "without" cancels against an earlier negation in its clause: "never edit files
+# without user approval" still waits for the user.
+DOUBLE_NEGATION_RE = re.compile(r"\b(?:not|never|cannot|no|nothing|nobody)\b|n't\b|n\u2019t\b", re.IGNORECASE)
+# M2: a reference SKILL.md sends Claude to as a step, so its pauses are the skill's
+# own: named on a numbered step line, or on a line that says to read it first.
+READ_VERB_RE = re.compile(r"\b(?:read|load|open|follow|use|consult|review|study)\b", re.IGNORECASE)
+READ_FIRST_RE = re.compile(r"\b(?:first|before)\b|\b(?:start|begin)\s+(?:with|by)\b", re.IGNORECASE)
 # M2 clauses run to sentence or clause punctuation, a paragraph or block break,
 # or a table cell; a single newline inside a paragraph is a soft wrap.
 CLAUSE_BREAK_RE = re.compile(
@@ -245,9 +277,11 @@ _NEGATION_FILLERS = (
     "to", "try", "attempt", "need", "needs", "have", "has", "be", "able", "allowed", "required",
     "necessary", "should", "must", "will", "can", "you", "we", "they", "it", "is", "are", "of", "any",
     "circumstances", "point", "time", "bother", "go", "and", "or", "wait", "pause", "stop",
+    "get", "getting", "obtain", "obtaining", "request", "requesting", "seek", "seeking", "explicit", "prior",
 )
-_NEGATORS = (
-    r"(?:\b(?:not|never|cannot|nor|no|without|avoid|avoiding|refrain\s+from|instead\s+of|rather\s+than)"
+_NEGATORS = (  # "subagents lose AskUserQuestion" negates it too
+    r"(?:\b(?:not|never|cannot|nor|no|without|avoid|avoiding|refrain\s+from|instead\s+of|rather\s+than"
+    r"|lose|loses|lack|lacks)"
     r"|n't|n\u2019t)"
 )
 
@@ -265,7 +299,7 @@ _NOT = r"(?:\s+not|\s+never|n't|n\u2019t)"
 POST_NEGATION_RE = re.compile(  # "`AskUserQuestion` is not available"
     r"\s*(?:tool\s+)?(?:"
     r"(?:is|are|was|were)" + _NOT + r"\s+(?:\w+\s+)?"
-    r"(?:available|allowed|permitted|possible|supported|usable|an\s+option)\b"
+    r"(?:available|allowed|permitted|possible|supported|usable|an\s+option|required|needed|necessary)\b"
     r"|(?:is|are)\s+(?:unavailable|disabled|forbidden)\b"
     r"|(?:cannot|can't|can\u2019t|won't|won\u2019t|(?:will|must|may|should)" + _NOT + r")\s+be\s+"
     r"(?:used|called|available|asked)\b"
@@ -706,56 +740,123 @@ def _check_size(skill: _Skill, out: _Collector) -> None:
                 f"(house limits {STYLE_MAX_LINES} lines, {STYLE_MAX_CHARS} characters)")
 
 
-def _is_negated(text: str, match: re.Match) -> bool:
-    """True when the ask or wait in match is negated in its own clause (rules.md M2).
+def _governs_clause(prefix: str, negation: re.Pattern = CLAUSE_NEGATION_RE) -> bool:
+    """True when a negation in prefix governs the clause that ends at the mention.
+
+    A condition in the prefix stops it: a negation inside the condition ("If the
+    format is not given ask the user") or before it ("Do not proceed until you
+    ask the user") governs another verb.
+    """
+    conjunctions = list(CONJUNCTION_RE.finditer(prefix))
+    if conjunctions:
+        prefix = prefix[conjunctions[-1].end():]
+    return CONDITION_RE.search(prefix) is None and negation.search(prefix) is not None
+
+
+def _is_negated(text: str, start: int, end: int) -> bool:
+    """True when the ask or wait at text[start:end] is negated in its own clause (rules.md M2).
 
     A negation counts when it follows the mention ("`AskUserQuestion` is not
     available"), when it sits right before it with only filler words between
-    ("do not ever ask the user"), or when it governs the clause and no condition
-    comes before it ("The subagent cannot reach or ask the user"). A negation
-    inside a preceding condition ("If the format is not given ask the user")
-    does not count.
+    ("do not ever ask the user"), or when it governs the clause and the clause
+    has no condition before the mention ("The subagent cannot reach or ask the
+    user"). A negation inside or before a condition ("If the format is not given
+    ask the user") does not count, and two negations cancel ("never edit without
+    user approval").
     """
-    if POST_NEGATION_RE.match(text, match.end()):
+    if POST_NEGATION_RE.match(text, end):
         return True
-    start = match.start()
     prefix = text[max(0, start - NEGATION_WINDOW):start]
     breaks = list(CLAUSE_BREAK_RE.finditer(prefix))
     if breaks:
         prefix = prefix[breaks[-1].end():]
-    temporal = TEMPORAL_ASK_RE.match(match.group(0)) is not None
-    adjacent = TEMPORAL_ADJACENT_NEGATION_RE if temporal else ADJACENT_NEGATION_RE
-    if adjacent.search(prefix):
-        return True
+    temporal = TEMPORAL_ASK_RE.match(text, start) is not None
+    adjacent = (TEMPORAL_ADJACENT_NEGATION_RE if temporal else ADJACENT_NEGATION_RE).search(prefix)
+    if adjacent:
+        return not (adjacent.group(0).lower().startswith("without")
+                    and _governs_clause(prefix[:adjacent.start()], DOUBLE_NEGATION_RE))
     if temporal:
         return False
-    conjunctions = list(CONJUNCTION_RE.finditer(prefix))
-    if conjunctions:
-        prefix = prefix[conjunctions[-1].end():]
-    condition = CONDITION_RE.search(prefix)
-    limit = condition.start() if condition else len(prefix)
-    return CLAUSE_NEGATION_RE.search(prefix[:limit]) is not None
+    return _governs_clause(prefix)
+
+
+def _find_pauses(lines: list[str], first_line: int) -> list[tuple[int, str]]:
+    """Where Markdown lines ask or wait for the user (rules.md M2): sorted (line, quoted text), one per line."""
+    tags = _fence_tags(lines)
+    prose = ["" if tag is not None else line for line, tag in zip(lines, tags)]
+    asking = _View([_mask_inline_code(line, keep_identifiers=True) for line in prose], first_line)
+    text = asking.text
+    imperative = [
+        match for match in IMPERATIVE_ASK_RE.finditer(text)
+        if IMPERATIVE_PREFIX_RE.search(text[text.rfind("\n", 0, match.start()) + 1:match.start()])
+    ]
+    found: dict[int, str] = {}
+    for match in [*ASK_USER_RE.finditer(text), *imperative]:
+        if not _is_negated(text, match.start(), match.end()):
+            found.setdefault(asking.line_of(match.start()), match.group(0))
+    for offset, line in enumerate(lines):  # choice prompts, code blocks included
+        for match in CHOICE_PROMPT_RE.finditer(line):
+            starts = list(QUESTION_START_RE.finditer(line, 0, match.start()))
+            start = starts[-1].end() if starts else 0
+            if not _is_negated(line, start, match.end()):
+                found.setdefault(first_line + offset, line[start:match.end()].strip())
+                break
+    return sorted(found.items())
+
+
+def _step_references(skill: _Skill, nofence: list[str]) -> list[tuple[str, int]]:
+    """References SKILL.md sends Claude to as a step: (path, SKILL.md line), first mention of each.
+
+    A reference counts when a prose line names it and is a numbered step
+    ("1. **Intake**: use `references/intake.md`") or says to read it first
+    ("Read `references/api.md` before writing code"). A numbered item that
+    opens with the file ("1. `references/api.md`: endpoints") lists files, not steps.
+    """
+    steps: dict[str, int] = {}
+    first = skill.body_first_line
+    for line, sibling, token in extract_bundled_paths(skill.body_lines, first):
+        text = nofence[line - first]
+        if sibling or not token.startswith("references/") or not token.endswith(".md") or not text:
+            continue
+        marker = NUMBERED_STEP_RE.match(text)
+        item = text[marker.end() - 1:].lstrip("*_[`(") if marker else ""
+        step = marker is not None and not item.startswith((token, "./" + token, posixpath.basename(token)))
+        if step or (READ_VERB_RE.search(text) and READ_FIRST_RE.search(text)):
+            rel = posixpath.normpath(token)
+            if rel.startswith("references/") and (skill.root / rel).is_file():
+                steps.setdefault(rel, line)
+    return list(steps.items())
+
+
+def _reference_pauses(skill: _Skill, rel: str) -> list[tuple[int, str]]:
+    text = _read_text(skill.root / rel)
+    return [] if text is None else _find_pauses(text.splitlines(), 1)  # M5 reports an unreadable file
 
 
 def _check_fork(skill: _Skill, out: _Collector, nofence: list[str]) -> None:
     if skill.meta.get("context") != "fork":
         return
     first = skill.body_first_line
-    asking = _View([_mask_inline_code(line, keep_identifiers=True) for line in nofence], first)
-    reported = set()
-    imperative = [
-        match for match in IMPERATIVE_ASK_RE.finditer(asking.text)
-        if IMPERATIVE_PREFIX_RE.search(asking.text[asking.text.rfind("\n", 0, match.start()) + 1:match.start()])
-    ]
-    for match in [*ASK_USER_RE.finditer(asking.text), *imperative]:
-        if _is_negated(asking.text, match):
-            continue
-        line = asking.line_of(match.start())
-        if line not in reported:
-            reported.add(line)
-            out.add("M2", DEFINITIVE, SKILL_FILE, line,
-                    f"context: fork is set but the body asks or waits for the user ('{_one_line(match.group(0))}'); "
+    for line, quoted in _find_pauses(skill.body_lines, first):
+        out.add("M2", DEFINITIVE, SKILL_FILE, line,
+                f"context: fork is set but the body asks or waits for the user ('{_one_line(quoted)}'); "
+                "a forked subagent cannot ask, so remove context: fork")
+    steps = dict(_step_references(skill, nofence))
+    for rel, step_line in steps.items():
+        for line, quoted in _reference_pauses(skill, rel):
+            out.add("M2", DEFINITIVE, rel, line,
+                    f"context: fork is set but {rel}, which SKILL.md:{step_line} sends Claude to as a step, "
+                    f"asks or waits for the user ('{_one_line(quoted)}'); "
                     "a forked subagent cannot ask, so remove context: fork")
+    for rel in sorted(_linked_references(skill) - steps.keys()):
+        if not (rel.startswith("references/") and rel.endswith(".md") and (skill.root / rel).is_file()):
+            continue
+        pauses = _reference_pauses(skill, rel)
+        if pauses:
+            also = f" (also lines {_line_list([line for line, _ in pauses[1:]])})" if len(pauses) > 1 else ""
+            out.add("M2", CHECK, rel, pauses[0][0],
+                    f"forked skill links {rel}, which asks or waits for the user ('{_one_line(pauses[0][1])}'){also}; "
+                    "confirm whether the skill reads it on a path it takes")
 
     for offset, line in enumerate(nofence):
         if WORKFLOW_TOOL_RE.search(line):
@@ -1252,12 +1353,17 @@ def _check_reference_tocs(skill: _Skill, out: _Collector, references: list[Path]
                     f"{len(lines)} lines with no '## Contents' heading in the first {REFERENCE_TOC_WINDOW} lines")
 
 
-def _check_reference_chains(skill: _Skill, out: _Collector) -> None:
-    linked = {
+def _linked_references(skill: _Skill) -> set[str]:
+    """The references/ paths SKILL.md names, normalised (rules.md m10 and M2)."""
+    return {
         posixpath.normpath(token.rstrip("/"))
         for _, sibling, token in extract_bundled_paths(skill.body_lines, skill.body_first_line)
         if sibling is None and token.startswith("references/")
     }
+
+
+def _check_reference_chains(skill: _Skill, out: _Collector) -> None:
+    linked = _linked_references(skill)
     for rel in sorted(linked):
         path = skill.root / rel
         if path.suffix != ".md" or not path.is_file():
