@@ -15,6 +15,8 @@ These are the rules `review-skill` grades against, written as instructions for t
 
 Grade A means 0 Major and 0 Minor findings. Style findings are Repertoire house conventions; they are reported but never graded. create-skill still aims for zero Style notes, so that its output matches the kit. Each rule ID counts once per skill. Some checks are definitive (the validator decides) and others heuristic (a reviewer confirms them with quoted evidence), so a clean `quick_validate.py` run is necessary but not sufficient.
 
+The default target, `claude-code`, means Claude Code and Cowork: the skill ships in a plugin, may use every Claude Code frontmatter field, and must also run in Cowork (M11). The `portable` target is for single-skill uploads to claude.ai and the API, which accept only six frontmatter fields; Cowork gets skills through the plugin, not through such uploads.
+
 ## Rule index
 
 | ID | Title | Severity | How to satisfy while authoring |
@@ -29,6 +31,8 @@ Grade A means 0 Major and 0 Minor findings. Style findings are Repertoire house 
 | M8 | Description lacks what or when, or uses first or second person | Major | One capability sentence plus a "Use when..." clause; no "I" or "you". |
 | M9 | Skill will not load or loads wrong | Major | Valid name equal to the directory, description under 1024 characters with no `<` or `>`, no template leftovers. |
 | M10 | Secrets, undisclosed network use, or harmful instructions | Major | No secrets; disclose network use; nothing that acts against the user. |
+| M11 | Breaks in Cowork | Major | No `` !`cmd` `` injection, own files through `${CLAUDE_SKILL_DIR}`, no display needed, a fallback for local services. |
+| M12 | Fails its own evals | Major | Re-run the skill's evals after every change (regression) and fix what fails twice. |
 | m1 | Explains what Claude already knows | Minor | Delete general explanations; keep only skill-specific knowledge. |
 | m2 | Three or more options with no default | Minor | "Default to X. Use Y when Z." |
 | m3 | Time-sensitive content | Minor | No date-conditional logic; pin versions with a note. |
@@ -79,9 +83,15 @@ When forking, set `agent` only if the default `general-purpose` agent is wrong, 
   - Name rules: 1-64 characters of `a-z`, `0-9`, and single hyphens, equal to the directory name. Avoid the directory names `synced` and `anthropic-skills*`.
   - The description is at most 1024 characters and contains no angle brackets.
   - Replace every `[TODO` placeholder before validating. Skills made from older templates may also hold `scripts/example.py`, `references/api_reference.md`, or `assets/example_asset.txt`; delete them.
-  - Keep dynamic context injection syntax out of SKILL.md unless the command should run on every invocation.
   - For the portable target (claude.ai, the API, other clients), also include `name` and use only the portable keys.
 - **M10:** keep secrets in environment variables. When a script uses the network, say so in SKILL.md and give the purpose. Never instruct the model to reveal its hidden reasoning.
+- **M11:** write every skill so it also runs in Cowork:
+  - Keep dynamic context injection (`` !`cmd` `` or a fence opened with three backticks and `!`) out of SKILL.md, code fences included; write "Run `cmd`" as a step instead.
+  - Reach the skill's own files through `${CLAUDE_SKILL_DIR}/...` in Markdown and through `Path(__file__).resolve().parent` in scripts, never through `~/.claude/skills/<own-name>/` or `.claude/skills/<own-name>/`.
+  - Write results to files (in Cowork, the outputs folder) instead of opening a window or browser.
+  - Give every local service (a stdio MCP server, `localhost`) a stated fallback, since cloud Cowork sessions cannot reach them, and do not shell out to `claude -p`.
+  - Read secrets from environment variables, not only from a home-directory dotfile.
+- **M12:** keep `evals/evals.json` true to the skill. After any change, run the evals again (review-skill's `regression` mode), and fix the skill, or a wrong expectation, until no case fails twice.
 
 ## Minor rules: how to satisfy them
 

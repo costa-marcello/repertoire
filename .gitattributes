@@ -1,4 +1,0 @@
-# OOXML schema files are vendored third-party ISO/ECMA/Microsoft standards
-skills/docx/ooxml/schemas/** linguist-vendored
-skills/pptx/ooxml/schemas/** linguist-vendored
-*.xsd linguist-generated

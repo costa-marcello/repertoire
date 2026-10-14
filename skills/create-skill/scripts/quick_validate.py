@@ -57,7 +57,7 @@ SKILL_FILE = "SKILL.md"
 
 # Output order: rule IDs in the order rules.md lists them.
 RULE_ORDER = (
-    "F", "M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10",
+    "F", "M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10", "M11", "M12",
     "m1", "m2", "m3", "m4", "m9", "m10", "m11", "m12", "m13", "m14", "m15",
     "S1", "S2", "S3", "S4", "S5", "S6", "S7",
 )
