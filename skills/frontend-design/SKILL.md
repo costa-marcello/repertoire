@@ -53,7 +53,7 @@ Frontend Design Progress:
 - [ ] Color: 3-5 CSS custom properties defined (no hardcoded hex outside vars)
 - [ ] Motion: entry animation + 1-2 hover/scroll interactions
 - [ ] Layout: grid/flexbox structure with intentional spacing
-- [ ] Code complete: renders without console errors
+- [ ] Code complete: build, lint, and type-check pass (see Pre-Delivery Verification)
 - [ ] Polish: all interactive elements have :hover + :focus-visible states
 ```
 
@@ -68,7 +68,12 @@ Then build working front-end code that is:
 
 Before delivering, verify every item in the workflow checklist above is checked. Then run through `references/checklist.md` (visual quality, interaction, light/dark mode, layout, accessibility, performance). Fix any failures before presenting the final code.
 
----
+Verify from code and files, not only by opening a browser, because Cowork and other headless sessions have no display:
+
+1. Run the project's own checks when they exist (`npm run build`, `npm run lint`, `npx tsc --noEmit`) and fix what they report.
+2. Check the rest in the source: breakpoints, `:focus-visible` rules, a light and a dark value for every colour token, and the contrast of each text/background hex pair (4.5:1 minimum).
+3. Only when the project already has Playwright, render screenshots to PNG files and read them, for example `npx playwright screenshot --viewport-size=375,812 --color-scheme=dark <url> mobile-dark.png`. In Cowork, save them in the outputs folder. Do not install a browser just for this check.
+4. Deliver a standalone page as a file (in Cowork, in the outputs folder) and give its path so the user can open it.
 
 ## Frontend Aesthetics Guidelines
 
@@ -127,8 +132,6 @@ Create atmosphere and depth rather than defaulting to solid colors. Add contextu
 | Semantic HTML | Use `<article>`, `<section>`, `<nav>`, `<main>` | `<div>` soup everywhere |
 | ARIA | Use only when semantic HTML is insufficient | ARIA as first choice |
 
----
-
 ## What to NEVER Do
 
 **NEVER use generic AI-generated aesthetics:**
@@ -151,17 +154,15 @@ Create atmosphere and depth rather than defaulting to solid colors. Add contextu
 
 </instructions>
 
----
-
 ## Examples
 
-<example name="Luxury Watch Pricing Card">
+<example>
 
 **Request:** "Build a pricing card component for a luxury watch e-commerce site"
 
 **Checklist:**
 ```text
-- [x] Purpose: Convert browsers to buyers for $5k+ watches
+- [x] Purpose: Convert browsers to buyers for watches priced above 5,000 USD
 - [x] Tone: Editorial/magazine with art deco accents
 - [x] Differentiator: Cinematic hover reveal with gold foil texture
 - [x] Typography: Playfair Display (display) + Cormorant Garamond (body)
@@ -244,7 +245,7 @@ Create atmosphere and depth rather than defaulting to solid colors. Add contextu
 
 </example>
 
-<example name="Developer CLI File Upload">
+<example>
 
 **Request:** "Create a file upload component for a developer CLI tool dashboard"
 
@@ -289,7 +290,7 @@ Create atmosphere and depth rather than defaulting to solid colors. Add contextu
 
 </example>
 
-<example name="Meditation App Testimonials">
+<example>
 
 **Request:** "Design a testimonial carousel for a meditation app landing page"
 
@@ -328,7 +329,7 @@ Create atmosphere and depth rather than defaulting to solid colors. Add contextu
 
 </example>
 
-<example name="SaaS Analytics Dashboard">
+<example>
 
 **Request:** "Build a KPI dashboard for a fintech analytics platform"
 

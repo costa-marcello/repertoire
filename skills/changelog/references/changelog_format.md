@@ -295,7 +295,7 @@ The `/changelog` skill handles generation natively. Use external tools only when
 
 ## Release Workflow Reference
 
-Reference for git operations used by the `/changelog` skill during commit, tag, and push workflows.
+Reference for git operations used by the `/changelog` skill during commit, tag, and push workflows. Commands that contact the remote carry `GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never`, so a missing credential fails at once instead of waiting on a sign-in prompt; the skill then prints the push commands for the user to run.
 
 ### Git Commands
 
@@ -303,20 +303,14 @@ Reference for git operations used by the `/changelog` skill during commit, tag, 
 # Stage changelog
 git add CHANGELOG.md
 
-# Commit (update mode)
-git commit -m "Update changelog"
-
-# Commit (release mode)
+# Commit
 git commit -m "Release vX.Y.Z"
 
-# Create annotated tag (release mode only)
+# Create annotated tag
 git tag -a vX.Y.Z -m "Release vX.Y.Z - summary of changes"
 
-# Push commit only (update mode)
-git push
-
-# Push commit and tags together (release mode)
-git push --follow-tags
+# Push commit and tags together
+GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never git push --follow-tags
 ```
 
 ### Tag Naming Convention
@@ -352,7 +346,7 @@ Benefits:
 git status --porcelain
 
 # Fetch latest remote state
-git fetch origin
+GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never git fetch origin
 
 # Check if local branch is behind remote
 git rev-list --count HEAD..origin/$(git branch --show-current)
@@ -361,6 +355,6 @@ git rev-list --count HEAD..origin/$(git branch --show-current)
 git tag -l "vX.Y.Z"
 
 # Verify tag reached remote after push
-git ls-remote --tags origin | grep "vX.Y.Z"
+GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never git ls-remote --tags origin vX.Y.Z
 ```
 

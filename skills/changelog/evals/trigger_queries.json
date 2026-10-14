@@ -1,0 +1,12 @@
+[
+  {"query": "cut a release for everything merged since the last tag", "should_trigger": true},
+  {"query": "we're ready to ship 2.1.0, write the changelog entry, tag it and push", "should_trigger": true},
+  {"query": "bump the version based on the commits since v1.4.0 and tag the release", "should_trigger": true},
+  {"query": "prepare the next release: update CHANGELOG.md and create the git tag", "should_trigger": true},
+  {"query": "turn the unreleased changes in our changelog into version 0.10.0 and release it", "should_trigger": true},
+  {"query": "add an Unreleased entry to CHANGELOG.md for the bug I just fixed, don't release anything", "should_trigger": false},
+  {"query": "show me what changed between v1.2.0 and v1.3.0", "should_trigger": false},
+  {"query": "delete the v1.3.0 tag, I created it by mistake", "should_trigger": false},
+  {"query": "write a conventional commit message for my staged changes", "should_trigger": false},
+  {"query": "set up semantic-release in our GitHub Actions pipeline so releases happen on merge", "should_trigger": false}
+]

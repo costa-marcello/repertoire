@@ -350,6 +350,6 @@ function DiagramComponent() {
 
 1. **Switch to ELK when dagre produces crossed lines** - Add `layout: elk` to the config frontmatter. ELK handles 20+ node diagrams better.
 2. **Add a `%%` comment above every `themeVariables` block** explaining the colour rationale.
-3. **Export to PNG/SVG and open the file** before committing -- renderer differences between platforms are common.
+3. **Render to PNG or SVG with mermaid-cli and check the result** before committing -- renderer differences between platforms are common. No display is needed: a PNG can be read as an image file.
 4. **Group related nodes in subgraphs** when a diagram has more than 8 nodes. Name each subgraph after the bounded context it represents.
 5. **Commit config frontmatter alongside the diagram** so theme changes appear in code review diffs.

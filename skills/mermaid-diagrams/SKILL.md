@@ -1,6 +1,6 @@
 ---
 name: mermaid-diagrams
-description: "Creates professional software diagrams using Mermaid's text-based syntax. Use when users request diagrams, visualizations, or documentation of software architecture including class diagrams, sequence diagrams, flowcharts, ERDs, C4 architecture diagrams, state machines, git graphs, or gantt charts. Triggers: 'diagram', 'visualize', 'model', 'map out', 'show the flow', database design, code structure."
+description: "Creates professional software diagrams using Mermaid's text-based syntax and renders them to SVG, PNG, or PDF files on request. Use when users request diagrams, visualizations, or documentation of software architecture including class diagrams, sequence diagrams, flowcharts, ERDs, C4 architecture diagrams, state machines, git graphs, or gantt charts. Triggers: 'diagram', 'visualize', 'model', 'map out', 'show the flow', database design, code structure."
 license: MIT
 ---
 
@@ -23,7 +23,7 @@ diagramType
 - First line declares diagram type (e.g., `classDiagram`, `sequenceDiagram`, `flowchart`)
 - Use `%%` for comments
 - Whitespace aids readability; not required
-- Typos break diagrams silently -- validate in Mermaid Live
+- Typos break diagrams silently -- run the validation loop below
 
 ## Diagram Type Selection Guide
 
@@ -43,9 +43,9 @@ Default to **flowchart** when the user's intent is unclear. Flowcharts cover the
 
 </instructions>
 
-<example name="Class Diagram (Domain Model)">
+<example>
 
-### Class Diagram
+### Class Diagram (domain model)
 ```mermaid
 classDiagram
     Title -- Genre
@@ -67,9 +67,9 @@ classDiagram
 
 </example>
 
-<example name="Sequence Diagram (API Flow)">
+<example>
 
-### Sequence Diagram
+### Sequence Diagram (API flow)
 ```mermaid
 sequenceDiagram
     participant User
@@ -88,9 +88,9 @@ sequenceDiagram
 
 </example>
 
-<example name="Flowchart (User Journey)">
+<example>
 
-### Flowchart
+### Flowchart (user journey)
 ```mermaid
 flowchart TD
     Start([User visits site]) --> Auth{Authenticated?}
@@ -105,9 +105,9 @@ flowchart TD
 
 </example>
 
-<example name="ERD (Database Schema)">
+<example>
 
-### ERD
+### ERD (database schema)
 ```mermaid
 erDiagram
     USER ||--o{ ORDER : places
@@ -131,9 +131,9 @@ erDiagram
 
 </example>
 
-<example name="State Diagram (Order Lifecycle)">
+<example>
 
-### State Diagram
+### State Diagram (order lifecycle)
 ```mermaid
 stateDiagram-v2
     [*] --> Draft
@@ -175,7 +175,7 @@ stateDiagram-v2
 4. **Split at 15 nodes** - Diagrams with more than 15 nodes lose clarity. Break into focused views linked by a parent diagram.
 5. **Store `.mmd` files next to the code they describe** - Keep diagrams and source in the same PR so they stay in sync.
 6. **Set a title on every diagram** - Use the `title` keyword or a Markdown heading directly above the code block.
-7. **Test in Mermaid Live before committing** - Paste the diagram into [mermaid.live](https://mermaid.live) to catch silent failures.
+7. **Render once before committing** - Run Step 3 of the validation loop to catch silent failures.
 8. **Check colour contrast** - Verify foreground/background pairs meet WCAG AA (4.5:1 ratio). Do not rely on colour alone to convey meaning.
 
 </best-practices>
@@ -192,7 +192,7 @@ Write the diagram using strict Mermaid syntax. Apply these rules during generati
 | Rule | Wrong | Correct | Why |
 |------|-------|---------|-----|
 | Escape parentheses in labels | `node[Node (example)]` | `node["Node (example)"]` | Bare parentheses crash the parser |
-| Quote text with special characters | `A[Price: $100]` | `A["Price: $100"]` | `$`, `%`, `&`, `<`, `>` break parsing |
+| Quote text with special characters | `A[Load: 50% & rising]` | `A["Load: 50% & rising"]` | `$`, `%`, `&`, `<`, `>` break parsing |
 | Quote the reserved word `end` | `A --> end` | `A --> End["end"]` | Unquoted `end` silently breaks diagrams |
 | Use HTML entities when quotes fail | `A["alert()"]` | `A["alert&lpar;&rpar;"]` | Nested parens inside quotes still fail |
 | Avoid `{}` in comments | `%% config: {dark}` | `%% config dark theme` | Curly braces in comments break parsing |
@@ -209,17 +209,21 @@ Self-check the generated diagram against these failure patterns:
 
 If any issue is found, fix it before output. Do not ask the user to fix syntax.
 
-### Step 3: Render verification
-After outputting the diagram, recommend the user verify rendering:
-- **Quick check**: paste into [Mermaid Live](https://mermaid.live)
-- **CLI validation**: `npx @mermaid-js/mermaid-cli -i diagram.mmd -o test.png`
-- **MCP tools**: if a Mermaid MCP server is available, use it for in-session validation
+### Step 3: Render to a file
+Rendering needs no display: mermaid-cli draws the diagram in a headless browser and writes a file. Render when the user asks for an image or a file, or asks to check that a diagram renders; otherwise the Step 2 self-check is the check and the code block is the output.
+
+1. Save the diagram as a `.mmd` file: in Cowork, in the outputs folder; in a repository, next to the code it describes. A render that only checks the diagram goes to a temporary folder instead.
+2. Run `mmdc -i diagram.mmd -o diagram.svg`. Use `.png` for slides and chat, `.pdf` for print.
+3. Without `mmdc`, run `npx -y -p @mermaid-js/mermaid-cli mmdc -i diagram.mmd -o diagram.svg`. The first run downloads mermaid-cli and a headless Chromium from npm (network).
+4. If Chromium fails to launch (often "No usable sandbox" when running as root, as in a container), add `-p ${CLAUDE_SKILL_DIR}/assets/puppeteer-config.json`, which turns off the browser sandbox for this local render.
+5. Send any error to Step 4 with its message. For a PNG, read the image file to check the layout.
+6. When neither command can run (no Node.js or no network), output the code only and say it was not rendered here. It renders on GitHub, GitLab, and in VS Code, and [mermaid.live](https://mermaid.live) exports images for a user with a browser.
 
 ### Step 4: Repair (if rendering fails)
-If the user reports a rendering failure:
+If the Step 3 render fails, or the user reports a rendering failure:
 1. Read the error message (if available) and identify the failing line
 2. Check the syntax rules table above for the matching pattern
-3. Fix and re-output the corrected diagram
+3. Fix the diagram, render it again if Step 3 ran, and re-output it
 4. Never output the same broken syntax twice
 
 </validation>
@@ -266,12 +270,12 @@ flowchart LR
 | VS Code | Works | Requires Markdown Mermaid extension. |
 | Obsidian | Partial | Desktop works. iOS fails entirely. Pie charts render as empty boxes. |
 | Azure DevOps | Works | Requires `::: mermaid` syntax, not backtick fences. |
-| PDF export | Fails | Export as PNG/SVG from mermaid.live first. |
+| PDF export | Fails | Render to PDF, SVG, or PNG with mermaid-cli first (Step 3). |
 
-**Export commands:**
-- **Online**: [Mermaid Live Editor](https://mermaid.live) with PNG/SVG export
-- **CLI**: `mmdc -i input.mmd -o output.png` (install via `npm install -g @mermaid-js/mermaid-cli`)
+**Export commands** (Step 3 has the full routine):
+- **CLI (default)**: `mmdc -i input.mmd -o output.svg`, or with no install `npx -y -p @mermaid-js/mermaid-cli mmdc -i input.mmd -o output.svg`
 - **Docker**: `docker run --rm -v $(pwd):/data minlag/mermaid-cli -i /data/input.mmd -o /data/output.png`
+- **Browser, when nothing can be installed**: [Mermaid Live Editor](https://mermaid.live) exports PNG and SVG
 
 </configuration>
 
