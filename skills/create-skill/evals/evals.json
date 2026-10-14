@@ -3,25 +3,30 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "/create-skill pr-description Write pull request descriptions from the current branch's diff against main: a two-line summary, the changes grouped by top-level directory, and a testing section. Put it in skills/ inside your working folder.",
-      "expected_output": "A new skill at .claude/skills/pr-description/ with SKILL.md and evals/, built after a baseline run, validated with quick_validate.py, reviewed by a fresh review-skill subagent, and reported with per-case results.",
-      "files": [],
+      "prompt": "/create-skill pr-description Write pull request descriptions from the current branch's diff against main: a two-line summary, the changes grouped by top-level directory, and a testing section. It's for our team-tools plugin repo (team-tools/).",
+      "expected_output": "A new skill at skills/pr-description/ in a copy of the team-tools plugin repository, with SKILL.md and evals/, built after a baseline run, validated with quick_validate.py and the Cowork check, reviewed by a fresh review-skill subagent, and reported with per-case results and a note to run the repository's link script once.",
+      "files": [
+        "evals/files/team-tools/.claude-plugin/plugin.json",
+        "evals/files/team-tools/scripts/link_user_skills.py"
+      ],
       "expectations": [
         "Writes evals.json with at least 3 eval cases and trigger_queries.json with 10 queries in a workspace outside the skill directory",
         "Runs the baseline subagents before init_skill.py creates the skill directory",
         "With no user to reply, states the plan and the chosen defaults and continues instead of waiting for a go-ahead",
         "Gives each eval subagent only an inputs folder and an output folder, and its prompt forbids pushing, posting, or opening PRs, with any such command written to would_run.txt instead",
-        "Creates the skill at skills/pr-description/ inside its output folder with name: pr-description in the frontmatter",
+        "Creates the skill at skills/pr-description/ inside its copy of team-tools/, because the repository has .claude-plugin/, and not under .claude/skills/, with name: pr-description in the frontmatter",
+        "Tells the user to run python -B scripts/link_user_skills.py once from the team-tools root so Claude Code loads the plugin's skills, and does not run the script itself",
         "The description opens with a third-person verb and contains a 'Use when' clause",
         "States the fork decision with the condition that decided it, and uses --fork only if all five conditions hold",
         "Runs quick_validate.py on the final skill and reports the RESULT line with exit code 0 and style=0",
-        "Reports the review-skill grade, or says that the review-skill gate did not run"
+        "Reports a Cowork check of the new skill: no dynamic context injection, bundled files reached through ${CLAUDE_SKILL_DIR}, and no display needed",
+        "Asks the review-skill gate for a report-only review (repertoire:review-skill first, then review-skill) and reports the grade, or says that the gate did not run"
       ]
     },
     {
       "id": 2,
       "prompt": "every monday i run `gh issue list --label bug --state open --json number,title,labels`, group the issues by their component:* label, and make a markdown table sorted by count that i paste into our team channel. turn that into a skill for me, but it should only run when i ask for it, never on its own",
-      "expected_output": "A new skill that runs the gh command, groups issues by component label, and prints the sorted table; it sets disable-model-invocation: true and discloses that it calls the GitHub API through gh.",
+      "expected_output": "A new skill that runs the gh command, groups issues by component label, and prints the sorted table; it sets disable-model-invocation: true, discloses that it calls the GitHub API through gh, and passes the Cowork check.",
       "files": [],
       "expectations": [
         "Takes the command, grouping, and output format from the prompt instead of asking for them again",
@@ -30,14 +35,15 @@
         "Marks every trigger query should_trigger: false and skips the trigger check, because the skill is user-only",
         "The skill prints the table for the user to paste and posts nothing to the channel itself",
         "SKILL.md states that the skill calls GitHub through the gh CLI (network use) and that gh must be installed and authenticated",
-        "Contains no literal argument-substitution tokens in teaching examples and no dynamic context injection syntax",
-        "Runs quick_validate.py and reports the result"
+        "SKILL.md says gh can authenticate through the GH_TOKEN environment variable, not only a stored gh login, so the skill also works in Cowork",
+        "Contains no literal argument-substitution tokens in teaching examples, and runs the gh command as a step rather than through dynamic context injection",
+        "Runs quick_validate.py and reports the result, together with the Cowork check"
       ]
     },
     {
       "id": 3,
       "prompt": "the csv-summary skill in csv-summary/ keeps reporting one column for files exported from Excel in Europe, which use semicolons as the delimiter. fix that without changing anything else about how the skill works",
-      "expected_output": "An updated csv-summary skill whose field-splitting step detects the delimiter (comma or semicolon) instead of assuming commas, with every other step, the name, and the description's purpose unchanged.",
+      "expected_output": "An updated csv-summary skill whose field-splitting step detects the delimiter (comma or semicolon) instead of assuming commas, with every other step, the name, and the description's purpose unchanged, and a report that the update's regression run was skipped because this is an eval run.",
       "files": [
         "evals/files/csv-summary/SKILL.md"
       ],
@@ -47,7 +53,22 @@
         "Keeps name: csv-summary and the directory name unchanged",
         "Adds an eval case with a semicolon-delimited file that reproduces the failure",
         "Changes step 2 so it detects the delimiter instead of assuming commas, and leaves steps 1, 3, 4, and 5 unchanged",
+        "Says that the update's regression run (review-skill with the word regression) was skipped because this is itself an eval run, and does not invoke review-skill's regression mode",
         "Lists unrelated findings separately instead of fixing them"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "every friday i plot weekly signups from signups.csv as a bar chart with matplotlib, then open the png to eyeball it before i send it on. make that a skill. i mostly work in cowork now, sometimes claude code. there's no plugin repo yet, put it wherever makes sense",
+      "expected_output": "A new skill that saves the chart as a PNG file and reports its path (in Cowork, the outputs folder) instead of opening it, keeps the default claude-code target and its Claude Code fields, and tells the user that Cowork gets the skill through a plugin.",
+      "files": [],
+      "expectations": [
+        "Keeps the default claude-code target and does not switch to portable or remove frontmatter fields such as argument-hint because the user works in Cowork",
+        "The skill saves the chart as a PNG file and reports its path (in Cowork, in the outputs folder) instead of opening a window, an image viewer, or a browser",
+        "Runs any bundled script through ${CLAUDE_SKILL_DIR}/scripts/, never through ~/.claude/skills/ or .claude/skills/",
+        "SKILL.md names matplotlib as a requirement with its install command",
+        "Tells the user that Cowork loads the skill only through an installed plugin, never from ~/.claude/skills, and does not suggest a zip or a claude.ai upload as the Cowork route",
+        "Runs quick_validate.py and the Cowork check and reports both results"
       ]
     }
   ]

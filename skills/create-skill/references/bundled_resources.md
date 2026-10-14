@@ -1,6 +1,6 @@
 # Bundled Resources
 
-What goes into a skill directory beside SKILL.md, how to decide what to bundle, and the naming, path, and versioning rules that keep a skill portable.
+What goes into a skill directory beside SKILL.md, how to decide what to bundle, and the naming, path, and versioning rules that keep a skill working wherever it is installed, in Claude Code and Cowork alike.
 
 ## Contents
 
@@ -70,8 +70,10 @@ For each eval case or concrete request, ask two questions: how would Claude do t
 - **Errors.** Catch specific exceptions, and print what failed and how to fix it. No bare `except:`, and no `except Exception: pass`.
 - **Constants.** Comment each constant with the reason for its value.
 - **Output encoding.** Use plain ASCII tags such as `[OK]` and `[FAIL]`, and write UTF-8 to stdout. Emoji crash under the Windows cp1252 console encoding when output is piped.
-- **Invocation.** Write commands with `python`; use `python3` only where `python` is not on the path (on Windows `python3` is often the Microsoft Store stub). In Claude Code, reference scripts through `${CLAUDE_SKILL_DIR}/scripts/`; `frontmatter_reference.md` covers the variants.
+- **Invocation.** Write commands with `python`; use `python3` only where `python` is not on the path (on Windows `python3` is often the Microsoft Store stub). In Claude Code and Cowork, reference scripts through `${CLAUDE_SKILL_DIR}/scripts/`; `frontmatter_reference.md` covers the variants. Inside a script, find bundled files from `Path(__file__).resolve().parent`.
+- **Output.** Write results to files and print their paths; never open a window, browser, or viewer. Cowork has no display, and the user collects files from the outputs folder (M11).
 - **Network.** Disclose any network use, and its purpose, in SKILL.md (M10).
+- **Local services.** A script that needs a local stdio MCP server or a `localhost` service states a fallback in SKILL.md, because cloud Cowork sessions cannot reach them (M11).
 
 ## references/
 
@@ -92,7 +94,7 @@ Files used in the output and not read into context: templates, images, fonts, ic
 - **evals/**
   - It holds `evals/evals.json` (3 or more eval cases) and `evals/trigger_queries.json` (about 10 trigger queries), both written before the skill.
   - Input files go in `evals/files/`.
-  - Packaging strips `evals/`, so evals never ship. `evals_guide.md` has the formats.
+  - The zip from `package_skill.py` leaves out `evals/`; a plugin install carries the folder, which does no harm. `evals_guide.md` has the formats.
 - **tests/** (optional) holds unit tests for bundled scripts. Using the standard library's `unittest` keeps them free of dependencies.
 
 ## Naming files
@@ -105,11 +107,11 @@ Files used in the output and not read into context: templates, images, fonts, ic
 **Leave out:**
 - user-specific absolute paths: home directories with a real user name, cloud-sync folders;
 - real people's names, and company, department, or product names (`sanitization_checklist.md` covers public releases);
-- an assumed install location for the skill's own files, such as a fixed path under the home directory. The skill may be installed per project, per user, or in a plugin;
-- secrets: read them from environment variables instead.
+- an install location for the skill's own files, such as `~/.claude/skills/<skill-name>/` or `.claude/skills/<skill-name>/`. The skill may be installed per project, per user, or in a plugin, and Cowork never reads those folders (M11);
+- secrets: read them from environment variables, not only from a home-directory dotfile (M11).
 
 **Use:**
-- paths relative to the skill directory, or `${CLAUDE_SKILL_DIR}/...` in Claude Code;
+- paths relative to the skill directory, or `${CLAUDE_SKILL_DIR}/...` in Claude Code and Cowork;
 - generic placeholders (`<project-root>`, `<user>`, `your-company`);
 - forward slashes, on Windows too (m11). Fenced blocks tagged `powershell`, `ps1`, `cmd`, or `bat` are exempt.
 

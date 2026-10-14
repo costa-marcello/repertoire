@@ -13,9 +13,10 @@ How to write a skill's evals, run them with subagents before and after the skill
 7. [Running the baseline](#running-the-baseline)
 8. [Running with the skill](#running-with-the-skill)
 9. [Grading and comparing](#grading-and-comparing)
-10. [Checking trigger queries](#checking-trigger-queries)
-11. [What this approximation cannot measure](#what-this-approximation-cannot-measure)
-12. [Upgrade paths](#upgrade-paths)
+10. [Regression runs](#regression-runs)
+11. [Checking trigger queries](#checking-trigger-queries)
+12. [What this approximation cannot measure](#what-this-approximation-cannot-measure)
+13. [Upgrade paths](#upgrade-paths)
 
 ## Why evals come first
 
@@ -101,6 +102,10 @@ Write about 10 entries: 5 with `should_trigger: true` and 5 near-misses with `fa
       baseline/           output folder of the baseline run
       with_skill/         output folder of the with-skill run
   iteration-2/
+  regression-1/
+    eval-1/
+      run-1/              output folder of the first regression run
+      run-2/              output folder of the repeat, only after a failure
 ```
 
 Keep the workspace outside every skill directory, for two reasons: files in a skill's root are an S4 finding, and a baseline run must not find a draft of the skill.
@@ -123,6 +128,7 @@ Eval subagents act in the user's real environment, with the user's repositories 
   For an update, move `<workspace>/skill-snapshot/evals/` (when it exists) to `<workspace>/snapshot-evals/` before the baseline runs. The two folders together still hold the whole original.
 - **No outward side effects.** A subagent clones any repository it needs into its output folder and uses a local bare repository as the remote. It never pushes to a real remote, never publishes, posts, or sends anything, and never opens PRs, issues, releases, or tags on a hosting service. It writes any such command to `would_run.txt` in its output folder instead of running it. Grade that file like any other output.
 - **Fresh subagents.** Dispatch a new general-purpose subagent for every run, never one that inherits this conversation, which holds the drafts and the expectations.
+- **No regression runs inside.** An eval subagent never starts a regression run (see [Regression runs](#regression-runs)), even when the skill under test asks for one, as create-skill's update flow does; it says that it skipped it.
 - **Late baselines.** A baseline that runs while a draft is installed (a case added in step 10, or any baseline after the first edit of an update) can load the draft through the Skill tool. Add "Do not use the Skill tool." to its prompt, check its transcript for Skill tool calls, and rerun it if any appear.
 
 ## Running the baseline
@@ -135,6 +141,8 @@ Eval subagents act in the user's real environment, with the user's repositories 
 
 ```text
 Complete the task below.
+No user can answer questions during this run. Where you would ask the user, choose the safest
+answer, say which one in your note, and carry on.
 Read input files only from <workspace>/inputs/eval-<id>/ (or: none).
 Work and write only inside <workspace>/iteration-<N>/eval-<id>/baseline/, and save every output file there.
 Clone any repository you need into that folder, and use a local bare repository there as its remote.
@@ -148,7 +156,7 @@ Task: <prompt from evals.json>
 
 For an update, replace the first line with "Read `<workspace>/skill-snapshot/SKILL.md` and follow it to complete the task below." For a late baseline, add "Do not use the Skill tool." after the first line.
 
-- **Without subagents** (claude.ai): skip the baseline. The comparison then rests on the user's review of the outputs.
+- **Without subagents** (claude.ai chat): skip the baseline. The comparison then rests on the user's review of the outputs.
 
 ## Running with the skill
 
@@ -157,13 +165,17 @@ Refresh `<workspace>/under-test/<skill-name>/` (see [Isolating eval runs](#isola
 ```text
 Read <workspace>/under-test/<skill-name>/SKILL.md and follow it to complete the task below.
 Read the reference files and run the scripts it points to, as it directs.
+Where it says ${CLAUDE_SKILL_DIR}, use <workspace>/under-test/<skill-name>.
+No user can answer questions during this run. Where the skill says to ask the user, choose the
+safest answer, say which one in your note, and carry on.
 Read input files only from <workspace>/inputs/eval-<id>/ (or: none).
 Work and write only inside <workspace>/iteration-<N>/eval-<id>/with_skill/, and save every output file there.
 Clone any repository you need into that folder, and use a local bare repository there as its remote.
 Never push to a real remote, never publish, post, or send anything, and never open PRs, issues,
 releases, or tags on a hosting service. Write any such command to would_run.txt in that folder
 instead of running it, then carry on with the rest of the task.
-Finish with a short note: what you did, which skill files you read, and anything you were unsure about.
+Finish with a short note: what you did, which skill files you read, which questions you answered
+yourself, and anything you were unsure about.
 
 Task: <prompt from evals.json>
 ```
@@ -188,6 +200,17 @@ Record each expectation for both arms in `<workspace>/grading/iteration-<N>.md`:
 - **Non-discriminating expectations** pass in both arms and measure nothing. Replace them with harder ones.
 - **Failing in both arms** means the skill does not teach that point yet, or the expectation is wrong.
 - **Show the user** the table, and the outputs of subjective cases, before revising.
+
+## Regression runs
+
+A regression run re-runs a skill's own `evals/evals.json` after a change, to show that nothing its cases cover broke. review-skill grades the result as M12 "Fails its own evals".
+
+- **Who runs it.** create-skill's update flow asks review-skill for it, from the main conversation and never from a subagent, because review-skill asks the user before running: invoke `repertoire:review-skill` (or `review-skill` if that name is unknown) with the skill path and `report only regression`. Report only keeps review-skill from fixing untouched parts of the skill. Run it yourself, as below, only when review-skill is unavailable.
+- **When not to.** Never inside an eval subagent and never inside the Layer 3 review gate, and only on skills in the user's own repository.
+- **How.** Refresh `<workspace>/under-test/<skill-name>/` and copy each case's `files` into its inputs folder (see [Isolating eval runs](#isolating-eval-runs)). Dispatch one fresh subagent per case, all in the same turn, with the with-skill prompt from [Running with the skill](#running-with-the-skill), the output folder `<workspace>/regression-<N>/eval-<id>/run-1/`, and "Do not use the Skill tool." after its first line.
+- **Grading.** Record each expectation as pass or fail with its evidence in `<workspace>/grading/regression-<N>.md`. Re-run each failing case once, in a new subagent, into `run-2/`. Only a case that fails both runs counts.
+- **A case that fails twice** blocks finishing. Change the skill until the case passes; when the expectation itself is wrong, fix the eval and say why in the report. Then run the regression again.
+- **Without subagents** (claude.ai chat): run each case yourself, one at a time, and ask the user to review the outputs.
 
 ## Checking trigger queries
 
@@ -222,7 +245,7 @@ Compare each answer with `should_trigger`, then revise the description:
 
 **`claude plugin eval`** runs eval suites for a plugin, with a with-plugin arm and a without-plugin arm.
 - **Trigger grading.** A `tool_used: Skill` grader measures whether the skill was actually invoked.
-- **Plugin needed.** It needs a `plugin.json` or a skills-directory plugin, so wrap a standalone skill from `.claude/skills/` in a plugin first.
+- **Plugin needed.** It needs a `plugin.json` or a skills-directory plugin. A skill in a plugin repository (`.claude-plugin/plugin.json` at its root, as in Repertoire) already qualifies, and a checkout linked into `~/.claude/skills/` loads as the skills-directory plugin `<plugin-name>@skills-dir`. Wrap a standalone skill from `.claude/skills/` or `~/.claude/skills/` in a plugin first.
 - **Case layout.** Each case is a directory, `evals/<case>/prompt.md`, with grader files under `graders/*.md`. The tool does not read `evals.json`.
   - Translate each eval case into a case directory, and each expectation into a grader.
   - Add a `tool_used: Skill` grader for the trigger check.
@@ -231,6 +254,6 @@ Compare each answer with `should_trigger`, then revise the description:
 - **Native Windows.** Suites that grant Bash need WSL2.
 
 **Anthropic's skill-creator** reads the same `evals.json` and trigger query formats.
-- **Description optimizer.** It runs each trigger query several times through `claude -p`, splits the queries into train and test sets, and proposes better descriptions.
+- **Description optimizer.** It runs each trigger query several times through `claude -p`, splits the queries into train and test sets, and proposes better descriptions. Run it on the user's own machine; it does not run in Cowork.
 - **Native Windows.** Its trigger loop does not work there, because it waits on a pipe with `select()`; run it under WSL.
-- **Validator.** It accepts only the portable fields, so for a Claude Code skill its findings about fields such as `context` do not apply.
+- **Validator.** It accepts only the portable fields, so for a skill with the default `claude-code` target (Claude Code and Cowork) its findings about fields such as `context` do not apply.
