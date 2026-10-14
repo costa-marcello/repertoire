@@ -1,7 +1,34 @@
+# OS files
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# Python and Node caches
 __pycache__/
 .pytest_cache/
-node_modules/
 *.pyc
+node_modules/
+
+# Local environments and secrets (.env.example stays tracked)
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+
+# Editors
+.vscode/
+.idea/
+
+# Local agent context and settings
 CLAUDE.md
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/worktrees/
+
+# Skill tooling output
 .security-scan-passed
+*-workspace/
+dist/
+/*.zip
+*.log
