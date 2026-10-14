@@ -381,8 +381,13 @@ class ShapeData:
                         if "defRPr" in elem.tag and (sz := elem.get("sz")):
                             return float(sz) / 100.0  # Convert EMUs to points
                     break
-        except Exception:
-            pass
+        except (AttributeError, KeyError, TypeError, ValueError) as e:
+            print(
+                f"Warning: could not read the layout font size for shape "
+                f"'{getattr(shape, 'name', '?')}' ({type(e).__name__}: {e}); "
+                "omitting default_font_size. Check the placeholder in the slide layout.",
+                file=sys.stderr,
+            )
         return None
 
     def __init__(
@@ -501,8 +506,14 @@ class ShapeData:
                     for elem in child.iter():
                         if "sz" in elem.attrib:
                             return int(elem.attrib["sz"]) // 100
-        except Exception:
-            pass
+        except (AttributeError, KeyError, TypeError, ValueError) as e:
+            print(
+                f"Warning: could not read the theme font size for shape "
+                f"'{getattr(self.shape, 'name', '?')}' ({type(e).__name__}: {e}); "
+                "assuming 14pt, so overflow estimates may be off. "
+                "Check the text styles in the slide master.",
+                file=sys.stderr,
+            )
 
         return 14  # Conservative default for body text
 

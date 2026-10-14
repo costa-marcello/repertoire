@@ -120,9 +120,16 @@ def duplicate_slide(pres, index):
     # Copy any additional image/media relationships that might be referenced elsewhere
     for rel_id, rel in image_rels.items():
         try:
+            # get_or_add reuses an existing relationship, so duplicates are not an error
             new_slide.part.rels.get_or_add(rel.reltype, rel._target)
-        except Exception:
-            pass  # Relationship might already exist
+        except (AttributeError, KeyError, ValueError) as e:
+            print(
+                f"Warning: could not copy media relationship {rel_id} "
+                f"({rel.reltype}) to the duplicated slide ({type(e).__name__}: {e}); "
+                "images or media on that slide may be missing. "
+                "Open the output and check the slide.",
+                file=sys.stderr,
+            )
 
     return new_slide
 

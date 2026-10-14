@@ -31,6 +31,7 @@ All notable changes to this project will be documented in this file.
 - Fixed security_scan.py scanning nothing for skills installed under a dot-folder such as `~/.claude/`, and review-only runs writing a marker file into the reviewed skill
 - Fixed package_skill.py zipping `__pycache__`, the scan marker, and evals
 - Fixed all four scripts crashing on Windows when output is piped, and documented running `python`, with `python3` only where `python` is not on the path
+- Fixed pptx's `inventory.py` and `rearrange.py` silently swallowing errors (M6): they now catch specific exceptions and print an actionable warning on stderr before falling back to the same defaults
 
 ### Removed
 - **BREAKING**: Removed 10 skills that fall outside the new scope: ci-cd, smart-merge, shadcn-ui, debug, review-code, codex, gemini, ultrathink, cc-hooks, and production-audit
