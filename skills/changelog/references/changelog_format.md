@@ -88,16 +88,6 @@ Add comparison links at the bottom for navigation:
 
 Based on [conventionalcommits.org](https://www.conventionalcommits.org/).
 
-### Commit Format
-
-```
-<type>[optional scope]: <description>
-
-[optional body]
-
-[optional footer(s)]
-```
-
 ### Type to Section Mapping
 
 | Commit Type | Changelog Section | Include? |
@@ -314,25 +304,9 @@ GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never git push --follow-tags
 - Tags follow Semantic Versioning: `vMAJOR.MINOR.PATCH`
 - Match the tag version to the changelog heading version exactly
 
-### Annotated vs Lightweight Tags
+### Annotated Tags
 
-Always create **annotated tags** (`git tag -a`) for releases:
-
-| Type | Command | Use Case |
-|------|---------|----------|
-| Annotated | `git tag -a v1.0.0 -m "message"` | Releases (stores author, date, message) |
-| Lightweight | `git tag v1.0.0` | Never use for releases |
-
-Annotated tags store the tagger name, email, date, and message. They are proper git objects and are the standard for release tags. `git push --follow-tags` only pushes annotated tags, not lightweight ones.
-
-### The `--follow-tags` Flag
-
-`git push --follow-tags` pushes commits and any annotated tags that point to commits being pushed. This ensures the tag and commit arrive at the remote together in a single operation.
-
-Benefits:
-- Atomic: tag and commit pushed together
-- Safe: only pushes annotated tags (not lightweight)
-- Only pushes tags reachable from the commits being pushed
+Create release tags with `git tag -a`, because `git push --follow-tags` skips lightweight tags.
 
 ### Pre-Flight Checks
 
