@@ -10,10 +10,11 @@
         "evals/files/tabjson/src/cli.js"
       ],
       "expectations": [
-        "Treats the project as open source and follows the OSS template's sections, including Install, Usage, Contributing, and License",
+        "Treats the project as open source and follows the OSS template's sections, including Installation, Usage, Contributing, and License",
         "The install command is npm install -g tabjson (or npx tabjson), matching the name and bin in package.json",
         "Usage examples use only flags that src/cli.js accepts (--delimiter, --pretty, --out) and invent none",
         "States the Node.js 18 or later requirement and the MIT license from package.json",
+        "Leaves no template leftovers: no [placeholder] text, no 'Use this template' note, and no link to a CONTRIBUTING.md or LICENSE file, since the project has neither",
         "Writes tabjson/README.md and says where the file went",
         "Asks 'Anything else to highlight or include that I might have missed?' or an equivalent question after drafting"
       ]
@@ -54,6 +55,26 @@
         "Includes gotchas from the files: run :Lazy sync after pulling changes, and the leader key is space",
         "Leaves out OSS sections such as Contributing, License, and badges",
         "Writes nvim-config/README.md, says where it went, and asks whether anything else should be included"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "write a README for datakit/, it's on PyPI",
+      "expected_output": "datakit/README.md already exists, so the reply treats the request as an update: it edits the existing file in place, keeps what is still accurate (the datakit title, pip install datakit), and fixes the stale parts from the code: transform() instead of process(), Python 3.10 or later, CSV, JSON, and Parquet support, and a CLI section for datakit convert with only its real options. The reply says where the file is and asks whether anything else should be highlighted.",
+      "files": [
+        "evals/files/datakit/README.md",
+        "evals/files/datakit/pyproject.toml",
+        "evals/files/datakit/src/datakit/__init__.py",
+        "evals/files/datakit/src/datakit/core.py",
+        "evals/files/datakit/src/datakit/cli.py"
+      ],
+      "expectations": [
+        "Notices that datakit/README.md exists and updates it in place instead of replacing it with an unrelated new file",
+        "Keeps the accurate parts: the datakit title and the pip install datakit command",
+        "Replaces process() with transform() and states the Python 3.10 or later requirement from pyproject.toml",
+        "Describes CSV, JSON, and Parquet support",
+        "Documents datakit convert with only its real options (a source file, --to with csv, json, or parquet, and --out) and invents none",
+        "Says where the README is and asks whether anything else should be highlighted or included"
       ]
     }
   ]

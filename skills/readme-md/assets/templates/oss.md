@@ -8,6 +8,7 @@ Use this template for projects intended for public use and contribution.
 
 [One-line description of what this project does]
 
+[Keep a badge only when its source exists: a LICENSE file, a CI workflow, a published package]
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/[user]/[repo]/ci.yml)](https://github.com/[user]/[repo]/actions)
 [![npm version](https://img.shields.io/npm/v/[package-name])](https://www.npmjs.com/package/[package-name])
@@ -41,7 +42,7 @@ Use this template for projects intended for public use and contribution.
 
 ### More Examples
 
-[Link to examples directory or additional code samples]
+[Link to examples folder or additional code samples]
 
 ## Documentation
 
@@ -49,7 +50,7 @@ Use this template for projects intended for public use and contribution.
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+[Whether contributions are welcome and where to start. Link `CONTRIBUTING.md` only if the project has one.]
 
 ### Development Setup
 
@@ -74,4 +75,4 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 
 ## License
 
-[Project name] is licensed under the [License name] license. See the [`LICENSE`](LICENSE) file for more information.
+[Project name] is licensed under the [License name] license. [Link the `LICENSE` file here only if the project has one.]

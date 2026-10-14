@@ -1,31 +1,31 @@
-# Config Directory README Template
+# Config Folder README Template
 
-Use this template for XDG config directories, dotfiles, script folders,
-and any local directory you'll return to later wondering "what is this?"
+Use this template for XDG config folders, dotfiles, script folders,
+and any local folder you'll return to later wondering "what is this?"
 
 The audience is future-you, probably confused.
 
 ---
 
-# [Tool/Directory Name] Config
+# [Tool or Folder Name] Config
 
 > Last reviewed: [YYYY-MM-DD]
 
-[One sentence: what this directory configures and why you have custom config]
+[One sentence: what this folder configures and why you have custom config]
 
 ## What's Here
 
 | Path | Purpose |
 |------|---------|
-| `[file-or-dir]` | [What it does] |
-| `[file-or-dir]` | [What it does] |
-| `[file-or-dir]` | [What it does] |
+| `[file-or-folder]` | [What it does] |
+| `[file-or-folder]` | [What it does] |
+| `[file-or-folder]` | [What it does] |
 
-### [Subdirectory 1] (if complex enough to warrant detail)
+### [Subfolder 1] (if complex enough to warrant detail)
 
-[Brief explanation of what's in this subdirectory]
+[Brief explanation of what's in this subfolder]
 
-### [Subdirectory 2]
+### [Subfolder 2]
 
 [Brief explanation]
 

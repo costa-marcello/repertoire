@@ -2,44 +2,14 @@
 
 ## Contents
 
-1. [README 101](#readme-101)
-2. [Suggestions for a Good README](#suggestions-for-a-good-readme)
-3. [FAQ](#faq)
-4. [What's Next?](#whats-next)
+1. [Suggestions for a Good README](#suggestions-for-a-good-readme)
+2. [What's Next?](#whats-next)
 
-> Source: [makeareadme.com](https://www.makeareadme.com) by Danny Guo
-> 
-> "Because no one can read your mind (yet)"
-
-## README 101
-
-### What is it?
-
-A README is a text file that introduces and explains a project. It contains information that is commonly required to understand what the project is about.
-
-### Why should I make it?
-
-It's an easy way to answer questions that your audience will likely have regarding how to install and use your project and also how to collaborate with you.
-
-### Who should make it?
-
-Anyone who is working on a programming project, especially if you want others to use it or contribute.
-
-### When should I make it?
-
-Definitely before you show a project to other people or make it public. You might want to get into the habit of making it the first file you create in a new project.
-
-### Where should I put it?
-
-In the top level directory of the project. This is where someone who is new to your project will start out. Code hosting services such as GitHub, Bitbucket, and GitLab will also look for your README and display it along with the list of files and directories in your project.
-
-### How should I make it?
-
-While READMEs can be written in any text file format, the most common one that is used nowadays is Markdown. It allows you to add some lightweight formatting. You can learn more about it at the [CommonMark website](https://commonmark.org/).
+> Source: [makeareadme.com](https://www.makeareadme.com) by Danny Guo, condensed.
 
 ## Suggestions for a Good README
 
-Every project is different, so consider which of these sections apply to yours. Also keep in mind that while a README can be too long and detailed, **too long is better than too short**. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Every project is different, so pick the sections that apply to yours. When a README grows long, move the detail into separate documentation and link it, rather than deleting the information.
 
 ### Name
 
@@ -51,7 +21,7 @@ Let people know what your project can do specifically. Provide context and add a
 
 ### Badges
 
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use [Shields.io](http://shields.io/) to add some to your README. Many services also have instructions for adding a badge.
+Use [Shields.io](https://shields.io/) or the service's own badge, and add one only when something real backs it, such as a CI workflow or a published package.
 
 ### Visuals
 
@@ -77,7 +47,7 @@ If you have ideas for releases in the future, it is a good idea to list them in 
 
 State if you are open to contributions and what your requirements are for accepting them.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to future-you.
 
 You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
 
@@ -93,21 +63,11 @@ For open source projects, say how it is licensed.
 
 If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
 
-## FAQ
-
-### Is there a standard README format?
-
-Not all of the suggestions here will make sense for every project, so it's really up to the developers what information should be included in the README.
-
-### What should the README file be named?
-
-`README.md` (or a different file extension if you choose to use a non-Markdown file format). It is traditionally uppercase so that it is more prominent, but it's not a big deal if you think it looks better lowercase.
-
 ## What's Next?
 
 ### More Documentation
 
-A README is a crucial but basic way of documenting your project. While every project should at least have a README, more involved ones can also benefit from a wiki or a dedicated documentation website. Tools include:
+When a README outgrows one page, move the detail to a wiki or a documentation site and link it. Default to the project's existing docs site. When there is none, suggest the generator that fits the stack: MkDocs for Python projects, Docusaurus for JavaScript ones. The others are alternatives:
 
 - [Docusaurus](https://docusaurus.io/)
 - [GitBook](https://www.gitbook.com/)
@@ -117,7 +77,7 @@ A README is a crucial but basic way of documenting your project. While every pro
 
 ### Changelog
 
-A [changelog](https://en.wikipedia.org/wiki/Changelog) is another file that is very useful for programming projects. See [Keep a Changelog](http://keepachangelog.com/).
+Record release history in `CHANGELOG.md` rather than in the README. See [Keep a Changelog](https://keepachangelog.com/).
 
 ### Contributing Guidelines
 

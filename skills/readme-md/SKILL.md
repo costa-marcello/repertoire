@@ -17,11 +17,17 @@ Identify the audience first. Match sections, depth, and tone to what that audien
 
 **User request:** $ARGUMENTS
 
-If the request line above has text, extract the task type (creating, adding, updating, reviewing) and project type (OSS, personal, internal, config) from it. If it is empty or still shows an unfilled placeholder, take them from the user's message instead. When either source gives the task, skip Step 1 and proceed to Step 2. Only ask clarifying questions if the task or project type is entirely unclear.
+If the request line above has text, extract the task type (creating, adding, updating, reviewing) and project type (OSS, personal, internal, config) from it. If it is empty or still shows an unfilled placeholder, take them from the user's message instead. When either source gives the task, skip Step 1 and proceed to Step 2. If neither source gives the task, begin at Step 1.
 
-If neither source gives the task, begin at Step 1.
+**Where the README goes:** write `README.md` in the root folder of the project it describes, the folder that holds its manifest (such as `package.json` or `pyproject.toml`). By default that is the working directory in Claude Code or the connected folder in Cowork; when the user names a subfolder (`packages/cli/`), it goes there. With no project folder (for example, a Cowork session with nothing connected), save it in the outputs folder. Always say where the file went.
 
-**Where the README goes:** write `README.md` at the project root: the working directory in Claude Code, the connected folder in Cowork. With no project folder (for example, a Cowork session with nothing connected), save it in the outputs folder. Always say where the file went.
+## Gotchas
+
+- Use only the commands, flags, versions, file paths, and license found in the project's files. Never invent a flag or a requirement; when the files don't say, ask the user or leave it out.
+- A request to create a README when `README.md` already exists is an update: edit the existing file and keep its accurate parts instead of replacing it.
+- A review reports and proposes; it leaves the file unchanged until the user asks for the edits.
+- Link only files that exist; many projects have no `CONTRIBUTING.md` or `LICENSE` file.
+- Add a badge only when something real backs it (a published package, a CI workflow file, a license file).
 
 ## Quick Workflow
 
@@ -30,11 +36,12 @@ Copy this checklist:
 ```
 README Progress:
 - [ ] Task identified: Creating / Adding / Updating / Reviewing
+- [ ] Facts gathered from the project files
 - [ ] Audience identified: _____
 - [ ] Project type: OSS / Personal / Internal / Config
-- [ ] Template selected from assets/templates/
-- [ ] Draft complete and saved; location told to the user
-- [ ] Verified: draft matches actual project state (package.json, directory structure, commands)
+- [ ] Template selected from assets/templates/ (Creating or Adding only)
+- [ ] Draft (or review report) complete; README location told to the user
+- [ ] Verified against the project files (Step 4)
 - [ ] Asked: "Anything else to highlight or include that I might have missed?"
 ```
 
@@ -51,52 +58,68 @@ README Progress:
 | **Updating** | Capabilities changed, content is stale |
 | **Reviewing** | Checking if README is still accurate |
 
-### Step 2: Task-Specific Questions
+### Step 2: Gather the Facts
 
-**Creating initial README:**
-1. What type of project? (see Project Types below)
-2. What problem does this solve in one sentence?
+Read the project before asking anything: the manifest (`package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`), the entry points and CLI usage strings, `LICENSE`, and any existing `README.md`. Answer the questions below from those files; ask the user only what the files cannot answer. With no project folder, ask the user for the facts.
+
+**Creating:**
+1. What type of project is it? (see Project Types below)
+2. What problem does it solve, in one sentence?
 3. What's the quickest path to "it works"?
 4. Anything notable to highlight?
 
 **Adding a section:**
 1. What needs documenting?
-2. Where should it go in the existing structure?
+2. Where does it fit in the existing structure?
 3. Who needs this info most?
 
-**Updating existing content:**
-1. What changed?
-2. Read current README, identify stale sections
-3. Propose specific edits
+**Updating:**
+1. What changed? Ask only when the code doesn't show it.
+2. Read the current README and find the stale sections.
+3. Edit those sections in place, keeping the parts that are still accurate.
 
-**Reviewing/refreshing:**
-1. Read current README
-2. Check against actual project state (package.json, main files, etc.)
-3. Flag outdated sections
-4. Update "Last reviewed" date if present
+**Reviewing:**
+1. Read the current README.
+2. Check it against the project state: manifest, main files, CLI.
+3. Report each stale or missing section with its evidence from the files and the replacement text.
+4. Apply the edits only when the user asks; then also update the "Last reviewed" date, if the README has one.
 
-### Step 3: Always Ask
+### Step 3: Draft from the Template
 
-After drafting, ask: **"Anything else to highlight or include that I might have missed?"**
+When creating, copy the template for the project type (see Project Types) from the line after its `---` separator; the lines above it are notes for you. Replace every `[placeholder]`, and delete any section that has nothing real to say instead of leaving it empty. When adding a section to an existing README, model it on the matching section of the template.
+
+Keep the template's section order. `references/art-of-readme.md` and `references/standard-readme-spec.md` order sections differently; read them as background, and follow the Standard Readme order only when the user asks for a Standard Readme compliant README.
+
+### Step 4: Verify
+
+Re-read the draft (or the review report) against the project files and fix what fails, then check again:
+- Every command, flag, file path, version, and license appears in the project's files.
+- No `[placeholder]` or template note remains.
+- Every local link points to a file that exists.
+- Every badge is backed by a real file, CI workflow, or published package.
+
+### Step 5: Always Ask
+
+After drafting or reporting, ask: **"Anything else to highlight or include that I might have missed?"**
 
 ## Project Types
 
 | Type | Audience | Key Sections | Template |
 |------|----------|--------------|----------|
-| **Open Source** | Contributors, users worldwide | Install, Usage, Contributing, License | `assets/templates/oss.md` |
-| **Personal** | Future you, portfolio viewers | What it does, Tech stack, Learnings | `assets/templates/personal.md` |
+| **OSS** (open source) | Contributors, users worldwide | Installation, Usage, Contributing, License | `assets/templates/oss.md` |
+| **Personal** | Future-you, portfolio viewers | What it does, Tech stack, Learnings | `assets/templates/personal.md` |
 | **Internal** | Teammates, new hires | Setup, Architecture, Runbooks | `assets/templates/internal.md` |
-| **Config** | Future you (confused) | What's here, Why, How to extend, Gotchas | `assets/templates/xdg-config.md` |
+| **Config** | Future-you (confused) | What's here, Why, How to extend, Gotchas | `assets/templates/xdg-config.md` |
 
-**Ask the user** if unclear. Don't assume OSS defaults for everything.
+Tell the types apart from the files and the request: a published package or public repository with a license is OSS; dotfiles or tool settings with no build are Config; on-call, deployment, or private-registry details mean Internal; a side project or portfolio piece is Personal. **Ask the user** when these signals leave it unclear. Don't assume OSS defaults for everything.
 
 ## Essential Sections (All Types)
 
 Every README needs at minimum:
 
 1. **Name** - Self-explanatory title
-2. **Description** - What + why in 1-2 sentences  
-3. **Usage** - How to use it (examples help)
+2. **Description** - What + why in 1-2 sentences
+3. **Usage** - How to use it (examples help). In a Config README, "How to Extend" and "Gotchas" play this part.
 
 </instructions>
 
@@ -107,34 +130,34 @@ Every README needs at minimum:
 
 **Before (typical first draft):**
 ```markdown
-# mytool
-A tool for doing stuff with files.
+# imgshrink
+A tool for doing stuff with images.
 
 ## Installation
-npm install mytool
+npm install imgshrink
 
 ## Usage
-mytool [options]
+imgshrink [options]
 ```
 
-**After (audience-focused):**
+**After (audience-focused; the Contributing and License sections are left out of this excerpt):**
 ````markdown
-# mytool
-Convert CSV files to JSON with one command. Handles messy data, encoding issues, and files up to 2GB.
+# imgshrink
+Shrink PNG and JPEG files without visible quality loss. Works on whole folders and skips files it can't make smaller.
 
 ## Quick Start
 ```bash
-npm install -g mytool
-mytool input.csv > output.json
+npm install -g imgshrink
+imgshrink photos/
 ```
 
 ## Common Use Cases
 ```bash
-# Skip header row
-mytool --skip-header data.csv
+# Preview the savings without writing any file
+imgshrink --dry-run photos/
 
-# Handle non-UTF8 encoding
-mytool --encoding latin1 legacy.csv
+# Keep each original next to its shrunk copy
+imgshrink --keep-original banner.png
 ```
 ````
 
@@ -181,20 +204,20 @@ My config files.
 
 **After (answers future-you's questions):**
 ```markdown
-# Neovim Config
+# tmux Config
 
 ## What's Here
-- `init.lua` - Entry point, loads everything else
-- `lua/plugins/` - Plugin configs (lazy.nvim)
-- `lua/keymaps.lua` - All custom keybindings
+- `tmux.conf` - Entry point, sources everything else
+- `conf/keys.conf` - All custom key bindings
+- `plugins/` - Plugins, installed by TPM (not committed)
 
 ## Key Choices
-- **Why lazy.nvim?** Fastest loader, good defaults
-- **Why no LSP here?** Using Mason, see `lua/plugins/lsp.lua`
+- **Why TPM?** Installs and updates every plugin with one key press
+- **Why `C-a` as the prefix?** Kept from years of GNU screen
 
 ## Gotchas
-- Run `:Lazy sync` after pulling changes
-- `<leader>` is space (set in init.lua line 12)
+- Press `prefix + I` after pulling changes, or new plugins stay missing
+- Edits apply only after `tmux source-file tmux.conf` or a server restart
 ```
 
 **Why better:** Future-you at 2am will thank past-you for the "Gotchas" section.
@@ -259,49 +282,48 @@ npm run test:integration     # requires running Docker services
 
 **Before (stale, misleading):**
 ````markdown
-# datakit
-A Python library for CSV processing.
+# sheetsync
+A Node library that copies a Google Sheet to CSV.
 
 ## Installation
-pip install datakit
+npm install sheetsync
 
 ## Usage
-```python
-from datakit import process
-process("input.csv")
+```js
+const { sync } = require("sheetsync");
+await sync("SHEET_ID", "out.csv");
 ```
 ````
 
-**Review findings:**
-1. Project now supports JSON and Parquet (added 6 months ago), not just CSV
-2. `process()` was renamed to `transform()` in v2.0
-3. Requires Python 3.10+, not mentioned anywhere
-4. No mention of the new CLI interface added in v1.8
+**Review findings (each with its evidence):**
+1. The package is ESM-only (`"type": "module"` in `package.json`), so `require` fails
+2. `sync()` is now `pull()`: `src/index.js` exports only `pull`
+3. Node.js 20 or later is required (`engines` in `package.json`), and the README doesn't say so
+4. The `sheetsync watch` command (`bin` in `package.json`) is undocumented
 
-**After (accurate, current):**
+**After (applied once the user asked for the edits):**
 ````markdown
-# datakit
-Transform CSV, JSON, and Parquet files with a single API or CLI command.
+# sheetsync
+Copy a Google Sheet to CSV once, or keep the file in sync as the sheet changes.
 
 ## Installation
-Requires Python 3.10+
+Requires Node.js 20+
 
 ```bash
-pip install datakit
+npm install sheetsync
 ```
 
 ## Usage
 
-### Python API
-```python
-from datakit import transform
-transform("input.csv", output_format="json")
+### Library
+```js
+import { pull } from "sheetsync";
+await pull("SHEET_ID", "out.csv");
 ```
 
 ### CLI
 ```bash
-datakit convert input.csv --to json
-datakit convert data.parquet --to csv
+npx sheetsync watch SHEET_ID out.csv
 ```
 ````
 
@@ -310,13 +332,13 @@ datakit convert data.parquet --to csv
 
 ## References
 
-| File | Purpose |
-|------|---------|
-| `references/section-checklist.md` | Which sections to include by project type |
-| `references/style-guide.md` | Common README mistakes and prose guidance |
-| `references/art-of-readme.md` | Philosophy: cognitive funneling, brevity, key elements |
-| `references/make-a-readme.md` | Section-by-section guidance for what to include |
-| `references/standard-readme-spec.md` | Formal spec for standardised README format |
-| `references/standard-readme-example-minimal.md` | Minimal compliant README example |
-| `references/standard-readme-example-maximal.md` | Full-featured README example |
-| `assets/templates/` | Ready-to-use templates: oss, personal, internal, xdg-config |
+| File | Read it when |
+|------|--------------|
+| `references/section-checklist.md` | Deciding which sections to keep or drop for the project type |
+| `references/style-guide.md` | Writing or reviewing the prose: vague descriptions, buried prerequisites, filler |
+| `references/art-of-readme.md` | Trimming a long README (move detail to linked pages), or arranging content from broad to specific (background; the template's order still wins) |
+| `references/make-a-readme.md` | Deciding whether an optional section (Support, Roadmap, Visuals, Project Status) earns a place |
+| `references/standard-readme-spec.md` | The user asks for a Standard Readme compliant README (see Step 3) |
+| `references/standard-readme-example-minimal.md` | Same request, to see the smallest compliant layout |
+| `references/standard-readme-example-maximal.md` | Same request, to see every optional section in place |
+| `assets/templates/` | Step 3: oss, personal, internal, and xdg-config templates |

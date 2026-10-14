@@ -1,7 +1,7 @@
 # Art of README
 
 > Source: [hackergrrl/art-of-readme](https://github.com/hackergrrl/art-of-readme)
-> License: [Creative Commons Attribution](http://creativecommons.org/licenses/by/2.0/)
+> License: [Creative Commons Attribution](https://creativecommons.org/licenses/by/2.0/)
 
 Distilled principles from the original article. Read the full source for history, examples, and community context.
 
