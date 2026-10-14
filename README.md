@@ -200,8 +200,8 @@ Discovers and installs skills from two registries: the open agent skills ecosyst
 
 ```
 .claude-plugin/
-  marketplace.json       # The marketplace: lists repertoire and repertoire-searxng
-  plugin.json            # The repertoire plugin itself
+  marketplace.json       # The marketplace: lists repertoire, defines repertoire-searxng inline
+  plugin.json            # The repertoire plugin itself, the repo's only plugin.json
 skills/
   changelog/
     SKILL.md             # Frontmatter + prompt (the skill itself)
@@ -216,8 +216,10 @@ skills/
     SKILL.md
     scripts/             # Helper scripts bundled with the skill
 plugins/
-  repertoire-searxng/    # Optional plugin: the SearXNG MCP server
+  repertoire-searxng/    # Optional plugin: the SearXNG MCP server (README only)
 ```
+
+The `repertoire` plugin's folder is the whole repository, and Cowork skips a plugin whose folder holds another `.claude-plugin/plugin.json`. So the repository keeps exactly one, at the root: `repertoire-searxng` is defined in its marketplace entry, and test fixtures generate their manifests when they run.
 
 Each skill lives in its own directory under `skills/`. The `SKILL.md` file contains YAML frontmatter (name, description, and optional fields such as `argument-hint`) followed by the prompt content. Supporting materials go in `references/`, scripts in `scripts/`, templates in `assets/`, and test cases in `evals/`.
 

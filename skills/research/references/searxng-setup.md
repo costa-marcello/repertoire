@@ -79,10 +79,10 @@ Run `claude mcp list` to see that `searxng` connects. Its tools are `mcp__searxn
 The Repertoire marketplace has an opt-in plugin, `repertoire-searxng`, that runs the same server (`mcp-searxng@2.5.1`). It has one setting, `searxng_url`, which defaults to `http://localhost:8888`. Its tools carry the plugin prefix, for example `mcp__plugin_repertoire-searxng_searxng__searxng_web_search`.
 
 - **Claude Code:** `/plugin install repertoire-searxng@repertoire`. Use either the plugin or the user-scope server above; when both are present, the skill uses the user-scope server first.
-- **Desktop Cowork:** Customize > Plugins, enable `repertoire-searxng`, and set `searxng_url` if your instance isn't at the default address.
+- **Desktop Cowork:** Customize > Plugins, enable `repertoire-searxng`. Cowork doesn't ask for plugin settings, so the server always uses the default `http://localhost:8888`; run SearXNG there to use it from Cowork.
 - **Cloud Cowork sessions** can't run local MCP servers, so there the skill always uses WebSearch and WebFetch. Nothing needs to be configured for that.
 
-If desktop Cowork shows the plugin but the skill still reports the fallback, the server may not reach `localhost:8888` from where Cowork runs it. Set `searxng_url` to an address of your computer that Cowork can reach, or keep the fallback.
+If desktop Cowork shows the plugin but the skill still reports the fallback, the server may not reach `localhost:8888` from where Cowork runs it. Cowork can't change `searxng_url`, so keep the fallback there; a different address works only in Claude Code.
 
 ## Troubleshooting
 

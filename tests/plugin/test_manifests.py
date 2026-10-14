@@ -1,5 +1,6 @@
-"""Checks the plugin packaging: the marketplace, both plugin manifests, the
-skills the repertoire plugin ships, and Cowork's plugin limits.
+"""Checks the plugin packaging: the marketplace, the repertoire manifest, the
+inline repertoire-searxng entry, the skills the repertoire plugin ships, and
+Cowork's plugin limits.
 
 Run from the repository root:
     python -B -m unittest discover -s tests/plugin
@@ -21,12 +22,19 @@ ROOT_PLUGIN = REPO
 SEARXNG_PLUGIN = REPO / "plugins" / "repertoire-searxng"
 PLUGIN_ROOTS = (ROOT_PLUGIN, SEARXNG_PLUGIN)
 
-# Fields that add components. A marketplace entry must leave them to plugin.json.
+# The repertoire plugin's folder is the whole repository, and Cowork skips a
+# plugin whose folder holds another .claude-plugin/plugin.json. These are the
+# only .claude-plugin files the repository may contain.
+ALLOWED_PLUGIN_FILES = {".claude-plugin/plugin.json", ".claude-plugin/marketplace.json"}
+
+# Fields that add components. The repertoire entry leaves them to plugin.json;
+# the strict:false searxng entry is its own manifest and may carry these.
 COMPONENT_FIELDS = {
     "skills", "commands", "agents", "hooks", "mcpServers", "lspServers",
     "outputStyles", "themes", "workflows", "experimental", "monitors",
     "userConfig", "channels", "settings", "types",
 }
+INLINE_FIELDS = {"mcpServers", "userConfig"}
 USER_CONFIG_KEYS = {
     "type", "title", "description", "required", "default", "options",
     "multiple", "sensitive", "min", "max",
@@ -61,6 +69,13 @@ def keys_anywhere(value) -> set[str]:
         for item in value:
             found |= keys_anywhere(item)
     return found
+
+
+def marketplace_entry(name: str) -> dict:
+    entries = [p for p in load_json(MARKETPLACE)["plugins"] if p.get("name") == name]
+    if len(entries) != 1:
+        raise AssertionError(f"marketplace.json has {len(entries)} entries named {name}")
+    return entries[0]
 
 
 def frontmatter_name(skill_md: Path) -> str | None:
@@ -133,22 +148,30 @@ class MarketplaceTests(unittest.TestCase):
                 root = (REPO / source).resolve()
                 self.assertTrue(root.is_dir(), f"{source} does not exist")
                 self.assertTrue(root == REPO or root.is_relative_to(REPO))
-                self.assertTrue((root / ".claude-plugin" / "plugin.json").is_file())
-                self.assertEqual(entry["name"], manifest(root)["name"])
                 self.assertTrue(entry.get("description"))
+                if entry.get("strict") is False:
+                    # The entry is the manifest; a plugin.json here would nest
+                    # inside the repertoire plugin.
+                    self.assertFalse((root / ".claude-plugin").exists())
+                else:
+                    self.assertTrue((root / ".claude-plugin" / "plugin.json").is_file())
+                    self.assertEqual(entry["name"], manifest(root)["name"])
 
-    def test_entries_declare_no_components_and_leave_strict_unset(self):
-        for entry in self.data["plugins"]:
-            with self.subTest(entry=entry.get("name")):
-                self.assertFalse(COMPONENT_FIELDS & entry.keys(),
-                                 "component fields belong in plugin.json")
-                self.assertNotIn("strict", entry)
+    def test_repertoire_entry_declares_no_components_and_leaves_strict_unset(self):
+        entry = marketplace_entry("repertoire")
+        self.assertFalse(COMPONENT_FIELDS & entry.keys(), "component fields belong in plugin.json")
+        self.assertNotIn("strict", entry)
+
+    def test_searxng_entry_is_an_inline_manifest(self):
+        entry = marketplace_entry("repertoire-searxng")
+        self.assertIs(entry.get("strict"), False)
+        self.assertLessEqual(COMPONENT_FIELDS & entry.keys(), INLINE_FIELDS)
 
 
 class ManifestTests(unittest.TestCase):
     def test_no_version_anywhere(self):
         # Without a version, the plugin cache follows the commit.
-        for path in (MARKETPLACE, *(r / ".claude-plugin" / "plugin.json" for r in PLUGIN_ROOTS)):
+        for path in (MARKETPLACE, ROOT_PLUGIN / ".claude-plugin" / "plugin.json"):
             with self.subTest(file=str(path.relative_to(REPO))):
                 self.assertNotIn("version", keys_anywhere(load_json(path)))
 
@@ -165,7 +188,7 @@ class ManifestTests(unittest.TestCase):
         self.assertFalse(COMPONENT_FIELDS & data.keys())
 
     def test_searxng_manifest(self):
-        data = manifest(SEARXNG_PLUGIN)
+        data = marketplace_entry("repertoire-searxng")
         self.assertEqual(data["name"], "repertoire-searxng")
         self.assertTrue(data.get("description"))
         self.assertTrue(data.get("author", {}).get("name"))
@@ -186,11 +209,11 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(server["env"]["SEARXNG_URL"], "${user_config.searxng_url}")
 
     def test_user_config_references_are_declared(self):
-        for root in PLUGIN_ROOTS:
-            path = root / ".claude-plugin" / "plugin.json"
-            declared = set(load_json(path).get("userConfig", {}))
-            used = set(USER_CONFIG_REF.findall(path.read_text(encoding="utf-8-sig")))
-            with self.subTest(plugin=root.name):
+        for name, data in (("repertoire", manifest(ROOT_PLUGIN)),
+                           ("repertoire-searxng", marketplace_entry("repertoire-searxng"))):
+            declared = set(data.get("userConfig", {}))
+            used = set(USER_CONFIG_REF.findall(json.dumps(data)))
+            with self.subTest(plugin=name):
                 self.assertLessEqual(used, declared)
 
     def test_searxng_plugin_has_readme(self):
@@ -202,7 +225,7 @@ class ManifestTests(unittest.TestCase):
 class LayoutTests(unittest.TestCase):
     def test_no_bin_hooks_or_mcp_json_at_plugin_roots(self):
         # Cowork refuses a plugin with a top-level bin/; the MCP server is
-        # declared inline in the searxng manifest only.
+        # declared inline in the searxng marketplace entry only.
         for root in PLUGIN_ROOTS:
             with self.subTest(plugin=root.name):
                 self.assertFalse((root / "bin").exists())
@@ -220,6 +243,17 @@ class LayoutTests(unittest.TestCase):
                 self.assertEqual(frontmatter_name(skill_md), skill.name)
                 self.assertRegex(readme, rf"(?<![\w-]){re.escape(skill.name)}(?![\w-])",
                                  f"{skill.name} is not mentioned in README.md")
+
+    def test_only_root_plugin_manifest(self):
+        # Cowork skips the "./" repertoire plugin when any other
+        # .claude-plugin/ sits inside it, test fixtures included; the
+        # Claude Code validator does not catch this.
+        files, method = shipped_files()
+        nested = sorted(
+            rel for rel in (f.relative_to(REPO).as_posix() for f in files)
+            if ".claude-plugin" in rel.split("/")[:-1] and rel not in ALLOWED_PLUGIN_FILES
+        )
+        self.assertEqual(nested, [], f"nested plugin files found by {method}")
 
     def test_plugin_stays_within_cowork_limits(self):
         files, method = shipped_files()
@@ -241,10 +275,8 @@ class ClaudeValidateTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_validate_marketplace_and_root_plugin(self):
+        # Also schema-checks the inline repertoire-searxng entry.
         self.validate(".")
-
-    def test_validate_searxng_plugin(self):
-        self.validate("./plugins/repertoire-searxng")
 
 
 if __name__ == "__main__":
