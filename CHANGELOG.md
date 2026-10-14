@@ -8,9 +8,12 @@ All notable changes to this project will be documented in this file.
 - Added a single rule catalog (`review-skill/references/rules.md`) that both skills share: every rule has an ID, a source (Anthropic, the Agent Skills spec, Claude Code, or skillkit), a severity, and a detection method, and create-skill's `authoring_rules.md` mirrors it rule for rule
 - Added evals-first authoring to create-skill: three eval cases and ten trigger prompts written before the skill, a baseline run without the skill, and with-skill runs during validation
 - Added `evals/` test cases to create-skill and review-skill, and unit tests for the scripts and the rule alignment (`python -m unittest discover -s tests/create_review`)
-- Added remotion-video to the README skill list
 
 ### Changed
+- Refocused the project from a coding-agent skill kit into a smaller general-purpose collection of 13 skills
+- Rewrote the README intro, quick start, and category descriptions for the 13 skills and renamed the "AI and Research" category to "Research"
+- Dropped the research skill's `agent_allocation.md` reference and expanded its sub-agent prompts reference
+- Polished wording and examples across the changelog, claude-md, docx, frontend-design, pdf, pptx, readme-md, and xlsx skills, including sharper changelog filter rules and one `<example>` tag per xlsx example
 - **BREAKING**: Redefined M2: `context: fork` is now opt-in, and only a fork on a skill that cannot work forked (one that asks the user, waits for confirmation, uses Workflow, needs the conversation, or holds only guidelines) is a finding; a missing fork is never one
 - **BREAKING**: Retired m5-m8 (their IDs are never reused); XML tags, example counts, the 400-line target, root layout, and evals are now ungraded style notes (S1-S7), and new rules M9, M10, and m9-m15 cover loading, safety, tables of contents, reference chains, paths, frontmatter hygiene, script contracts, MCP names, and shouted directives
 - **BREAKING**: quick_validate.py now requires PyYAML, parses frontmatter as YAML, prints one `[ID] severity confidence file:line message` line per finding, and uses exit codes 0 (clean), 1 (Major), 4 (Minor only), 2 (usage), and 3 (environment)
@@ -30,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - Fixed all four scripts crashing on Windows when output is piped, and documented running `python`, with `python3` only where `python` is not on the path
 
 ### Removed
+- **BREAKING**: Removed 10 skills that fall outside the new scope: ci-cd, smart-merge, shadcn-ui, debug, review-code, codex, gemini, ultrathink, cc-hooks, and production-audit
 - Removed review-skill's marketplace template; marketplace updates live in create-skill's `marketplace_update.md`
 
 ## [0.8.0] - 2026-02-13
@@ -186,6 +190,7 @@ All notable changes to this project will be documented in this file.
 - Fixed script invocations and variable names after skill rename
 - Fixed review-skill over-specification and deduplicated steps
 
+[Unreleased]: https://github.com/costa-marcello/skillkit/compare/v0.8.0...HEAD
 [0.8.0]: https://github.com/costa-marcello/skillkit/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/costa-marcello/skillkit/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/costa-marcello/skillkit/compare/v0.6.0...v0.6.1

@@ -63,7 +63,7 @@ When forking, set `agent` only if the default `general-purpose` agent is wrong, 
 <example>
 **Fork:** `csv-report` takes a file path, runs `scripts/summarise.py`, and returns a table. It has a task and needs only its argument, so `context: fork` is fine.
 
-**Inline:** `debug` investigates "the bug we are discussing", which requires the conversation, so it runs inline. `create-skill` asks clarifying questions, so it runs inline as well.
+**Inline:** a debugging skill that investigates "the bug we are discussing" requires the conversation, so it runs inline. `create-skill` asks clarifying questions, so it runs inline as well.
 </example>
 
 ## Major rules: how to satisfy them
