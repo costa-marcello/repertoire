@@ -25,7 +25,7 @@ Most skills are thin wrappers around a single prompt. Repertoire skills are stru
 | What makes them different | Why it matters |
 |--------------------------|----------------|
 | **Decision trees, not just prompts** | Each skill contains branching workflows that adapt to what you actually need. claudia-md alone has six modes, from a quick audit to a full restructure of your CLAUDE.md files. |
-| **Bundled reference materials** | Skills carry their own documentation. The frontend-design skill includes 99 UX rules, 25+ chart types, style guides by industry, and 10 tech stack references. This knowledge loads on demand without bloating your context window. |
+| **Bundled reference materials** | Skills carry their own documentation. The frontend-design skill includes 45 UX rules, 25+ chart types, style guides by industry, and notes for 10 tech stacks. This knowledge loads on demand without bloating your context window. |
 | **Enforced quality gates** | Every skill is graded by review-skill against one rule catalog built from Anthropic's skill guidance and the Agent Skills spec, with house conventions reported separately and never graded. The catalog checks that each skill also runs in Cowork, and a regression mode re-runs a skill's own test cases after every change. |
 | **Fork only when it helps** | A skill runs inline, where it can use your conversation and ask you questions, or in a forked subagent (`context: fork`) that works in isolation and returns only its result. review-skill checks that forked skills are self-contained tasks that never need your input or the conversation's history. |
 | **Multi-agent orchestration** | The research skill dispatches 6-10 parallel subagents across Reddit, X, Hacker News, official docs, and academic papers. It then cross-references what they find. This is not a single-prompt tool. |
@@ -100,7 +100,7 @@ Creates a versioned release in one flow: gathers the commits since the last tag,
 <td><strong>frontend-design</strong></td>
 <td>
 
-Creates distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. This is not a component library. It is a design intelligence system with 99 UX rules, 25+ chart type references, style and colour guides organised by industry, typography pairing recommendations, and 10 tech stack code snippets. Every build starts with a design thinking checklist (purpose, tone, differentiator, constraints) and ends with a polish verification. Explicitly bans Inter, Roboto, purple gradients on white, and predictable layouts. Adapts to whatever framework you use (React, Vue, vanilla HTML/CSS) and respects existing UI libraries in your project.
+Creates distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. This is not a component library. It is a design intelligence system with 45 prioritised UX rules, 25+ chart type references, style and colour guides organised by industry, typography pairing recommendations, and notes for 10 tech stacks. Every build starts with a design thinking checklist (purpose, tone, differentiator, constraints) and ends with a polish verification. Avoids Inter and Roboto (Inter only for data dashboards), purple gradients on white, and predictable layouts, respects `prefers-reduced-motion`, and checks colour contrast with a bundled script instead of a browser. Adapts to whatever framework you use (React, Vue, vanilla HTML/CSS) and respects existing UI libraries in your project.
 
 </td>
 <td><code>/repertoire:frontend-design</code> + describe interface<br/>"design a dashboard for a fintech app"<br/>"build a landing page that feels premium"<br/>"improve the visual design of this component"</td>
@@ -210,7 +210,7 @@ skills/
     SKILL.md
     references/          # Deep reference docs, loaded on demand
       style-guide.md     # Styles, colours, typography by industry
-      ui-rules.md        # 99 UX guidelines
+      ui-rules.md        # 45 UX rules by priority
       chart-types.md     # 25+ chart types
   research/
     SKILL.md
@@ -230,7 +230,7 @@ The plugin loads every skill under `skills/`. Claude Code and Cowork make each o
 /repertoire:review-skill skills/my-skill          # Review and fix a specific skill
 ```
 
-The `references/` pattern is what keeps skills fast. The SKILL.md stays under 500 lines (the enforced limit), while deep reference materials load only when the skill needs them. The frontend-design skill, for example, has 99 UX rules and 25+ chart types available, but they only enter the context window when the skill reaches for them.
+The `references/` pattern is what keeps skills fast. The SKILL.md stays under 500 lines (the enforced limit), while deep reference materials load only when the skill needs them. The frontend-design skill, for example, has 45 UX rules and 25+ chart types available, but they only enter the context window when the skill reaches for them.
 
 ---
 

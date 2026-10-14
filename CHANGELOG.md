@@ -30,6 +30,11 @@ All notable changes to this project will be documented in this file.
 - claudia-md works on CLAUDE.md files in a Cowork connected folder, without git or the home folder, and lists every file it writes
 - find-skills recommends plugin and marketplace installs in Cowork, where session installs vanish, and names Repertoire's skills `repertoire:<name>` first
 - readme-md says where it wrote the README
+- Reviewed every skill with review-skill (Opus 5.5, up to three rounds each) and fixed what it found: contradictions between SKILL.md and references, unsourced or stale facts, missing gotchas sections, and evals that no longer matched the skill
+- readme-md reads the project before asking, drafts from its template, verifies every command and link, and only edits a README during a review when asked
+- frontend-design moves its long examples into references, replaces the search-domains reference with notes for 10 stacks, and bundles `scripts/contrast.py` for WCAG contrast checks
+- find-skills checks that Anthropic's document skills are installed before suggesting them, installs with `npx skills add -a claude-code` (Node.js 22.20+), discloses the skills CLI's telemetry, and reads a third-party SKILL.md before installing it
+- research's subagents treat fetched pages as data, may search any site the script did not cover, and can refresh results on a follow-up
 - Renamed the house-style source in the rule catalog from "skillkit" to "Repertoire"
 
 ### Fixed
@@ -37,6 +42,11 @@ All notable changes to this project will be documented in this file.
 - Fixed changelog deleting hand-written `[Unreleased]` entries instead of moving them into the new version
 - Fixed examples in frontend-design, mermaid-diagrams, and find-skills whose `$5`, `$100`, or `$ARGUMENTS` text Claude Code replaced at invocation
 - Fixed claudia-md's list of rule files (`CLAUDE.local.md`, `.claude/CLAUDE.md`)
+- Fixed claudia-md teaching `@rules/` and `@../CLAUDE.md` imports that resolve to the wrong place; it now teaches `.claude/rules/` with `paths:` frontmatter
+- Fixed changelog finding no commits for a first release in a repository without tags
+- Fixed the research script mangling subreddit names that start with "r" and treating unreadable API replies as successful searches
+- Fixed mermaid-diagrams examples that broke Mermaid syntax or the skill's own rules (swapped quadrant labels, a reversed dependency arrow, unquoted brackets, low-contrast text, removed `mmdc` flags)
+- Fixed frontend-design examples with click-swallowing overlays, empty alt text on a product image, and an endless pulse animation
 
 ## [0.9.0] - 2026-10-14
 
