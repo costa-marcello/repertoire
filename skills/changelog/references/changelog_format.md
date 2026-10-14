@@ -106,12 +106,12 @@ Based on [conventionalcommits.org](https://www.conventionalcommits.org/).
 | `fix` | Fixed | Always |
 | `perf` | Changed | If user-visible |
 | `refactor` | Changed | If API changes |
-| `docs` | - | If user-facing |
-| `style` | - | Rarely |
-| `test` | - | Never |
-| `build` | - | Rarely |
-| `ci` | - | Never |
-| `chore` | - | Rarely |
+| `docs` | - | Never (dropped by /changelog, see SKILL.md Step 4) |
+| `style` | - | Never (dropped by /changelog) |
+| `test` | - | Never (dropped by /changelog) |
+| `build` | - | Never (dropped by /changelog) |
+| `ci` | - | Never (dropped by /changelog) |
+| `chore` | - | Never (dropped by /changelog) |
 | `revert` | Fixed/Removed | Depends |
 
 ### Breaking Changes
@@ -132,11 +132,6 @@ Use /v2/users instead.
 - **BREAKING**: Removed /v1/users endpoint - use /v2/users instead
 ```
 
-Or use a dedicated section:
-```markdown
-### Breaking Changes
-- Removed /v1/users endpoint - use /v2/users instead
-```
 
 ## Writing Style Guidelines
 
@@ -269,7 +264,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ```bash
 # List commits since last tag with conventional format
-git log --pretty=format:"%s" $(git describe --tags --abbrev=0)..HEAD
+git log --pretty=format:"%s" "$(git describe --tags --abbrev=0)..HEAD"   # no tags yet: git log --pretty=format:"%s" HEAD
 
 # Group commits by type
 git log --pretty=format:"%s" v1.0.0..v1.1.0 | grep "^feat:"

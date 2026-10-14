@@ -28,13 +28,13 @@ Put `GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never` in front of every command that
 
 If `$ARGUMENTS` contains a version (e.g., `v1.2.0`), use it directly.
 
-Otherwise, auto-detect from commits since the last tag:
+Otherwise, auto-detect from commits since the last tag, the nearest tag reachable from HEAD:
 
 ```bash
-git tag --sort=-v:refname | head -1
+git describe --tags --abbrev=0
 ```
 
-If no tags exist, treat the current version as `0.0.0`.
+If it exits non-zero, there are no tags: treat the current version as `0.0.0`, and in this step and Step 4 use `HEAD` (the full history) wherever `<last-tag>..HEAD` appears.
 
 Scan commits: `git log --pretty=format:"%s%n%b" <last-tag>..HEAD`. Apply the highest-priority rule:
 
@@ -44,7 +44,7 @@ Scan commits: `git log --pretty=format:"%s%n%b" <last-tag>..HEAD`. Apply the hig
 | 2 | New feature — feat or feat(scope) prefix | Minor |
 | 3 | Bug fix or improvement — fix, perf, or other included types | Patch |
 
-If all commits were filtered (docs, test, ci, chore only), report "No release needed" and stop.
+If all commits were filtered (only the types Step 4 drops), report "No release needed" and stop.
 
 Report the detected version before continuing:
 
@@ -61,7 +61,7 @@ Commits since vCURRENT: N total (N included, N filtered)
 
 1. Get all commits since the last tag: `git log --oneline <last-tag>..HEAD`
 2. Categorize using the mapping below.
-3. Filter noise: always drop merge commits, `ci:`, `chore:`, `test:`, `docs:`, and `style:` commits. For `refactor:` commits, include only when the diff touches a public API, CLI flag, configuration schema, or user-facing output; otherwise drop.
+3. Filter noise: always drop merge commits, `build:`, `ci:`, `chore:`, `test:`, `docs:`, and `style:` commits. For `refactor:` commits, include only when the diff touches a public API, CLI flag, configuration schema, or user-facing output; otherwise drop.
 4. Translate technical commits to user-friendly descriptions.
 
 ## Step 5: Write Release Entry
@@ -71,7 +71,7 @@ Commits since vCURRENT: N total (N included, N filtered)
 3. Add a new versioned section `## [X.Y.Z] - YYYY-MM-DD` with today's date, placed above existing version sections.
 4. If an `## [Unreleased]` section exists, move its entries into the new section (keep every entry; merge one that repeats a commit-derived entry), then delete the empty Unreleased heading and its footer link.
 5. Update footer comparison links.
-6. **Verify:** Entry count matches the categorized commit count (minus filtered) plus the entries moved from Unreleased.
+6. **Verify:** every included commit and every entry moved from Unreleased appears in at least one bullet of the new section, no bullet comes from a filtered commit, and the `[Unreleased]` heading and its footer link are gone.
 
 ## Step 6: Commit, Tag, Push
 
@@ -104,7 +104,7 @@ Map Conventional Commits prefixes to Keep a Changelog sections. See `references/
 | `fix:` | Fixed |
 | `refactor:` (user-visible) | Changed |
 | `security:` | Security |
-| `docs:`, `test:`, `ci:`, `chore:` | Filter out |
+| `docs:`, `style:`, `test:`, `build:`, `ci:`, `chore:` | Filter out |
 
 **Always include:** features, user-facing bug fixes, breaking changes, security fixes.
 **Always filter:** merge commits, internal refactors, test changes, CI config, typos.
@@ -117,7 +117,7 @@ Translate technical commits to user-friendly language:
 
 ```bash
 # All commits since last tag
-git log --oneline $(git describe --tags --abbrev=0 2>/dev/null || echo "")..HEAD
+git log --oneline "$(git describe --tags --abbrev=0)..HEAD"   # no tags yet: git log --oneline HEAD
 
 # Commits between tags
 git log --oneline v1.0.0..v1.1.0
