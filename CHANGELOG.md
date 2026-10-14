@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.10.0] - 2026-10-14
 
 ### Added
 - Added plugin distribution: the repository is now a plugin marketplace whose `repertoire` plugin carries every skill to both Claude Code (`/plugin marketplace add costa-marcello/repertoire`, then `/plugin install repertoire@repertoire`) and Cowork (Customize > Plugins > Add marketplace), with the full Claude Code frontmatter kept in both
@@ -243,7 +243,7 @@ All notable changes to this project will be documented in this file.
 - Fixed script invocations and variable names after skill rename
 - Fixed review-skill over-specification and deduplicated steps
 
-[Unreleased]: https://github.com/costa-marcello/repertoire/compare/v0.9.0...HEAD
+[0.10.0]: https://github.com/costa-marcello/repertoire/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/costa-marcello/repertoire/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/costa-marcello/repertoire/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/costa-marcello/repertoire/compare/v0.6.1...v0.7.0
