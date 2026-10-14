@@ -1,0 +1,67 @@
+{
+  "skill_name": "claudia-md",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "First save this as taskboard/CLAUDE.md (the rest of the taskboard project is already there):\n\n# Taskboard\n\nKanban board API for small teams.\n\n## Commands\n\n- `npm install`\n- `npm start` - start the server\n- `npm test`\n\n## Key Files\n\n- `src/index.ts` - entry point\n- `src/lib/db.ts` - database client\n- `src/utils/legacy.ts` - old helpers\n\n## Rules\n\n- Never use any\n- Write clean code\n- Don't hardcode URLs\n- Use Jest for tests\n\nThen review that CLAUDE.md against the project and tell me how good it is. Report only, don't change anything.",
+      "expected_output": "A quality report for taskboard/CLAUDE.md that scores it on the six-category 100-point rubric with a letter grade, then lists issues: rules without reasoning, a vague rule, negative-only framing, stale commands (npm instead of pnpm, no start script), missing files (src/lib/db.ts, src/utils/legacy.ts), and a Jest rule that conflicts with the Vitest setup. No file is changed.",
+      "files": [
+        "evals/files/taskboard/package.json",
+        "evals/files/taskboard/pnpm-lock.yaml",
+        "evals/files/taskboard/vitest.config.ts",
+        "evals/files/taskboard/src/index.ts",
+        "evals/files/taskboard/src/lib/database.ts"
+      ],
+      "expectations": [
+        "Scores taskboard/CLAUDE.md on the six rubric categories (Commands/workflows, Architecture clarity, Non-obvious patterns, Conciseness, Currency, Content Quality) out of 100 and gives a letter grade that matches the score bands",
+        "Flags at least two rules as missing reasoning and quotes them, for example 'Never use any'",
+        "Flags 'Write clean code' as vague and 'Don't hardcode URLs' as negative-only framing",
+        "Flags the commands as stale: the lockfile is pnpm-lock.yaml, and package.json has no start script (the dev server is the dev script)",
+        "Flags src/lib/db.ts and src/utils/legacy.ts as missing, and notes that the database client is src/lib/database.ts",
+        "Flags 'Use Jest for tests' as conflicting with the Vitest setup in package.json and vitest.config.ts",
+        "Leaves taskboard/CLAUDE.md byte-for-byte unchanged and creates no other file"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I'm in Cowork and my taskboard folder is connected. It's just a folder, not a git repo. First save this as taskboard/CLAUDE.md:\n\n# Taskboard\n\nKanban board API for small teams.\n\n## Commands\n\n- `npm install`\n- `npm start` - start the server\n- `npm test`\n\n## Key Files\n\n- `src/index.ts` - entry point\n- `src/lib/db.ts` - database client\n- `src/utils/legacy.ts` - old helpers\n\n## Rules\n\n- Never use any\n- Write clean code\n- Don't hardcode URLs\n- Use Jest for tests\n\nThen sync that CLAUDE.md with the project as it is now. While you're at it, check my global ~/.claude/CLAUDE.md too.",
+      "expected_output": "An Update-mode change preview for taskboard/CLAUDE.md: pnpm commands from the package.json scripts replace the npm ones, src/lib/db.ts becomes src/lib/database.ts, src/utils/legacy.ts is removed, and the user-authored rules are shown as preserved. It says ~/.claude/CLAUDE.md cannot be read from Cowork and offers to review it if the user pastes it or copies it into the connected folder. It asks for approval before writing and names the file it would change.",
+      "files": [
+        "evals/files/taskboard/package.json",
+        "evals/files/taskboard/pnpm-lock.yaml",
+        "evals/files/taskboard/vitest.config.ts",
+        "evals/files/taskboard/src/index.ts",
+        "evals/files/taskboard/src/lib/database.ts"
+      ],
+      "expectations": [
+        "Shows a change preview grouped into additions, updates, and removals before writing anything",
+        "Proposes pnpm commands taken from the package.json scripts (pnpm dev, pnpm build, pnpm test, pnpm lint) in place of npm install and npm start",
+        "Proposes changing src/lib/db.ts to src/lib/database.ts and removing src/utils/legacy.ts from Key Files",
+        "Keeps the four user-authored rules, or flags 'Use Jest for tests' for the user to decide, instead of rewriting them silently",
+        "Says that ~/.claude/CLAUDE.md cannot be read from Cowork and offers to review it if the user pastes it or copies it into the connected folder",
+        "Runs no git command and does not ask the user to make the folder a git repository",
+        "Asks for approval before editing taskboard/CLAUDE.md, and names that file as the one it would change in the connected folder"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "init project: notes-cli/ has no CLAUDE.md yet. Create one from what's in the folder. I approve whatever you propose, so go ahead and write it.",
+      "expected_output": "A new notes-cli/CLAUDE.md built from the root template: a one-line description from pyproject.toml or README.md, the make install/test/lint commands and the notes entry point, the src/notes_cli layout and key file, and placeholder Hard Rules and Gotchas sections. The full file is previewed, then written, and the reply names the path.",
+      "files": [
+        "evals/files/notes-cli/pyproject.toml",
+        "evals/files/notes-cli/Makefile",
+        "evals/files/notes-cli/README.md",
+        "evals/files/notes-cli/src/notes_cli/main.py"
+      ],
+      "expectations": [
+        "Shows the full proposed CLAUDE.md before writing it",
+        "Writes notes-cli/CLAUDE.md and creates or changes no other file",
+        "Lists make install, make test, and make lint, plus the notes command from [project.scripts], and invents no command that the Makefile or pyproject.toml lacks",
+        "Opens with a one-line project description taken from pyproject.toml or README.md",
+        "Names src/notes_cli/main.py as the entry point or a key file",
+        "Includes Hard Rules and Gotchas placeholder sections with a comment asking for project-specific rules",
+        "Ends by naming the path of the file it created"
+      ]
+    }
+  ]
+}

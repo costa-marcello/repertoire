@@ -1,0 +1,12 @@
+[
+  {"query": "audit every CLAUDE.md in this monorepo and score them, I want to know which ones are weak", "should_trigger": true},
+  {"query": "our CLAUDE.md is 600 lines of rules now. split it up into .claude/rules files and keep only the essentials in the root", "should_trigger": true},
+  {"query": "the build commands in CLAUDE.md are out of date since we moved to pnpm, sync it with package.json", "should_trigger": true},
+  {"query": "most of the rules in my CLAUDE.md are bare 'never do X' lines. add the reasoning to them", "should_trigger": true},
+  {"query": "generate CLAUDE.md files for the packages under packages/ that need their own context", "should_trigger": true},
+  {"query": "write a README for this repo with install and usage sections", "should_trigger": false},
+  {"query": "/review-skill skills/deploy and grade it, report only", "should_trigger": false},
+  {"query": "edit .claude/settings.json so npm test runs without asking for permission", "should_trigger": false},
+  {"query": "write a system prompt for our customer support bot in ChatGPT", "should_trigger": false},
+  {"query": "add the 1.4.0 release notes to CHANGELOG.md and tag it", "should_trigger": false}
+]

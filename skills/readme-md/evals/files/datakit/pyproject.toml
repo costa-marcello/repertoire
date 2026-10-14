@@ -1,0 +1,9 @@
+[project]
+name = "datakit"
+version = "2.1.0"
+description = "Transform CSV, JSON, and Parquet files with one API or CLI command"
+requires-python = ">=3.10"
+dependencies = ["pyarrow>=15"]
+
+[project.scripts]
+datakit = "datakit.cli:main"

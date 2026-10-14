@@ -1,0 +1,55 @@
+{
+  "skill_name": "find-skills",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm in Claude Code. Is there a skill that could help me make my React app faster? Find a few options and tell me how I'd install the best one, but don't install anything yet.",
+      "expected_output": "A short list of matching skills from skills.sh (found with npx skills find and a React performance query), each with name, description, and source, one recommendation with a reason, and the Claude Code install command for it. Nothing is installed.",
+      "files": [],
+      "expectations": [
+        "Searches skills.sh with npx skills find and a React performance query, or says the search could not run and why",
+        "Presents each result with its name, a one-line description, and its source",
+        "Recommends one result and says why",
+        "Gives a Claude Code install command for the recommendation: npx skills add <owner/repo@skill>, or /plugin marketplace add plus /plugin install when the repository is a plugin marketplace",
+        "Runs no install command (no npx skills add, ccpm install, or plugin install)",
+        "Does not use npx skills check"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I'm using Cowork. Find me a skill that writes changelogs and makes tagged releases, and install it.",
+      "expected_output": "Recommends Repertoire's changelog skill as /repertoire:changelog (or /changelog when installed on its own) and tells the user to add the costa-marcello/repertoire marketplace in Customize > Plugins > Add marketplace and install the repertoire plugin. It runs no npx skills add or ccpm install, and explains that an install inside the Cowork session would be lost when the session ends.",
+      "files": [],
+      "expectations": [
+        "Recommends Repertoire's changelog skill, naming it /repertoire:changelog first and /changelog second",
+        "Tells the user to add the costa-marcello/repertoire marketplace through Customize > Plugins > Add marketplace and install the repertoire plugin",
+        "Does not run npx skills add or ccpm install",
+        "Explains that a skill installed inside the Cowork session would be lost when the session ends",
+        "Does not claim that the skill is now installed"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "find a skill that can fill in PDF forms. I switch between Claude Code and Cowork.",
+      "expected_output": "Points to Anthropic's built-in pdf skill, which ships with both Claude Code and Cowork, instead of searching for or installing a registry skill, and does not describe pdf as a Repertoire skill.",
+      "files": [],
+      "expectations": [
+        "Points to Anthropic's built-in pdf skill and says it ships with Claude Code and Cowork",
+        "Does not describe pdf, or any of docx, pptx, and xlsx, as a Repertoire skill",
+        "Runs no install command (no ccpm install, npx skills add, or plugin install)"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "what skills do I have installed right now?",
+      "expected_output": "A list of the skills available in the session, taken from the skills in Claude's own context and grouped by where they come from, with a total. For Claude Code it may add what npx skills list -g and ccpm list report, and suggests /plugin for installed plugins.",
+      "files": [],
+      "expectations": [
+        "Lists the skills from its own context, grouped by source (plugin, project, user, or built-in)",
+        "Reports a total count",
+        "Does not run npx skills check",
+        "Installs, removes, and updates nothing"
+      ]
+    }
+  ]
+}

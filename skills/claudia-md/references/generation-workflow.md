@@ -50,6 +50,8 @@ Example: Auth Service file with ~100 words ≈ ~130 tokens ✓
 
 ### Command
 
+List directories with Glob (`**/`) and drop the skip list below, or, when a shell is available, run:
+
 ```bash
 find . -type d -not -path '*/\.*' -not -path '*/node_modules/*' -not -path '*/dist/*' -not -path '*/__pycache__/*' -not -path '*/build/*' -not -path '*/coverage/*' -not -path '*/.next/*' -not -path '*/.nuxt/*' -not -path '*/vendor/*' | head -100
 ```
@@ -284,7 +286,7 @@ For each approved file:
 
 **Next steps:**
 - Review generated files and customize as needed
-- Run `/claudia-md review` to check quality
+- Run `/repertoire:claudia-md review` (or `/claudia-md review` when the skill is installed on its own) to check quality
 - Consider removing generic patterns, keep only project-specific
 ```
 

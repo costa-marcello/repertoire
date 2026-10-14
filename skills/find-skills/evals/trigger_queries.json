@@ -1,0 +1,12 @@
+[
+  {"query": "is there a skill that helps write Terraform modules? I'd rather install one than explain our conventions every time", "should_trigger": true},
+  {"query": "find me a plugin that adds Playwright end-to-end testing to Claude Code", "should_trigger": true},
+  {"query": "search skills.sh for something that reviews SQL migrations before we run them", "should_trigger": true},
+  {"query": "what skills do I have installed right now?", "should_trigger": true},
+  {"query": "I'm in Cowork. Is there something I can install so Claude knows how to make changelogs?", "should_trigger": true},
+  {"query": "create a new skill that formats SQL queries the way our team likes", "should_trigger": false},
+  {"query": "/review-skill skills/deploy and grade it, report only", "should_trigger": false},
+  {"query": "install lodash in this project and import it in utils.ts", "should_trigger": false},
+  {"query": "find where the skill loader is defined in this codebase", "should_trigger": false},
+  {"query": "bump the version in .claude-plugin/plugin.json to 2.1.0", "should_trigger": false}
+]

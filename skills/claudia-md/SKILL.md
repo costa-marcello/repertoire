@@ -1,11 +1,11 @@
 ---
 name: claudia-md
 description: Manages CLAUDE.md files. Audits, reviews, improves, refactors, updates, and generates subdirectory context. Discovers all CLAUDE.md files, evaluates quality against research-backed criteria, generates improvement reports, applies targeted updates, syncs CLAUDE.md with current codebase state, restructures using progressive disclosure, and creates contextual CLAUDE.md files for directories that benefit from instant context. Use when the user says "audit CLAUDE.md", "review my rules", "improve instructions", "organize Claude config", "update CLAUDE.md", "sync my rules", "init project", "generate subdirectory context", or "CLAUDE.md maintenance".
-allowed-tools: Read, Glob, Grep, Bash, Edit
+allowed-tools: Read, Glob, Grep, Bash, Edit, Write
 license: MIT
 ---
 
-<!-- v1.3.0 | 2026-02-13 -->
+<!-- v1.4.0 | 2026-10-14 -->
 
 # Claude MD
 
@@ -35,6 +35,15 @@ Common workflow combinations:
 
 Generate reuses Phase 1 discovery when Audit already ran in the same session.
 
+### Where It Works
+
+Every mode works on files in a folder, so it runs the same in Claude Code and Cowork.
+
+- **Project folder:** the current working directory in Claude Code; the connected folder in Cowork. If a Cowork session has no connected folder, ask the user to connect the folder that holds the CLAUDE.md. If they attach a single CLAUDE.md instead, work on it and save the result in the outputs folder.
+- **No git or terminal needed:** find and read files with Glob, Grep, and Read. A plain folder that is not a git repository is fine.
+- **User-wide file:** `~/.claude/CLAUDE.md` exists only in Claude Code. Cowork cannot read the home folder's Claude config, so skip that file there, say so in the report, and offer to review it if the user pastes it or copies it into the connected folder.
+- **Say where files went:** after writing, list every file created or changed with its path from the project folder root, and in Cowork say that it is in the connected folder (or the outputs folder).
+
 ---
 
 ## Workflow Overview
@@ -43,19 +52,15 @@ Generate reuses Phase 1 discovery when Audit already ran in the same session.
 
 ### Phase 1: Discovery
 
-Find all CLAUDE.md files in the repository:
-
-```bash
-find . -name "CLAUDE.md" -o -name ".claude.md" -o -name ".claude.local.md" 2>/dev/null | head -50
-```
+Find all CLAUDE.md files in the project folder with Glob, using the patterns `**/CLAUDE.md`, `**/CLAUDE.local.md`, `.claude/CLAUDE.md`, and `.claude/rules/**/*.md`. Drop matches under `node_modules`, `dist`, `build`, `vendor`, and `.git`. Stop at 50 files and say so when there are more.
 
 **File Types & Locations:**
 
 | Type | Location | Purpose |
 |------|----------|---------|
-| Project root | `./CLAUDE.md` | Primary project context |
-| Local overrides | `./.claude.local.md` | Personal/local settings (gitignored) |
-| Global defaults | `~/.claude/CLAUDE.md` | User-wide defaults across all projects |
+| Project root | `./CLAUDE.md` or `./.claude/CLAUDE.md` | Primary project context |
+| Local overrides | `./CLAUDE.local.md` | Personal project notes (usually gitignored) |
+| Global defaults | `~/.claude/CLAUDE.md` | User-wide defaults across all projects (Claude Code only; see Where It Works) |
 | Package-specific | `./packages/*/CLAUDE.md` | Module-level context in monorepos |
 | Subdirectory | Any nested location | Feature/domain-specific context |
 | Rules directory | `./.claude/rules/*.md` | Auto-loaded detailed rules |
@@ -109,7 +114,6 @@ Output the quality report before making any updates.
 
 **Report Format:**
 
-<example>
 ```markdown
 ## CLAUDE.md Quality Report
 
@@ -132,7 +136,6 @@ Output the quality report before making any updates.
 **Issues:** [list specific problems]
 **Recommended additions:** [list what should be added]
 ```
-</example>
 
 ### Phase 4: Issue Detection (Review Mode)
 
@@ -170,7 +173,7 @@ For each change, show: target file, the diff or quoted block, and a brief "why".
 **Diff Format:**
 
 <example>
-```markdown
+````markdown
 ### Update: ./CLAUDE.md
 
 **Why:** Build command was missing, causing confusion about how to run the project.
@@ -183,7 +186,7 @@ For each change, show: target file, the diff or quoted block, and a brief "why".
 + npm run dev  # Start development server on port 3000
 + ```
 ```
-```
+````
 </example>
 
 ### Phase 6: Refactoring (Refactor Mode)
@@ -266,7 +269,7 @@ project-root/
 
 ### Phase 7: Apply Updates
 
-After user approval, apply changes using the Edit tool. Preserve existing content structure.
+After user approval, apply changes with the Edit tool (Write for new files). Preserve existing content structure. Then re-read each changed file to confirm the edits landed, and list the files with their paths (see Where It Works).
 
 ### Mode: Update (Sync CLAUDE.md with Codebase)
 
@@ -281,7 +284,7 @@ Scans the codebase and updates CLAUDE.md to reflect the current project state. C
 | U3 | Drift Detection | Compare documented state against discovered state. Flag stale commands, missing sections, outdated structure, removed files. |
 | U4 | Change Preview | Show additions, updates, and removals as a diff. Never auto-apply. |
 | U5 | User Approval | Present changes for approval. Support approve all, select specific, or cancel. |
-| U6 | Apply Updates | Write approved changes. Preserve existing reasoning, rules, and user-authored content. |
+| U6 | Apply Updates | Write approved changes. Preserve existing reasoning, rules, and user-authored content. A new file goes to `CLAUDE.md` at the project folder root; say where it went. |
 
 **Key principle:** Update adds and corrects factual content (commands, structure, files). It never removes or rewrites user-authored rules, reasoning, or principles unless they reference things that no longer exist.
 
@@ -333,7 +336,7 @@ Apply these changes? [All / Select / Cancel]
 | G3 | Content Extraction | Extract purpose, key files, patterns, dependencies, gotchas from each candidate. |
 | G4 | Preview Generation | Show proposed files with scores and content. |
 | G5 | User Approval | Present options: approve all, select specific, modify, or cancel. Never auto-create. |
-| G6 | File Creation | Write approved files. Verify: starts with `@../CLAUDE.md`, under 500 tokens, no root duplication. |
+| G6 | File Creation | Write approved files. Verify: starts with `@../CLAUDE.md`, under 500 tokens, no root duplication. List each created path. |
 
 See [references/generation-workflow.md](references/generation-workflow.md) for the full scoring algorithm, extraction heuristics, and framework-specific guidance.
 

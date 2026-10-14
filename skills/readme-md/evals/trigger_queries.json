@@ -1,0 +1,12 @@
+[
+  {"query": "write a README for this repo, it's an open source CLI going on npm", "should_trigger": true},
+  {"query": "our README still describes the old API since we added the CLI. update it", "should_trigger": true},
+  {"query": "what sections should the README for an internal team service have?", "should_trigger": true},
+  {"query": "review README.md and tell me what's missing before we open-source the project", "should_trigger": true},
+  {"query": "my dotfiles folder has no README and I never remember why things are set up the way they are. write one", "should_trigger": true},
+  {"query": "write a CLAUDE.md for this project with the build and test commands", "should_trigger": false},
+  {"query": "add the 2.0.0 entry to CHANGELOG.md", "should_trigger": false},
+  {"query": "add JSDoc comments to every exported function in src/utils.ts", "should_trigger": false},
+  {"query": "draw a Mermaid diagram of the service architecture for the docs", "should_trigger": false},
+  {"query": "set up eslint and prettier for this project", "should_trigger": false}
+]

@@ -1,0 +1,15 @@
+[project]
+name = "notes-cli"
+version = "0.2.0"
+description = "Command-line notebook that stores Markdown notes in a local SQLite file"
+requires-python = ">=3.11"
+dependencies = ["click>=8.1"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+notes = "notes_cli.main:cli"
+
+[tool.ruff]
+line-length = 100

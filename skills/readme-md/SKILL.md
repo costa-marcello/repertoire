@@ -1,6 +1,6 @@
 ---
 name: readme-md
-description: Guides README creation and improvement with audience-matched templates. Use when writing READMEs for open source, personal, internal, or config projects, or when the user mentions documentation, README, or project setup.
+description: Guides README creation, updates, and reviews with audience-matched templates. Use when writing READMEs for open source, personal, internal, or config projects, when a README is stale or missing sections, or when the user asks what a README should contain.
 license: MIT
 argument-hint: "[task and project type]"
 ---
@@ -17,9 +17,11 @@ Identify the audience first. Match sections, depth, and tone to what that audien
 
 **User request:** $ARGUMENTS
 
-If `$ARGUMENTS` is non-empty, extract the task type (creating, adding, updating, reviewing) and project type (OSS, personal, internal, config) from it. Skip Step 1 and proceed to Step 2. Only ask clarifying questions if the task or project type is entirely unclear.
+If the request line above has text, extract the task type (creating, adding, updating, reviewing) and project type (OSS, personal, internal, config) from it. If it is empty or still shows an unfilled placeholder, take them from the user's message instead. When either source gives the task, skip Step 1 and proceed to Step 2. Only ask clarifying questions if the task or project type is entirely unclear.
 
-If `$ARGUMENTS` is empty, begin at Step 1.
+If neither source gives the task, begin at Step 1.
+
+**Where the README goes:** write `README.md` at the project root: the working directory in Claude Code, the connected folder in Cowork. With no project folder (for example, a Cowork session with nothing connected), save it in the outputs folder. Always say where the file went.
 
 ## Quick Workflow
 
@@ -30,8 +32,8 @@ README Progress:
 - [ ] Task identified: Creating / Adding / Updating / Reviewing
 - [ ] Audience identified: _____
 - [ ] Project type: OSS / Personal / Internal / Config
-- [ ] Template selected from templates/
-- [ ] Draft complete
+- [ ] Template selected from assets/templates/
+- [ ] Draft complete and saved; location told to the user
 - [ ] Verified: draft matches actual project state (package.json, directory structure, commands)
 - [ ] Asked: "Anything else to highlight or include that I might have missed?"
 ```
@@ -116,7 +118,7 @@ mytool [options]
 ```
 
 **After (audience-focused):**
-```markdown
+````markdown
 # mytool
 Convert CSV files to JSON with one command. Handles messy data, encoding issues, and files up to 2GB.
 
@@ -134,7 +136,7 @@ mytool --skip-header data.csv
 # Handle non-UTF8 encoding
 mytool --encoding latin1 legacy.csv
 ```
-```
+````
 
 **Why better:** Shows the problem it solves, demonstrates real scenarios, gives copy-paste commands.
 </example>
@@ -149,7 +151,7 @@ This tool does X, Y, Z. It also now supports authentication via OAuth which can 
 ```
 
 **After (scannable, actionable):**
-```markdown
+````markdown
 ## Features
 - **X** - Does this
 - **Y** - Does that
@@ -163,7 +165,7 @@ auth:
   provider: oauth
   token: your-token
 ```
-```
+````
 
 **Why better:** New feature is discoverable, has its own section, shows exactly how to use it.
 </example>
@@ -211,7 +213,7 @@ Run `docker compose up`.
 ```
 
 **After (onboarding-ready):**
-```markdown
+````markdown
 # User Service
 
 Manages authentication, profiles, and role-based access for the platform.
@@ -247,7 +249,7 @@ npm run test:integration     # requires running Docker services
 
 ### Auth0 callback fails locally
 **Fix**: Set `AUTH0_BASE_URL=http://localhost:3000` in `.env`. The default points to staging.
-```
+````
 
 **Why better:** New team members can run the service in under 5 minutes. Troubleshooting section prevents the most common support question.
 </example>
@@ -256,7 +258,7 @@ npm run test:integration     # requires running Docker services
 **Task:** Reviewing an existing README for accuracy
 
 **Before (stale, misleading):**
-```markdown
+````markdown
 # datakit
 A Python library for CSV processing.
 
@@ -268,7 +270,7 @@ pip install datakit
 from datakit import process
 process("input.csv")
 ```
-```
+````
 
 **Review findings:**
 1. Project now supports JSON and Parquet (added 6 months ago), not just CSV
@@ -277,7 +279,7 @@ process("input.csv")
 4. No mention of the new CLI interface added in v1.8
 
 **After (accurate, current):**
-```markdown
+````markdown
 # datakit
 Transform CSV, JSON, and Parquet files with a single API or CLI command.
 
@@ -301,7 +303,7 @@ transform("input.csv", output_format="json")
 datakit convert input.csv --to json
 datakit convert data.parquet --to csv
 ```
-```
+````
 
 **Why better:** Every section matches the actual project state. Stale docs erode trust faster than no docs.
 </example>

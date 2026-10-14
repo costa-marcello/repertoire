@@ -11,7 +11,7 @@
 7. [Greenfield Mode (No Existing CLAUDE.md)](#greenfield-mode-no-existing-claudemd)
 8. [Monorepo Handling](#monorepo-handling)
 
-<!-- v1.0.0 | 2026-02-13 -->
+<!-- v1.1.0 | 2026-10-14 -->
 
 Detailed algorithm for the Update mode. The SKILL.md contains the compact summary; this reference provides the full scanning heuristics.
 
@@ -109,7 +109,7 @@ Identify entry points and important files:
 
 ## Phase U2: Existing CLAUDE.md Read
 
-Read the current `./CLAUDE.md` if it exists. Parse into sections by heading level.
+Read the current `./CLAUDE.md` (or `./.claude/CLAUDE.md`) if it exists. Parse into sections by heading level.
 
 **Section classification:**
 
@@ -206,7 +206,9 @@ Apply approved changes using the Edit tool. Preserve:
 - User-authored reasoning and rules
 - Comments and formatting conventions
 
-If creating a new CLAUDE.md from scratch, use the root template from `references/templates.md` as the base structure.
+If creating a new CLAUDE.md from scratch, use the root template from `references/templates.md` as the base structure, and write it with the Write tool to `CLAUDE.md` at the project folder root (the connected folder in Cowork).
+
+Finish by naming every file you changed or created, with its path from the project folder root.
 
 ---
 
