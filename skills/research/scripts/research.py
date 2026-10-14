@@ -3,7 +3,14 @@
 research - Research a topic on Reddit + X.
 
 Usage:
-    python3 research.py <topic> [options]
+    python research.py <topic> [options]
+    (use python3 where the python command is missing)
+
+Requires Python 3.9 or later; standard library only.
+
+Network: api.openai.com (Reddit discovery, model list), api.x.ai (X search),
+www.reddit.com (public thread JSON for engagement metrics). Only the sources
+whose API key is set are called; with no keys the script makes no requests.
 
 Options:
     --mock              Use fixtures instead of real API calls
@@ -22,9 +29,16 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
-# Add lib to path
-SCRIPT_DIR = Path(__file__).parent.resolve()
+# Add lib to path. The script finds its own files from its own location,
+# so it works from a plugin cache, a junction, or any install folder.
+SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR))
+
+# Captured output on Windows defaults to a legacy code page that cannot
+# encode the emoji and box characters below; force UTF-8 instead.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
 
 from lib import (
     dates,
@@ -48,7 +62,7 @@ def load_fixture(name: str) -> dict:
     """Load a fixture file."""
     fixture_path = SCRIPT_DIR / "fixtures" / name
     if fixture_path.exists():
-        with open(fixture_path) as f:
+        with open(fixture_path, encoding="utf-8") as f:
             return json.load(f)
     return {}
 
@@ -174,8 +188,9 @@ def run_research(
     Returns:
         Tuple of (reddit_items, x_items, web_needed, raw_openai, raw_xai, raw_reddit_enriched, reddit_error, x_error)
 
-    Note: web_needed is True when WebSearch should be performed by Claude.
-    The script outputs a marker and Claude handles WebSearch in its session.
+    Note: web_needed is True in web-only mode and with --include-web. The
+    script then prints the WEBSEARCH REQUIRED block (see output_result); in
+    the research skill, the Phase 2 subagents provide that web coverage.
     """
     reddit_items = []
     x_items = []
@@ -185,7 +200,7 @@ def run_research(
     reddit_error = None
     x_error = None
 
-    # Check if WebSearch is needed (always needed in web-only mode)
+    # Check if web coverage is needed (always needed in web-only mode)
     web_needed = sources in ("all", "web", "reddit-web", "x-web")
 
     # Web-only mode: no API calls needed, Claude handles everything
@@ -335,7 +350,7 @@ def main():
 
     if not args.topic:
         print("Error: Please provide a topic to research.", file=sys.stderr)
-        print("Usage: python3 research.py <topic> [options]", file=sys.stderr)
+        print("Usage: python research.py <topic> [options]", file=sys.stderr)
         sys.exit(1)
 
     # Load config
@@ -354,15 +369,15 @@ def main():
         # Validate requested sources against available
         sources, error = env.validate_sources(args.sources, available, args.include_web)
         if error:
-            # If it's a warning about WebSearch fallback, print but continue
-            if "WebSearch fallback" in error:
+            # The web-only note is a warning: print it and continue
+            if error.startswith(env.WEB_ONLY_NOTE):
                 print(f"Note: {error}", file=sys.stderr)
             else:
                 print(f"Error: {error}", file=sys.stderr)
                 sys.exit(1)
 
-    # Get date range
-    from_date, to_date = dates.get_date_range(60)
+    # Get date range (the lookback window stated in SKILL.md)
+    from_date, to_date = dates.get_date_range(dates.LOOKBACK_DAYS)
 
     # Check what keys are missing for promo messaging
     missing_keys = env.get_missing_keys(config)
@@ -499,22 +514,10 @@ def output_result(
     elif emit_mode == "path":
         print(render.get_context_path())
 
-    # Output WebSearch instructions if needed
+    # Web coverage notice. The research skill's SKILL.md ("Phase 1") reads
+    # this block; keep the two in step.
     if web_needed:
-        print("\n" + "="*60)
-        print("### WEBSEARCH REQUIRED ###")
-        print("="*60)
-        print(f"Topic: {topic}")
-        print(f"Date range: {from_date} to {to_date}")
-        print("")
-        print("Claude: Use your WebSearch tool to find 8-15 relevant web pages.")
-        print("EXCLUDE: reddit.com, x.com, twitter.com (already covered above)")
-        print("INCLUDE: blogs, docs, news, tutorials from the research window")
-        print("")
-        print("After searching, synthesize WebSearch results WITH the Reddit/X")
-        print("results above. WebSearch items should rank LOWER than comparable")
-        print("Reddit/X items (they lack engagement metrics).")
-        print("="*60)
+        print("\n" + render.web_search_block(report, topic, from_date, to_date))
 
 
 if __name__ == "__main__":

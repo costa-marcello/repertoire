@@ -1,6 +1,6 @@
 # Intent Parsing Reference
 
-<!-- Extracted from SKILL.md — full query type definitions, detection patterns, and variable storage -->
+<!-- Query type definitions, detection patterns, and variable storage for the research skill -->
 
 ## Variables to Extract
 
@@ -9,7 +9,7 @@ Before doing anything, parse the user's input for these four variables:
 1. **TOPIC**: What they want to learn about
 2. **TARGET_TOOL** (if specified): Where they'll use the prompts (e.g., "Nano Banana Pro", "Midjourney")
 3. **QUERY_TYPE**: One of the four types below
-4. **DEPTH**: Controls sub-agent count via flags
+4. **DEPTH**: Controls the subagent count via flags
 
 ## Query Type Definitions
 
@@ -22,11 +22,7 @@ Before doing anything, parse the user's input for these four variables:
 
 ## Depth Flags
 
-| Flag | Agents | Split |
-|------|--------|-------|
-| `--quick` | 6 | 3 community + 3 official |
-| *(default)* | 8 | 4 community + 4 official |
-| `--deep` | 10 | 5 community + 5 official |
+`--quick`, no flag (default), or `--deep`. Strip the flag from TOPIC. The same flag is passed to the script in Phase 1; the subagent count for each depth is in SKILL.md, Phase 2.
 
 ## Common Detection Patterns
 
@@ -39,4 +35,4 @@ Before doing anything, parse the user's input for these four variables:
 
 Store as: `TOPIC`, `TARGET_TOOL` (or "unknown"), `QUERY_TYPE`, `DEPTH`.
 
-Do not ask about target tool before research. If tool is specified, use it. If not, run research first, then ask after showing results.
+If the tool is specified, use it. If not, run the research first and ask after showing results.

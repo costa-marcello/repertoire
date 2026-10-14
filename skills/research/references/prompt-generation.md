@@ -1,6 +1,6 @@
 # Prompt Generation Protocol
 
-<!-- Extracted from SKILL.md — full protocol for writing prompts after research -->
+<!-- Full protocol for writing prompts after research; the only home of the post-prompt footer -->
 
 ## When User Shares Their Vision: Write ONE Perfect Prompt
 
@@ -72,5 +72,5 @@ Based on: {community_n} community sources + {official_n} official sources
 
 Want another prompt? Just tell me what you're creating next.
 
-Unlock Reddit & X data: Add API keys to ~/.config/research/.env
+Unlock Reddit & X data: set the OPENAI_API_KEY and XAI_API_KEY environment variables
 ```

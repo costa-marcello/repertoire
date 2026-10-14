@@ -1,6 +1,6 @@
 # Context Memory Protocol
 
-<!-- Extracted from SKILL.md — context retention after research completes -->
+<!-- Context retention after the research skill completes -->
 
 ## Variables to Retain
 
@@ -12,6 +12,7 @@ For the rest of the conversation, remember:
 - **KEY OFFICIAL FINDINGS**: {top 3-5 from official sources}
 - **CROSS-REFERENCES**: {where they agree/disagree}
 - **SCRIPT DATA**: Reddit/X engagement metrics
+- **SEARCH_BACKEND**: SearXNG or the WebSearch + WebFetch fallback, so a later answer can say where its sources came from
 
 ## Post-Research Behavior
 

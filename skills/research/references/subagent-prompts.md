@@ -1,45 +1,51 @@
-# Sub-Agent Prompt Templates
+# Subagent Prompt Templates
 
 ## Contents
 
-1. [MCP-First Tool Instructions](#mcp-first-tool-instructions)
+1. [Search Tool Block](#search-tool-block)
 2. [Query Quality Protocol](#query-quality-protocol)
 3. [Community Agent Template](#community-agent-template)
 4. [Official Agent Template](#official-agent-template)
 5. [Query Generation by QUERY_TYPE](#query-generation-by-query_type)
 
-<!-- Templates used by the research skill orchestrator to construct sub-agent prompts.
-     Variables: {TOPIC}, {QUERY_TYPE}, {FOCUS}, {QUERIES}, {DATE_FROM}, {CURRENT_YEAR}, {MCP_TOOLS} -->
+<!-- Templates used by the research skill orchestrator to construct subagent prompts.
+     Variables: {TOPIC}, {QUERY_TYPE}, {FOCUS}, {QUERIES}, {DATE_FROM}, {CURRENT_YEAR},
+     {SCRIPT_SOURCES}, {MCP_TOOLS} -->
 
-## MCP-First Tool Instructions
+## Search Tool Block
 
-Include this block in EVERY sub-agent prompt:
+`{MCP_TOOLS}` is one of the two blocks below, chosen by the search backend check in SKILL.md. Every subagent gets the same block.
+
+**SearXNG backend.** The block is written for the user-scope server (`mcp__searxng__`). When the check picked the `repertoire-searxng` plugin instead, replace every `mcp__searxng__` with `mcp__plugin_repertoire-searxng_searxng__` before sending it.
 
 ```
-SEARCH STRATEGY (ordered by priority):
-1. First, check if MCP search tools are available:
-   {MCP_TOOLS}
-2. For each query, use the highest-priority available tool
-3. Never skip step 1 — always attempt MCP tools before harness fallbacks
-
-Why: MCP tools return structured results that reduce context bloat
-and often provide higher-quality output than built-in search.
+SEARCH TOOLS (backend: SearXNG)
+- Search: mcp__searxng__searxng_web_search with "query" (required) and
+  "num_results" (up to 20). Add "categories" to narrow results: "news",
+  "science", "scientific publications", "it", "q&a", "repos".
+  For NEWS queries add "time_range": "month". Otherwise leave time_range
+  out (SearXNG has no window matching ours) and check each date against
+  {DATE_FROM} yourself.
+- Read a page: mcp__searxng__web_url_read with "url". Pass "maxLength": 8000,
+  or "section" with a heading, to keep long pages short. Use it to confirm
+  quotes, numbers and dates before you report them.
+- Refine a query: mcp__searxng__searxng_search_suggestions with "query".
+  Use it once when a query returns fewer than 3 relevant results.
+- If these tools are not loaded yet, load them first with ToolSearch:
+  "select:mcp__searxng__searxng_web_search,mcp__searxng__web_url_read,mcp__searxng__searxng_search_suggestions"
+- If SearXNG calls fail twice in a row, switch to WebSearch and WebFetch
+  for the rest of your queries (load them with ToolSearch
+  "select:WebSearch,WebFetch" if needed) and say so under Search backend.
 ```
 
-When `{MCP_TOOLS}` is populated with available tools, list them by name:
-```
-MCP search tools available — USE THESE FIRST:
-- [list each discovered tool by full name, e.g. searxng_web_search, brave_web_search]
-- Only fall back to harness tools if MCP tools return errors or no results
-```
+**WebSearch fallback.** Fill `{REASON}` with the reason the check recorded.
 
-When no MCP search tools are detected:
 ```
-No MCP search tools detected. Use harness tools in this order:
-1. WebSearch / WebFetch (Claude Code built-in)
-2. antigravity_search / Antigravity tools (if available)
-3. codex_search / Codex tools (if available)
-Use whichever responds first with results.
+SEARCH TOOLS (backend: WebSearch + WebFetch, because {REASON})
+- Search: WebSearch. Read a page: WebFetch, to confirm quotes, numbers
+  and dates before you report them.
+- If these tools are not loaded yet, load them first with ToolSearch:
+  "select:WebSearch,WebFetch"
 ```
 
 ---
@@ -65,12 +71,14 @@ QUERY CRAFTING DISCIPLINE:
 ROLE: You are a domain investigator. Your job is NOT to dump links.
 It is to return evidence-backed findings the orchestrator can trust.
 You are looking at what REAL PEOPLE are saying about {TOPIC} in online
-discussions and forums from the last 2 months.
+discussions and forums published from {DATE_FROM} to today.
 
 CONTEXT:
-- Reddit and X/Twitter are covered by a separate specialized script with real
-  engagement metrics (upvotes, likes, reposts). Do NOT search reddit.com or x.com.
-- You are searching for ADDITIONAL community voices beyond Reddit and X.
+- Sites already covered by a separate script with real engagement metrics
+  (upvotes, likes, reposts): {SCRIPT_SOURCES}. Do NOT search those sites.
+  If this says "none", Reddit threads are in scope for you; x.com pages
+  usually need a login, so prefer other sources over X.
+- You are searching for community voices beyond the sites listed above.
 - Date range: {DATE_FROM} to today
 - Current year: {CURRENT_YEAR}
 - Query type: {QUERY_TYPE}
@@ -88,9 +96,9 @@ QUERIES TO RUN (3-5 searches):
 {QUERIES}
 
 For each query:
-- Exclude reddit.com and x.com from results
+- Exclude the sites listed as covered by the script ({SCRIPT_SOURCES})
 - Use the user's exact terminology. Do not substitute terms based on your knowledge
-- Look for content from the last 2 months specifically
+- Look for content published from {DATE_FROM} to today specifically
 
 SOURCE CREDIBILITY LADDER (tag each finding):
 - Tier A: primary source (project maintainer, named domain expert,
@@ -139,6 +147,9 @@ A tight 3-finding report beats a loose 10-finding report.
 
 RETURN FORMAT (max 500 words, inside <answer>):
 
+### Search backend
+- [tools you actually used; if you switched from SearXNG to WebSearch, say when and why]
+
 ### Queries Run
 - [list each final query exactly as executed]
 
@@ -171,7 +182,7 @@ For each relevant result:
 ROLE: You are an authoritative source investigator. Your job is NOT to dump links.
 It is to return evidence-backed, primary-source findings the orchestrator can trust.
 You focus exclusively on OFFICIAL, INSTITUTIONAL, and EXPERT information about
-{TOPIC} from the last 2 months.
+{TOPIC} published from {DATE_FROM} to today.
 
 CONTEXT:
 - Community discussions (Reddit, X, forums) are covered by separate agents.
@@ -196,7 +207,7 @@ For each query:
 - Prioritise: .gov, .edu, official project sites, peer-reviewed sources,
   institutional reports
 - Use the user's exact terminology. Do not substitute terms based on your knowledge
-- Look for content from the last 2 months specifically
+- Look for content published from {DATE_FROM} to today specifically
 
 SOURCE CREDIBILITY LADDER (tag each finding):
 - Tier A: primary source (official docs/changelog/release notes from the
@@ -244,6 +255,9 @@ Return at most your top 5 findings. Quality over quantity.
 
 RETURN FORMAT (max 500 words, inside <answer>):
 
+### Search backend
+- [tools you actually used; if you switched from SearXNG to WebSearch, say when and why]
+
 ### Queries Run
 - [list each final query exactly as executed]
 
@@ -262,7 +276,7 @@ For each relevant result:
 - [What is the official/institutional stance or latest information?]
 
 ### Recent Changes
-- [Any announcements, updates, or shifts in the last 2 months, with dates]
+- [Any announcements, updates, or shifts since {DATE_FROM}, with dates]
 
 ### Contradictions
 - [Sources X and Y disagree on Z, with attribution. "None" if none found.]

@@ -7,9 +7,9 @@
 3. [Cross-Reference Table](#cross-reference-table)
 4. [Stats Footer](#stats-footer)
 5. [Invitation](#invitation)
-6. [Post-Prompt Footer](#post-prompt-footer)
 
-<!-- Template for the two-sided research report produced by the research skill. -->
+<!-- Template for the two-sided research report produced by the research skill.
+     The footer after a generated prompt lives in prompt-generation.md. -->
 
 ## Report Template
 
@@ -24,7 +24,7 @@
 [From Python script — these have real upvotes, likes, reposts]
 
 #### Broader Community (HN, forums, blogs)
-[From community sub-agents C1-C5]
+[From community subagents C1-C5]
 ```
 
 ### Community Section by QUERY_TYPE
@@ -106,6 +106,8 @@ Status definitions:
 
 ## Stats Footer
 
+Use real numbers from the research. The `Search backend` line is always present: it names `SEARCH_BACKEND` from SKILL.md, and any agent that switched to the fallback mid-run.
+
 ```
 ---
 All agents reported back!
@@ -114,21 +116,24 @@ All agents reported back!
 ├─ Community web: {n} sources (HN, forums, blogs)
 ├─ Official web: {n} sources (docs, papers, reports)
 ├─ Agents dispatched: {total} ({C}C + {O}O)
+├─ Search backend: {SEARCH_BACKEND}
 └─ Cross-reference: {agree} aligned, {disagree} divergent, {gaps} gaps
 ```
 
-**Web-only mode** (no Reddit/X API keys):
-```
----
-All agents reported back!
-├─ Community web: {n} sources (HN, forums, blogs)
-├─ Official web: {n} sources (docs, papers, reports)
-├─ Agents dispatched: {total} ({C}C + {O}O)
-└─ Cross-reference: {agree} aligned, {disagree} divergent, {gaps} gaps
+`{SEARCH_BACKEND}` reads like one of these:
+- `SearXNG (mcp__searxng__searxng_web_search)`
+- `SearXNG (mcp__plugin_repertoire-searxng_searxng__searxng_web_search); C3 fell back to WebSearch after two errors`
+- `WebSearch + WebFetch (fallback: no SearXNG tool)`
+- `WebSearch + WebFetch (fallback: SearXNG not reachable)`
 
-Unlock Reddit & X data: Add API keys to ~/.config/research/.env
+When the fallback was used, add one line under the footer: `SearXNG setup: see references/searxng-setup.md in the research skill.`
+
+Drop the Reddit line when the script did not cover Reddit, and the X line when it did not cover X. **Web-only mode** (no Reddit/X API keys) drops both and adds:
+```
+Unlock Reddit & X data: set these environment variables
   - OPENAI_API_KEY -> Reddit (real upvotes & comments)
   - XAI_API_KEY -> X/Twitter (real likes & reposts)
+  (In Claude Code, ~/.config/research/.env also works; Cowork has no such file.)
 ```
 
 ## Invitation
@@ -139,13 +144,13 @@ Share your vision for what you want to create and I'll write a thoughtful prompt
 you can copy-paste directly into {TARGET_TOOL}.
 ```
 
-## Post-Prompt Footer
-
-After delivering a prompt:
+If TARGET_TOOL is still unknown, ask instead:
 ```
----
-Expert in: {TOPIC} for {TARGET_TOOL}
-Based on: {reddit_n} Reddit threads ({upvotes} upvotes) + {x_n} X posts ({likes} likes) + {community_n} community sources + {official_n} official sources
+What tool will you use these prompts with?
 
-Want another prompt? Just tell me what you're creating next.
+Options:
+1. [Most relevant tool based on research]
+2. Nano Banana Pro (image generation)
+3. ChatGPT / Claude (text/code)
+4. Other (tell me)
 ```

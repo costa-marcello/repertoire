@@ -1,12 +1,12 @@
 # Source Categories
 
-<!-- Used by sub-agents to know WHERE to search. -->
+<!-- Used when filling {FOCUS} and {QUERIES}, so subagents know WHERE to search. -->
 
 ## Community Sources (Human Discussions)
 
-Sub-agents searching community sources look for real human opinions, recommendations, debates, and experience reports.
+Subagents searching community sources look for real human opinions, recommendations, debates, and experience reports.
 
-**EXCLUDE**: reddit.com, x.com, twitter.com — the Python script handles these with real engagement metrics (upvotes, likes, reposts). Do NOT duplicate that work.
+**Exclude** the sites the Python script covered (`SCRIPT_SOURCES`: reddit.com, x.com and twitter.com when both API keys work). The script has real engagement metrics (upvotes, likes, reposts) for them, so do not duplicate that work. When it covered none (web-only mode), Reddit threads are in scope for community subagents.
 
 ### Tier 1 — High Signal (has voting/engagement)
 - Hacker News (news.ycombinator.com)
@@ -30,7 +30,7 @@ Sub-agents searching community sources look for real human opinions, recommendat
 
 ## Official Sources (Authoritative/Institutional)
 
-Sub-agents searching official sources look for verified facts, announcements, documentation, and expert analysis.
+Subagents searching official sources look for verified facts, announcements, documentation, and expert analysis.
 
 ### Tier 1 — Primary Authority
 - Official project documentation and websites
@@ -62,7 +62,7 @@ Sub-agents searching official sources look for verified facts, announcements, do
 ## Domain Quality Signals
 
 When evaluating sources, prefer:
-- **Recency**: Content from the last 2 months (primary window)
+- **Recency**: Content published inside the lookback window (`{DATE_FROM}` to today; the default is set once in SKILL.md, "Lookback window")
 - **Specificity**: Sources that discuss the exact topic, not tangentially related
 - **Engagement**: Community sources with replies/votes > silent posts
 - **Authority**: Official sources from the actual project/org, not third-party summaries

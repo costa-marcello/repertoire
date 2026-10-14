@@ -1,4 +1,10 @@
-"""Environment and API key management for research skill."""
+"""Environment and API key management for research skill.
+
+API keys come from environment variables (OPENAI_API_KEY, XAI_API_KEY).
+~/.config/research/.env is an optional fallback for Claude Code on the
+user's own machine; Cowork sessions do not have that file, so only the
+environment variables work there. Without keys the script runs web-only.
+"""
 
 import os
 from pathlib import Path
@@ -7,6 +13,14 @@ from typing import Optional, Dict, Any
 CONFIG_DIR = Path.home() / ".config" / "research"
 CONFIG_FILE = CONFIG_DIR / ".env"
 
+WEB_ONLY_NOTE = "No API keys configured, so running in web-only mode."
+
+# Shown whenever a key is missing; keep it in step with SKILL.md "API keys".
+KEY_HINT = (
+    "Set OPENAI_API_KEY (Reddit) and XAI_API_KEY (X) as environment variables. "
+    "In Claude Code, ~/.config/research/.env also works; Cowork has no such file."
+)
+
 
 def load_env_file(path: Path) -> Dict[str, str]:
     """Load environment variables from a file."""
@@ -14,7 +28,7 @@ def load_env_file(path: Path) -> Dict[str, str]:
     if not path.exists():
         return env
 
-    with open(path, 'r') as f:
+    with open(path, 'r', encoding='utf-8') as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith('#'):
@@ -32,11 +46,11 @@ def load_env_file(path: Path) -> Dict[str, str]:
 
 
 def get_config() -> Dict[str, Any]:
-    """Load configuration from ~/.config/research/.env and environment."""
-    # Load from config file first
+    """Load configuration from the environment, then ~/.config/research/.env."""
+    # Optional Claude Code convenience file; absent in Cowork
     file_env = load_env_file(CONFIG_FILE)
 
-    # Environment variables override file
+    # Environment variables always win over the file
     config = {
         'OPENAI_API_KEY': os.environ.get('OPENAI_API_KEY') or file_env.get('OPENAI_API_KEY'),
         'XAI_API_KEY': os.environ.get('XAI_API_KEY') or file_env.get('XAI_API_KEY'),
@@ -69,7 +83,7 @@ def get_available_sources(config: Dict[str, Any]) -> str:
     elif has_xai:
         return 'x'
     else:
-        return 'web'  # Fallback: WebSearch only (no API keys needed)
+        return 'web'  # Web-only: the skill's subagents cover the web
 
 
 def get_missing_keys(config: Dict[str, Any]) -> str:
@@ -96,19 +110,20 @@ def validate_sources(requested: str, available: str, include_web: bool = False) 
     Args:
         requested: 'auto', 'reddit', 'x', 'both', or 'web'
         available: Result from get_available_sources()
-        include_web: If True, add WebSearch to available sources
+        include_web: If True, add web search to available sources
 
     Returns:
-        Tuple of (effective_sources, error_message)
+        Tuple of (effective_sources, error_message). An error message that
+        starts with WEB_ONLY_NOTE is a note, not a failure.
     """
-    # WebSearch-only mode (no API keys)
+    # Web-only mode (no API keys)
     if available == 'web':
         if requested == 'auto':
             return 'web', None
         elif requested == 'web':
             return 'web', None
         else:
-            return 'web', f"No API keys configured. Using WebSearch fallback. Add keys to ~/.config/research/.env for Reddit/X."
+            return 'web', f"{WEB_ONLY_NOTE} {KEY_HINT}"
 
     if requested == 'auto':
         # Add web to sources if include_web is set

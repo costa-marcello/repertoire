@@ -1,0 +1,51 @@
+{
+  "skill_name": "research",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/research what's new with the Bun JavaScript runtime --quick",
+      "expected_output": "Precondition: a SearXNG MCP server is connected (the user-scope searxng server or the repertoire-searxng plugin) and its instance answers. A NEWS report at quick depth: the skill checks SearXNG with ToolSearch and searxng_instance_info before anything else, runs the script from the skill folder, dispatches 6 subagents in one message through the Agent tool with the fully qualified SearXNG tools, and the stats footer says the search backend was SearXNG.",
+      "files": [],
+      "expectations": [
+        "ToolSearch is run with the query 'searxng' before any subagent is dispatched",
+        "mcp__searxng__searxng_instance_info or mcp__plugin_repertoire-searxng_searxng__searxng_instance_info is called before any search tool",
+        "The script is run from the skill's own folder (the resolved ${CLAUDE_SKILL_DIR}/scripts/research.py) with --quick, never through a ~/.claude/skills/research or .claude/skills/research path",
+        "Exactly 6 subagents (C1-C3 and O1-O3) are dispatched in a single message through the Agent tool, and no Task or TaskOutput tool is called",
+        "Every subagent prompt names the SearXNG tools with their server prefix (mcp__searxng__ or mcp__plugin_repertoire-searxng_searxng__), including web_url_read and searxng_search_suggestions",
+        "QUERY_TYPE is NEWS, and the NEWS subagents are told to pass time_range month",
+        "The report has the community section, the official section, and a cross-reference table with 3-5 rows marked Aligned, Divergent, or Gap",
+        "The stats footer has a line 'Search backend: SearXNG (...)' naming the fully qualified searxng_web_search tool",
+        "The report ends with the invitation or the target-tool question and then waits for the user"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "/research best open-source vector databases for RAG",
+      "expected_output": "Precondition: no SearXNG tool is available in the session (no searxng server and no repertoire-searxng plugin, as in a cloud Cowork session), or its instance is stopped. A RECOMMENDATIONS report at default depth whose subagents use WebSearch and WebFetch, and whose footer names that fallback, its reason, and the SearXNG setup reference.",
+      "files": [],
+      "expectations": [
+        "ToolSearch is run with the query 'searxng' before any subagent is dispatched",
+        "No SearXNG search tool (mcp__searxng__searxng_web_search or mcp__plugin_repertoire-searxng_searxng__searxng_web_search) is called",
+        "Exactly 8 subagents (C1-C4 and O1-O4) are dispatched in a single message through the Agent tool",
+        "Every subagent prompt carries the WebSearch + WebFetch search block with the recorded reason, and none lists SearXNG tools",
+        "The stats footer has a line 'Search backend: WebSearch + WebFetch (fallback: no SearXNG tool)' or '(fallback: SearXNG not reachable)'",
+        "A line under the footer points to references/searxng-setup.md",
+        "The community section is a 'Most Mentioned' list of specific database names with mention counts and sources"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "/research how are teams adopting the Model Context Protocol in production",
+      "expected_output": "Precondition: OPENAI_API_KEY and XAI_API_KEY are unset and no ~/.config/research/.env exists. The script runs web-only without network calls; the skill continues without warning, lets the subagents cover the web (Reddit included, since the script covered nothing), and the footer drops the Reddit and X lines, keeps the search backend line, and gives the environment-variable hint.",
+      "files": [],
+      "expectations": [
+        "The script output shows 'Mode: web-only' and 'Script covered: none', and the skill continues to Phase 2 without stopping or warning",
+        "The skill does not run a separate web search of its own in response to the '### WEBSEARCH REQUIRED ###' block; web sources come from the subagents",
+        "The community subagent prompts say the script covered no sites, so Reddit threads are in scope",
+        "The stats footer has no Reddit line and no X line, and still has a 'Search backend:' line naming SearXNG or WebSearch + WebFetch",
+        "The footer hint names OPENAI_API_KEY and XAI_API_KEY as environment variables and describes ~/.config/research/.env as a Claude Code convenience that Cowork lacks",
+        "No API key value appears anywhere in the output"
+      ]
+    }
+  ]
+}

@@ -10,28 +10,23 @@ from typing import Optional
 # Check if we're in a real terminal (not captured by Claude Code)
 IS_TTY = sys.stderr.isatty()
 
-# ANSI color codes
+# ANSI color codes, only when stderr is a real terminal. Captured output
+# (Claude Code, Cowork) gets plain text without escape sequences.
+def _ansi(code: str) -> str:
+    return code if IS_TTY else ''
+
+
 class Colors:
-    PURPLE = '\033[95m'
-    BLUE = '\033[94m'
-    CYAN = '\033[96m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    BOLD = '\033[1m'
-    DIM = '\033[2m'
-    RESET = '\033[0m'
+    PURPLE = _ansi('\033[95m')
+    BLUE = _ansi('\033[94m')
+    CYAN = _ansi('\033[96m')
+    GREEN = _ansi('\033[92m')
+    YELLOW = _ansi('\033[93m')
+    RED = _ansi('\033[91m')
+    BOLD = _ansi('\033[1m')
+    DIM = _ansi('\033[2m')
+    RESET = _ansi('\033[0m')
 
-
-BANNER = f"""{Colors.PURPLE}{Colors.BOLD}
-  ██╗      █████╗ ███████╗████████╗██████╗  ██████╗ ██████╗  █████╗ ██╗   ██╗███████╗
-  ██║     ██╔══██╗██╔════╝╚══██╔══╝╚════██╗██╔═████╗██╔══██╗██╔══██╗╚██╗ ██╔╝██╔════╝
-  ██║     ███████║███████╗   ██║    █████╔╝██║██╔██║██║  ██║███████║ ╚████╔╝ ███████╗
-  ██║     ██╔══██║╚════██║   ██║    ╚═══██╗████╔╝██║██║  ██║██╔══██║  ╚██╔╝  ╚════██║
-  ███████╗██║  ██║███████║   ██║   ██████╔╝╚██████╔╝██████╔╝██║  ██║   ██║   ███████║
-  ╚══════╝╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═════╝  ╚═════╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝
-{Colors.RESET}{Colors.DIM}  Deep research. 30 seconds of work.{Colors.RESET}
-"""
 
 MINI_BANNER = f"""{Colors.PURPLE}{Colors.BOLD}/research{Colors.RESET} {Colors.DIM}· researching...{Colors.RESET}"""
 
@@ -87,12 +82,13 @@ PROMO_MESSAGE = f"""
 {Colors.DIM}Right now you're using web search only. Add API keys to unlock:{Colors.RESET}
 
   {Colors.YELLOW}🟠 Reddit{Colors.RESET} - Real upvotes, comments, and community insights
-     └─ Add OPENAI_API_KEY (uses OpenAI's web_search for Reddit)
+     └─ Set OPENAI_API_KEY (uses OpenAI's web_search for Reddit)
 
   {Colors.CYAN}🔵 X (Twitter){Colors.RESET} - Real-time posts, likes, reposts from creators
-     └─ Add XAI_API_KEY (uses xAI's live X search)
+     └─ Set XAI_API_KEY (uses xAI's live X search)
 
-{Colors.DIM}Setup:{Colors.RESET} Edit {Colors.BOLD}~/.config/research/.env{Colors.RESET}
+{Colors.DIM}Setup:{Colors.RESET} set them as environment variables. In Claude Code,
+{Colors.BOLD}~/.config/research/.env{Colors.RESET} also works; Cowork has no such file.
 {Colors.YELLOW}{Colors.BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Colors.RESET}
 """
 
@@ -103,28 +99,29 @@ PROMO_MESSAGE_PLAIN = """
 Right now you're using web search only. Add API keys to unlock:
 
   🟠 Reddit - Real upvotes, comments, and community insights
-     └─ Add OPENAI_API_KEY (uses OpenAI's web_search for Reddit)
+     └─ Set OPENAI_API_KEY (uses OpenAI's web_search for Reddit)
 
   🔵 X (Twitter) - Real-time posts, likes, reposts from creators
-     └─ Add XAI_API_KEY (uses xAI's live X search)
+     └─ Set XAI_API_KEY (uses xAI's live X search)
 
-Setup: Edit ~/.config/research/.env
+Setup: set them as environment variables. In Claude Code,
+~/.config/research/.env also works; Cowork has no such file.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
 
 # Shorter promo for single missing key
 PROMO_SINGLE_KEY = {
     "reddit": f"""
-{Colors.DIM}💡 Tip: Add {Colors.YELLOW}OPENAI_API_KEY{Colors.RESET}{Colors.DIM} to ~/.config/research/.env for Reddit data with real engagement metrics!{Colors.RESET}
+{Colors.DIM}💡 Tip: set {Colors.YELLOW}OPENAI_API_KEY{Colors.RESET}{Colors.DIM} (environment variable, or ~/.config/research/.env in Claude Code) for Reddit data with real engagement metrics.{Colors.RESET}
 """,
     "x": f"""
-{Colors.DIM}💡 Tip: Add {Colors.CYAN}XAI_API_KEY{Colors.RESET}{Colors.DIM} to ~/.config/research/.env for X/Twitter data with real likes & reposts!{Colors.RESET}
+{Colors.DIM}💡 Tip: set {Colors.CYAN}XAI_API_KEY{Colors.RESET}{Colors.DIM} (environment variable, or ~/.config/research/.env in Claude Code) for X/Twitter data with real likes & reposts.{Colors.RESET}
 """,
 }
 
 PROMO_SINGLE_KEY_PLAIN = {
-    "reddit": "\n💡 Tip: Add OPENAI_API_KEY to ~/.config/research/.env for Reddit data with real engagement metrics!\n",
-    "x": "\n💡 Tip: Add XAI_API_KEY to ~/.config/research/.env for X/Twitter data with real likes & reposts!\n",
+    "reddit": "\n💡 Tip: set OPENAI_API_KEY (environment variable, or ~/.config/research/.env in Claude Code) for Reddit data with real engagement metrics.\n",
+    "x": "\n💡 Tip: set XAI_API_KEY (environment variable, or ~/.config/research/.env in Claude Code) for X/Twitter data with real likes & reposts.\n",
 }
 
 # Spinner frames
@@ -278,7 +275,7 @@ class ProgressDisplay:
     def end_web_only(self):
         """End web-only spinner."""
         if self.spinner:
-            self.spinner.stop(f"{Colors.GREEN}Web{Colors.RESET} Claude will search the web")
+            self.spinner.stop(f"{Colors.GREEN}Web{Colors.RESET} the research subagents will cover the web")
 
     def show_web_only_complete(self):
         """Show completion for web-only mode."""
@@ -286,7 +283,7 @@ class ProgressDisplay:
         if IS_TTY:
             sys.stderr.write(f"\n{Colors.GREEN}{Colors.BOLD}✓ Ready for web search{Colors.RESET} ")
             sys.stderr.write(f"{Colors.DIM}({elapsed:.1f}s){Colors.RESET}\n")
-            sys.stderr.write(f"  {Colors.GREEN}Web:{Colors.RESET} Claude will search blogs, docs & news\n\n")
+            sys.stderr.write(f"  {Colors.GREEN}Web:{Colors.RESET} the research subagents will search blogs, docs & news\n\n")
         else:
             sys.stderr.write(f"✓ Ready for web search ({elapsed:.1f}s)\n")
         sys.stderr.flush()

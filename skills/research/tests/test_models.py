@@ -1,13 +1,37 @@
 """Tests for models module."""
 
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 # Add lib to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
-from lib import models
+from lib import cache, models
+
+# Model selection writes a cache file. Point it at a temporary folder so the
+# tests never read or delete the user's real ~/.cache/research.
+_TMP = None
+_ORIGINAL = None
+
+
+def setUpModule():
+    global _TMP, _ORIGINAL
+    _TMP = tempfile.TemporaryDirectory()
+    _ORIGINAL = (cache.CACHE_DIR, cache.MODEL_CACHE_FILE)
+    cache.CACHE_DIR = Path(_TMP.name)
+    cache.MODEL_CACHE_FILE = cache.CACHE_DIR / "model_selection.json"
+
+
+def tearDownModule():
+    cache.CACHE_DIR, cache.MODEL_CACHE_FILE = _ORIGINAL
+    _TMP.cleanup()
+
+
+class _FreshCache(unittest.TestCase):
+    def setUp(self):
+        cache.MODEL_CACHE_FILE.unlink(missing_ok=True)
 
 
 class TestParseVersion(unittest.TestCase):
@@ -42,7 +66,7 @@ class TestIsMainlineOpenAIModel(unittest.TestCase):
         self.assertFalse(models.is_mainline_openai_model("gpt-4"))
 
 
-class TestSelectOpenAIModel(unittest.TestCase):
+class TestSelectOpenAIModel(_FreshCache):
     def test_pinned_policy(self):
         result = models.select_openai_model(
             "fake-key",
@@ -78,7 +102,7 @@ class TestSelectOpenAIModel(unittest.TestCase):
         self.assertEqual(result, "gpt-5.2")
 
 
-class TestSelectXAIModel(unittest.TestCase):
+class TestSelectXAIModel(_FreshCache):
     def test_latest_policy(self):
         result = models.select_xai_model(
             "fake-key",
@@ -87,9 +111,7 @@ class TestSelectXAIModel(unittest.TestCase):
         self.assertEqual(result, "grok-4-1-fast")
 
     def test_stable_policy(self):
-        # Clear cache first to avoid interference
-        from lib import cache
-        cache.MODEL_CACHE_FILE.unlink(missing_ok=True)
+        # setUp already cleared the sandboxed cache
         result = models.select_xai_model(
             "fake-key",
             policy="stable"
@@ -105,7 +127,7 @@ class TestSelectXAIModel(unittest.TestCase):
         self.assertEqual(result, "grok-3")
 
 
-class TestGetModels(unittest.TestCase):
+class TestGetModels(_FreshCache):
     def test_no_keys_returns_none(self):
         config = {}
         result = models.get_models(config)
