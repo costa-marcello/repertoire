@@ -1,150 +1,108 @@
-# Research-Backed Criteria for Deep Reviews
+# Deep-Review Lenses
 
-<!-- v1.0 | 2026-01-29 -->
+Six lenses drawn from Anthropic's prompting guidance and published research. Like the content lenses, they only find issues: each issue maps to a rule ID in `rules.md` or goes under "Advisory notes" in the report. No lens produces a grade, a score, or a pass count. Full citations are in `sources.md`.
 
-Use this reference when performing thorough skill reviews. These criteria come from official vendor documentation and peer-reviewed research.
+## Contents
 
----
+1. [XML tags (S1)](#1-xml-tags-s1)
+2. [Examples (S2, M5, m12)](#2-examples-s2-m5-m12)
+3. [Prompt defect taxonomy](#3-prompt-defect-taxonomy)
+4. [Anti-patterns](#4-anti-patterns)
+5. [Formatting (advisory)](#5-formatting-advisory)
+6. [HELM-inspired questions (thinking aids)](#6-helm-inspired-questions-thinking-aids)
+7. [Quick checklist](#quick-checklist)
 
-## 1. XML Tag Usage (Anthropic Official)
+## 1. XML tags (S1)
 
-Claude is trained on XML-tagged prompts. Research shows 15-20% improvement with proper XML structure.
+Anthropic's [prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#structure-prompts-with-xml-tags) recommend XML tags when a prompt mixes instructions, context, examples, and inputs, so Claude can tell them apart. Anthropic's skill guidance does not require tags, and Anthropic's own skills use plain Markdown. skillkit uses `<instructions>` and `<example>` as house style, so a gap here is Style.
 
-### What to Check
+| Check | Rule |
+|-------|------|
+| The workflow sits inside `<instructions>` | S1 (definitive) |
+| Worked examples sit inside `<example>` | S1 (heuristic; the validator checks only `<instructions>`) |
+| The same tag names are used throughout | advisory |
+| Inputs or fetched content are separated from instructions | advisory; M10 when the skill tells Claude to obey them |
 
-| Check | Pass | Fail |
-|-------|------|------|
-| Instructions wrapped | `<instructions>...</instructions>` | Plain prose |
-| Examples tagged | `<example>...</example>` | Unmarked examples |
-| Context separated | `<context>...</context>` | Mixed with instructions |
-| Consistent naming | Same tags throughout | Inconsistent tags |
+## 2. Examples (S2, M5, m12)
 
-### Recommended Tags
+The [prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#use-examples-effectively) call examples one of the most reliable ways to steer format and tone. Make them relevant, diverse, and structured; 3-5 work best for prompts. The skill guidance prescribes no number, which is why the count is Style.
 
-- `<instructions>` - Core directives
-- `<example>` or `<examples>` - Demonstrations
-- `<context>` - Background information
-- `<thinking>` and `<answer>` - Chain-of-thought separation
-- `<formatting>` - Output format specifications
+| Check | Rule |
+|-------|------|
+| Fewer than 3 or more than 5 `<example>` blocks in SKILL.md | S2 |
+| An example contradicts the instructions | M5 |
+| An example in SKILL.md contains a literal `$ARGUMENTS` or `$N` | m12 |
+| All examples cover the same case | advisory |
+| Long examples crowd SKILL.md | advisory; move them to a reference |
 
-**Source**: [Anthropic Prompt Engineering - Use XML Tags](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/use-xml-tags)
+Research context: example order changes results (Lu et al., ACL 2022); format matters more than label correctness (Min et al., EMNLP 2022); too many examples can lower performance (arXiv:2509.13196), although some tasks gain from hundreds (arXiv:2404.11018).
 
----
+## 3. Prompt defect taxonomy
 
-## 2. Example Quality (Academic Consensus)
+Tian et al. (arXiv:2509.14404) sort prompt defects into six dimensions. In a skill, each points to rules:
 
-Research shows 3-5 diverse examples optimal. Quality matters more than quantity.
+| Dimension | What it looks like in a skill | Rule |
+|-----------|-------------------------------|------|
+| Specification and intent | Vague description, unclear task, directives Claude cannot act on | M8, M7 |
+| Input and content | The skill treats file or web content as instructions; inputs are never defined | M10; advisory |
+| Structure and formatting | Bloated SKILL.md, long references without a table of contents, reference chains | M1, m9, m10, S3 |
+| Context and memory | Fork on a skill that needs the conversation; facts that disagree across files; key rules buried after the first 5,000 tokens | M2, M5, advisory |
+| Performance and efficiency | Explaining concepts Claude knows; repeated content | m1, S3 |
+| Maintainability and engineering | User-specific paths, dated logic, drifting terms, unexplained constants | m11, m3, m4, advisory |
 
-### Assessment Criteria
+## 4. Anti-patterns
 
-| Criterion | Good | Bad |
-|-----------|------|-----|
-| **Relevance** | Mirrors actual use cases | Generic/unrelated |
-| **Diversity** | Covers edge cases | All similar |
-| **Format** | Input/output pairs in `<example>` tags | Prose descriptions |
-| **Count** | 3-5 examples | 0-1 or 10+ |
+From the [OWASP Top 10 for LLM applications (2025)](https://genai.owasp.org/llm-top-10/):
 
-### Warning Signs
+| Risk | What it looks like in a skill | Rule |
+|------|-------------------------------|------|
+| LLM01 Prompt injection | The skill tells Claude to follow instructions found in fetched pages or user files | M10 |
+| LLM02 Sensitive information disclosure | Hardcoded secrets; file contents sent to an undisclosed host | M10 |
+| LLM03 Supply chain | A script downloads and runs remote code that SKILL.md does not disclose | M10 |
+| LLM06 Excessive agency | Deletes, publishes, or overwrites with no check or confirmation | M4; M10 when it acts against the user |
 
-- **Too few**: No examples = Claude guesses format
-- **Too many**: >10 examples = diminishing returns, token waste
-- **Wrong order**: Example order affects performance (Lu et al., 2022)
+From Anthropic's skill and prompting guidance:
 
-**Sources**:
-- Anthropic: "3-5 diverse, relevant examples"
-- arXiv:2509.13196: Performance degrades beyond ~20 examples
-- EMNLP 2022 (Min et al.): Format matters more than label correctness
+| Anti-pattern | Rule |
+|--------------|------|
+| Shouted directives (`MUST`, `NEVER`, `CRITICAL`) with no reason | m15 |
+| Conflicting instructions with no precedence | M5 |
+| Vague tool rules ("use tools when helpful") | M7 |
+| A menu of options with no default | m2 |
+| Instructions to reveal hidden reasoning | M10 |
+| MCP tools named without their server | m14 |
+| Rigid steps where judgment is needed (newer models need less prescription) | M3 when an open task is forced into fixed steps; otherwise advisory |
 
----
+From research: elaborate prompting techniques that help one model can hurt a stronger one (arXiv:2510.22251). Treat it as support for simplifying, not as a finding.
 
-## 3. Prompt Defect Categories
+## 5. Formatting (advisory)
 
-A taxonomy of 6 defect dimensions from academic research.
+He et al. (arXiv:2411.10541) found that GPT-3.5-turbo's results on a code translation task varied by up to 40% across prompt templates, while GPT-4 was much less sensitive. Use this as a reason to look at structure, not as a rule:
 
-| Category | What to Check | Red Flags |
-|----------|---------------|-----------|
-| **Specification** | Clear intent? | Ambiguous instructions |
-| **Input/Content** | Data well-formatted? | Messy input structure |
-| **Structure** | Organized with delimiters? | Wall of text |
-| **Context** | Sufficient background? | Missing critical info |
-| **Performance** | Token-efficient? | Bloated instructions |
-| **Maintainability** | Easy to modify? | Hardcoded values, fragile patterns |
+- Headers for sections, tables for comparisons, one delimiter style throughout.
+- Direct instructions over elaborate framing.
 
-**Source**: arXiv:2509.14404 - "A Taxonomy of Prompt Defects in LLM Systems"
+Formatting observations are advisory; tag usage is covered by S1.
 
----
+## 6. HELM-inspired questions (thinking aids)
 
-## 4. Anti-Patterns from Official Sources
+These questions, adapted from Stanford HELM's multi-metric view, help a reviewer notice problems. They carry no score. When one fails, look for the rule in the right column.
 
-### From OWASP LLM Top 10 2025
+| Question | Where to look |
+|----------|---------------|
+| Clarity: can a person follow SKILL.md in one read? | M7, m4 |
+| Actionability: can each instruction be carried out as written? | M7, m2 |
+| Robustness: would a reworded request still trigger the skill? | trigger review (advisory), M8 |
+| Maintainability: can one fact change without breaking another file? | M5, m3, m11 |
+| Safety: are destructive steps checked, and are boundaries stated? | M4, M10 |
 
-| Risk | Detection | Mitigation |
-|------|-----------|------------|
-| Prompt injection | User input mixed with instructions | Separate with XML tags, validate input |
-| Scope creep | No defined boundaries | Explicit "do not" statements |
+## Quick checklist
 
-### From OpenAI/Anthropic Docs
-
-| Anti-Pattern | Problem | Fix |
-|--------------|---------|-----|
-| Over-specification | "MUST", "CRITICAL", "NEVER" overuse | Natural language works |
-| Conflicting instructions | Model spends tokens reconciling | Clear hierarchy |
-| Vague tool rules | "Use tools when helpful" | Specify exact conditions |
-| Passive personality | "Be helpful" | Explicit behavioral rules |
-
-### From Academic Research
-
-| Anti-Pattern | Evidence | Impact |
-|--------------|----------|--------|
-| Single complex prompt | arXiv:2411.09916 | Most common failure mode |
-| Ignoring token limits | Multiple sources | Parsing struggles |
-| No iteration | Practitioner guides | First attempt rarely optimal |
-
----
-
-## 5. Formatting Effectiveness
-
-Research shows format can vary performance by 40%.
-
-### Model-Specific Preferences
-
-| Model | Preferred Format | Source |
-|-------|-----------------|--------|
-| Claude | XML tags, Markdown | Anthropic official |
-| GPT-4 | Markdown headers | arXiv:2411.10541 |
-| GPT-3.5 | JSON | arXiv:2411.10541 |
-
-### Universal Principles
-
-1. **Clarity > complexity** - Direct instructions outperform elaborate engineering
-2. **Consistent delimiters** - Pick XML or Markdown, use throughout
-3. **Hierarchical structure** - Headers for sections, tags for components
-4. **Tables for comparisons** - Easier for LLMs to scan than prose
-
----
-
-## 6. Evaluation Metrics (HELM-Inspired)
-
-For comprehensive skill assessment, evaluate across multiple dimensions.
-
-| Metric | Question | Scoring |
-|--------|----------|---------|
-| **Clarity** | Can a human understand in one read? | 1-5 scale |
-| **Actionability** | Is each instruction executable? | Pass/Fail per instruction |
-| **Robustness** | Would rewording break it? | Test 3 phrasings |
-| **Maintainability** | Can it be updated without breaking? | Identify brittle parts |
-| **Safety** | Are boundaries defined? | Check scope statements |
-
----
-
-## Quick Checklist for Deep Review
-
-```
-Deep Review Criteria:
-- [ ] XML tags used for structure?
-- [ ] 3-5 diverse examples present?
-- [ ] No defects in 6 taxonomy categories?
-- [ ] No anti-patterns from vendor docs?
-- [ ] Format matches model preferences?
-- [ ] Passes HELM-inspired metrics?
+```text
+Deep-review lenses:
+- [ ] XML tags: S1 gaps noted as Style
+- [ ] Examples: count (S2), contradictions (M5), literal arguments (m12)
+- [ ] Defect taxonomy: each dimension checked, issues mapped to IDs
+- [ ] Anti-patterns: OWASP and Anthropic lists checked, issues mapped to IDs
+- [ ] Formatting and HELM questions: observations recorded as advisory
 ```

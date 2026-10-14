@@ -1,340 +1,172 @@
-# Content Quality Checklist
+# Content Quality Lenses
 
-Evaluates skill **effectiveness**, not just structure. Use alongside `evaluation-checklist.md` for complete reviews.
+Eight lenses for judging whether a skill works, not only whether it is well formed, plus four newer points from Anthropic's guidance. A lens finds issues; it does not grade. Each issue maps to the rule ID named in the lens heading and is graded by `rules.md`. An issue that fits no rule goes under "Advisory notes" in the report.
 
-Based on [Anthropic Best Practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices).
+Based on [Anthropic's skill authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices).
 
----
+## Contents
 
-## 1. Degrees of Freedom Analysis
+1. [Degrees of freedom (M3)](#1-degrees-of-freedom-m3)
+2. [Conciseness (m1)](#2-conciseness-m1)
+3. [Actionability (M7)](#3-actionability-m7)
+4. [Options and defaults (m2)](#4-options-and-defaults-m2)
+5. [Script quality (M6, m13)](#5-script-quality-m6-m13)
+6. [Feedback loops (M4)](#6-feedback-loops-m4)
+7. [Consistency (M5, m4)](#7-consistency-m5-m4)
+8. [Time-sensitive content (m3)](#8-time-sensitive-content-m3)
+9. [Newer guidance (advisory unless a rule applies)](#9-newer-guidance-advisory-unless-a-rule-applies)
+10. [Quick reference](#quick-reference)
 
-Match specificity to task fragility. Wrong freedom level = skill failure.
+## 1. Degrees of freedom (M3)
 
-### Assessment Questions
+Match how specific the instructions are to how fragile the task is.
 
-- [ ] **Fragile operations use low freedom** (exact scripts, few parameters)
-- [ ] **Flexible tasks allow high freedom** (text instructions, heuristics)
-- [ ] **No over-constraining** on tasks with multiple valid approaches
-- [ ] **No under-constraining** on operations requiring exact sequences
+| Task type | Freedom | Form | Example |
+|-----------|---------|------|---------|
+| Reviews, troubleshooting, analysis | High | Heuristics with a default | "Check structure first, then edge cases" |
+| API integration, data processing | Medium | Parameters or pseudocode | `process(data, format="json")` |
+| Migrations, releases, OOXML edits | Low | Exact commands or a script | `python scripts/migrate.py --verify` |
 
-### Freedom Level Guide
+Anthropic's analogy: a narrow bridge with cliffs on both sides needs exact guardrails; an open field needs only a direction.
 
-| Task Type | Freedom | Format | Example |
-|-----------|---------|--------|---------|
-| Code reviews, troubleshooting | High | Text instructions | "Analyze structure, check edge cases" |
-| API integration, data processing | Medium | Pseudocode + params | `process(data, format="json")` |
-| Database migrations, form validation | Low | Exact scripts | `python scripts/migrate.py --verify` |
+Look for:
 
-### Detection Patterns
+- **Too loose** for a fragile step: "Modify the schema, being careful about data integrity." That is M3.
+- **Too rigid** for an open-ended task: "Check lines 1-10 for imports, then lines 11-20 for the class, then exactly 5 edge cases." That is M3.
 
-**Too Rigid** (high freedom task with low freedom instructions):
+## 2. Conciseness (m1)
+
+Every token in SKILL.md competes with the conversation. Ask of each paragraph: would Claude get this wrong without it?
+
+Look for:
+
+- Explanations of general concepts: what JSON, REST, git, or a PDF is. That is m1.
+- Filler such as "It's important to note that..." or "As you may know...". It is an advisory note unless it introduces a general explanation, which is m1.
+- Full implementations where a short pattern would do.
+
+Fails:
+
 ```markdown
-# BAD: Code review with exact steps
-1. Check line 1-10 for imports
-2. Check line 11-20 for class definition
-3. Check exactly 5 edge cases
-```
-
-**Too Loose** (low freedom task with high freedom instructions):
-```markdown
-# BAD: Database migration with vague guidance
-"Modify the schema as needed, being careful about data integrity"
-```
-
-### Bridge/Field Analogy
-
-- **Narrow bridge with cliffs**: Exact instructions, no deviation (migrations, auth flows)
-- **Open field**: General direction, Claude finds best route (analysis, reviews)
-
----
-
-## 2. Conciseness Audit
-
-Every token competes with conversation history. Challenge each paragraph.
-
-### Assessment Questions
-
-- [ ] **No explanations of common concepts** Claude already knows
-- [ ] **Each paragraph justifies its token cost**
-- [ ] **Code examples are minimal** (show pattern, not full implementation)
-- [ ] **No filler phrases** ("It's important to note that...", "As you may know...")
-
-### Token Cost Test
-
-For each section, ask:
-1. "Does Claude really need this explanation?"
-2. "Can I assume Claude knows this?"
-3. "Would removing this hurt Claude's ability to execute?"
-
-### Detection Patterns
-
-**Fails Conciseness** (unnecessary explanation):
-```markdown
-# BAD
 PDF (Portable Document Format) files are a common file format that contains
-text, images, and other content. To extract text from a PDF, you'll need to
-use a library. There are many libraries available for PDF processing...
+text, images, and other content. To extract text from a PDF, you'll need a library.
 ```
 
-**Passes Conciseness** (direct instruction):
+Passes:
+
 ```markdown
-# GOOD
-Use pdfplumber for text extraction:
-```python
-import pdfplumber
-with pdfplumber.open("file.pdf") as pdf:
-    text = pdf.pages[0].extract_text()
-```
+Extract text with pdfplumber: `pdfplumber.open(path).pages[0].extract_text()`.
 ```
 
-### Common Violations
+Keep gotchas and project-specific facts; those are what Claude cannot know.
 
-| Violation | Fix |
-|-----------|-----|
-| Explaining what APIs are | Remove entirely |
-| Describing what JSON is | Assume known |
-| "There are several ways to..." | Pick one, show it |
-| History/background sections | Delete unless critical context |
+## 3. Actionability (M7)
 
----
+Abstract instructions make Claude guess. M7 counts directives built only on the weak verbs listed under M7 in `rules.md`, with no default, command, or check. Three or more is M7.
 
-## 3. Actionability Check
+Can Claude carry out each instruction without guessing the author's intent, asking a clarifying question, or assuming the scope? If not, it is a lead for M7.
 
-Abstract instructions cause Claude to guess. Concrete instructions execute.
+| Unactionable | Actionable |
+|--------------|------------|
+| "Review the code structure appropriately" | "Check for unused imports, functions over 50 lines, and missing type hints" |
+| "Handle errors as needed" | "On HTTP 429, wait 2^n seconds (max 60) and retry 3 times" |
+| "Adjust the output format" | "Output JSON with the fields status, message, data" |
 
-### Assessment Questions
+A weak verb next to a concrete default is fine: "Retry as needed (default 3 attempts)" is actionable.
 
-- [ ] **All instructions are executable** (not "consider doing X")
-- [ ] **Examples show input/output pairs** where helpful
-- [ ] **"As needed" always has a default** or heuristic
-- [ ] **No ambiguous pronouns** (unclear "it", "this", "that")
+## 4. Options and defaults (m2)
 
-### Actionability Test
+Three or more tools or approaches with no default and no decision criteria is m2. Give a default and an escape hatch, not a menu.
 
-Can Claude execute this instruction without:
-1. Guessing author's intent?
-2. Asking clarifying questions?
-3. Making assumptions about scope?
+Passes:
 
-### Detection Patterns
-
-**Not Actionable** (vague):
 ```markdown
-# BAD
-"Review the code structure appropriately"
-"Handle errors as needed"
-"Adjust the output format"
+Use pdfplumber for text extraction. For scanned PDFs, use pdf2image with pytesseract instead.
 ```
 
-**Actionable** (specific):
+Fails:
+
 ```markdown
-# GOOD
-"Check for: 1) Unused imports 2) Functions over 50 lines 3) Missing type hints"
-"On HTTP 429: wait 2^n seconds (max 60s), retry up to 3 times"
-"Output as JSON with fields: {status, message, data}"
+You can use pypdf, pdfplumber, PyMuPDF, or pdf2image.
 ```
 
-### Verb Strength Scale
+Look for lists of 3+ tools without a recommendation, "you could do A, B, or C", and workflow branches with no criteria.
 
-| Weak (avoid) | Strong (use) |
-|--------------|--------------|
-| Consider | Check for |
-| Ensure | Verify that X returns Y |
-| Handle appropriately | On error X, do Y |
-| As needed | Default to X; use Y if Z |
+## 5. Script quality (M6, m13)
 
----
+Scripts should solve the problem, not hand it back to Claude.
 
-## 4. Options Overload Detection
+- Bare `except:`, `except Exception: pass`, `input()`, or `getpass.getpass()` in a bundled script: M6.
+- SKILL.md does not say whether to run or read a script, or does not name the packages it needs: m13.
+- Network calls not disclosed in SKILL.md: M10.
 
-Multiple options without defaults cause decision paralysis.
+Full detection and pass/fail patterns: `script-quality.md`.
 
-### Assessment Questions
+## 6. Feedback loops (M4)
 
-- [ ] **Tools/libraries have a recommended default**
-- [ ] **Alternatives listed as escape hatches** (not buffets)
-- [ ] **Decision criteria provided** when choice matters
-- [ ] **No more than 3 primary paths** for any decision
+A workflow that deletes, overwrites, publishes, or migrates, or that has 5 or more steps, needs a check before the irreversible step and at the end. Missing checks are M4.
 
-### Options Pattern
+Look for "make all changes, then verify at the end", a plan executed without validating it, and multi-file edits with no intermediate check.
 
-**Correct Pattern** (default + escape hatch):
+Full patterns: `feedback-loops.md`.
+
+## 7. Consistency (M5, m4)
+
+Contradictions make Claude spend effort reconciling instead of executing.
+
+| Type | Example | Rule |
+|------|---------|------|
+| Conflicting defaults | "default: 3" in one section, "default: 5" in another | M5 |
+| Conflicting rules | "Always output JSON" and "output YAML for configs" with no precedence | M5 |
+| Example contradicts the instructions | the example uses a flag the text forbids | M5 |
+| Stale cross-reference | "see section X" after X was renamed | M5 |
+| Missing bundled file | SKILL.md links a file that does not exist | M5 (definitive) |
+| Mixed terminology | "subagent" and "sub-agent", or "field" and "property" | m4 |
+
+Process: list the rules and defaults in SKILL.md, list them in each reference, compare by topic, then check that every cross-reference resolves.
+
+## 8. Time-sensitive content (m3)
+
+Content that expires turns into misinformation.
+
+Fails:
+
 ```markdown
-# GOOD
-Use pdfplumber for text extraction.
-
-For scanned PDFs requiring OCR, use pdf2image with pytesseract instead.
-```
-
-**Anti-Pattern** (buffet of options):
-```markdown
-# BAD
-You can use pypdf, or pdfplumber, or PyMuPDF, or pdf2image, or...
-```
-
-### Detection Checklist
-
-- [ ] Any list of 3+ tools without recommendation?
-- [ ] Any "you could do A, B, or C" without default?
-- [ ] Any fork in workflow without decision criteria?
-
-### Decision Tree Template
-
-When multiple approaches exist, provide structure:
-```markdown
-**Choosing approach:**
-- Need speed? → Use X
-- Need accuracy? → Use Y
-- Default (most cases) → Use Z
-```
-
----
-
-## 5. Script Quality
-
-Scripts should solve problems, not punt to Claude.
-
-**Quick checks:**
-- [ ] Explicit error handling (no bare `except:`)
-- [ ] All constants documented
-- [ ] Recovery actions, not just failures
-- [ ] No hardcoded secrets or user-specific paths
-
-**Full patterns:** See `script-quality.md`
-
----
-
-## 6. Feedback Loop Presence
-
-Complex operations need validation checkpoints.
-
-**Quick checks:**
-- [ ] Multi-step workflows have verification steps
-- [ ] Critical operations have rollback/recovery paths
-- [ ] Checklists provided for 5+ step workflows
-- [ ] Validation runs BEFORE destructive actions
-
-**Full patterns:** See `feedback-loops.md`
-
----
-
-## 7. Consistency Check
-
-Contradictions waste Claude's reasoning tokens reconciling conflicts instead of executing.
-
-### Assessment Questions
-
-- [ ] **No conflicting instructions** within same file
-- [ ] **No contradictions** between SKILL.md and references
-- [ ] **Consistent terminology** throughout (same terms for same concepts)
-- [ ] **Cross-references valid** (sections mentioned actually exist)
-
-### Intra-File Contradictions
-
-Check within each file for:
-
-| Type | Example | Problem |
-|------|---------|---------|
-| Conflicting rules | "Always use JSON" + "Output YAML for configs" | Which takes priority? |
-| Inconsistent defaults | Section A: "default: 3" / Section B: "default: 5" | Claude guesses |
-| Mixed terminology | "skill" vs "plugin" vs "extension" | Confusing |
-| Contradicting examples | Example 1 shows X, Example 2 contradicts | Which to follow? |
-
-### Inter-File Contradictions
-
-Check across SKILL.md and references:
-
-| Type | Example | Problem |
-|------|---------|---------|
-| Conflicting counts | SKILL.md: "3 examples" / reference: "5 examples" | Mismatch |
-| Different patterns | Two files show different error handling | Inconsistent |
-| Stale references | "See section X" but X renamed/deleted | Broken link |
-| Version drift | SKILL.md updated, references outdated | Desync |
-
-### Detection Process
-
-1. List all instructions/rules from SKILL.md
-2. List all instructions/rules from each reference
-3. Compare for conflicts (same topic, different guidance)
-4. Check terminology consistency
-5. Verify all cross-references resolve
-
-### Quick Consistency Test
-
-For each key decision in the skill, ask:
-- Is this stated the same way everywhere?
-- If mentioned in multiple places, do they agree?
-- Would Claude get confused reading both?
-
----
-
-## 8. Time-Sensitive Content Detection
-
-Content that expires becomes dangerous misinformation.
-
-### Assessment Questions
-
-- [ ] **No date-conditional logic** ("If you're doing this before...")
-- [ ] **Version numbers are current or clearly marked deprecated**
-- [ ] **URLs point to stable documentation** (not blog posts)
-- [ ] **Deprecated approaches in "Old Patterns" section**
-
-### Detection Patterns
-
-**Time-sensitive** (bad):
-```markdown
-# BAD
 If you're doing this before August 2025, use the old API.
-After August 2025, use the new API.
 ```
 
-**Time-proof** (good):
+Passes:
+
 ```markdown
-# GOOD
 ## Current method
-Use the v2 API endpoint: `api.example.com/v2/messages`
+Use the v2 endpoint: `api.example.com/v2/messages`.
 
 ## Old patterns
-<details>
-<summary>Legacy v1 API (deprecated 2025-08)</summary>
-The v1 API used: `api.example.com/v1/messages`
-This endpoint is no longer supported.
+<details><summary>Legacy v1 API (deprecated)</summary>
+The v1 endpoint was `api.example.com/v1/messages`.
 </details>
 ```
 
-### Content Decay Checklist
+Look for date-conditional logic, "currently" or "at the time of writing", and pinned versions with no "verify against official docs" note.
 
-- [ ] No "currently" or "at the time of writing"?
-- [ ] No specific dates in conditional logic?
-- [ ] API versions explicit and updatable?
-- [ ] External links to official docs (not tutorials)?
+## 9. Newer guidance (advisory unless a rule applies)
 
-### Half-Life Assessment
+Anthropic's skill and prompting guidance adds four points. Report a gap as an advisory note unless a rule named below applies.
 
-| Content Type | Typical Half-Life | Handling |
-|--------------|-------------------|----------|
-| Core algorithms | Years | Include directly |
-| API endpoints | Months | Link to official docs |
-| Library versions | Weeks | Use "latest" or pin with note |
-| Blog tutorials | Days | Avoid or extract principles only |
+- **Gotchas.** The most valuable content in a skill is often the list of places where Claude goes wrong without it: an API quirk, a file format edge case, a command that fails on Windows. A skill with no gotchas section gets an advisory note naming the likeliest failure point.
+- **Defaults, not menus.** Prefer one recommended path with an escape hatch over a list of equal choices. Three or more choices with no default is m2; two equal choices is advisory.
+- **Key instructions near the top.** After compaction, Claude Code re-attaches only the first 5,000 tokens of a recently invoked skill. Safety rules, the main workflow, and the arguments belong near the top; background and long tables go later or in references. A safety rule buried after a long section gets an advisory note.
+- **Reasons over emphasis.** Newer models over-apply shouted rules. Three or more all-caps directives without a reason is m15; fewer is advisory.
 
----
+## Quick reference
 
-## Grading
-
-Use the **Unified Grading Rubric** in `evaluation-checklist.md`. Content quality findings feed into the same grade as structural findings.
-
----
-
-## Quick Reference
-
-| Section | Core Question |
-|---------|---------------|
-| Degrees of Freedom | Is specificity matched to task fragility? |
-| Conciseness | Does each paragraph justify token cost? |
-| Actionability | Can Claude execute without guessing? |
-| Options Overload | Is there a clear default? |
-| Script Quality | Do scripts solve or punt? |
-| Feedback Loops | Can Claude verify before proceeding? |
-| Consistency | Do all files agree? No contradictions? |
-| Time-Sensitive | Will this be wrong in 6 months? |
+| Lens | Core question | Maps to |
+|------|---------------|---------|
+| Degrees of freedom | Is specificity matched to fragility? | M3 |
+| Conciseness | Does each paragraph earn its tokens? | m1 |
+| Actionability | Can Claude act without guessing? | M7 |
+| Options and defaults | Is there a clear default? | m2 |
+| Script quality | Do scripts solve or punt? | M6, m13, M10 |
+| Feedback loops | Is there a check before the irreversible step? | M4 |
+| Consistency | Do all files agree? | M5, m4 |
+| Time-sensitive content | Will this be wrong in six months? | m3 |
+| Newer guidance | Gotchas, defaults, key instructions first, reasons | advisory, m2, m15 |

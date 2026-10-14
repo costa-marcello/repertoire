@@ -1,0 +1,12 @@
+[
+  {"query": "can you make me a skill that turns our sprint retro notes into action items with owners and due dates? it should live in .claude/skills in this repo", "should_trigger": true},
+  {"query": "I've pasted the same 'check this terraform plan for drift and risky deletes' instructions into chat five times this week. can we package that up so claude just knows how to do it next time?", "should_trigger": true},
+  {"query": "my pdf-forms skill never kicks in when people say 'fill out this form'. rework its description and add evals so it triggers properly", "should_trigger": true},
+  {"query": "what frontmatter does a skill need if I want it to run in a forked subagent and only when I type the slash command myself?", "should_trigger": true},
+  {"query": "our deploy skill's SKILL.md is 700 lines now. split it into a lean SKILL.md plus reference files without losing anything", "should_trigger": true},
+  {"query": "/review-skill skills/pdf report only - just grade it, don't change anything", "should_trigger": false},
+  {"query": "write a CLAUDE.md for this repo that documents the build, lint, and test commands", "should_trigger": false},
+  {"query": "add a page to our docs site that explains the flags of our /deploy slash command", "should_trigger": false},
+  {"query": "what are Claude skills and how are they different from MCP servers? just explain, I'm deciding whether to use them", "should_trigger": false},
+  {"query": "bump the version in .claude-plugin/plugin.json to 2.1.0 and add my email to the author field", "should_trigger": false}
+]

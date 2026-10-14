@@ -1,102 +1,77 @@
-# Sources and Bibliography
+# Sources
 
-<!-- v1.0 | 2026-01-29 -->
+The guidance and research behind `rules.md` and the lenses. Cite these in reports and PR bodies.
 
-Official documentation and peer-reviewed research used to develop review criteria.
+## Contents
 
----
+1. [Anthropic and Claude Code](#anthropic-and-claude-code)
+2. [Agent Skills specification](#agent-skills-specification)
+3. [Security](#security)
+4. [Academic papers](#academic-papers)
+5. [Benchmarks and frameworks](#benchmarks-and-frameworks)
+6. [How to cite](#how-to-cite)
 
-## Official Vendor Documentation
+## Anthropic and Claude Code
 
-### Anthropic (Claude)
+| Resource | URL | Used for |
+|----------|-----|----------|
+| Skill authoring best practices | https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices | Most M and m rules: description, conciseness, degrees of freedom, feedback loops, scripts, anti-patterns |
+| Agent Skills overview | https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview | Progressive disclosure, where skills run, security |
+| Claude Code skills | https://code.claude.com/docs/en/skills | Frontmatter fields, `context: fork`, substitutions, injection, compaction (M2, M9, m12) |
+| Claude Code subagents | https://code.claude.com/docs/en/sub-agents | What a forked skill's subagent can and cannot do (M2) |
+| Prompting best practices | https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices | XML tags and examples (S1, S2), emphasis (m15), reasoning extraction (M10) |
+| Equipping agents for the real world with Agent Skills | https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills | Design rationale for skills and progressive disclosure |
 
-| Resource | URL |
-|----------|-----|
-| Prompt Engineering Overview | https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview |
-| Use XML Tags | https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/use-xml-tags |
-| Multishot Prompting (Examples) | https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/multishot-prompting |
-| Chain of Thought | https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/chain-of-thought |
-| Claude 4 Best Practices | https://docs.anthropic.com/en/build-with-claude/prompt-engineering/claude-4-best-practices |
-| Claude Code Best Practices | https://www.anthropic.com/engineering/claude-code-best-practices |
-| Skill Best Practices | https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices |
+## Agent Skills specification
 
-### OpenAI
+| Resource | URL | Used for |
+|----------|-----|----------|
+| Specification | https://agentskills.io/specification | Name and description limits, portable keys, script expectations (M9, M6) |
 
-| Resource | URL |
-|----------|-----|
-| Prompt Engineering Guide | https://platform.openai.com/docs/guides/prompt-engineering |
-| GPT-4.1 Prompting Guide | https://cookbook.openai.com/examples/gpt4-1_prompting_guide |
-| Function Calling | https://platform.openai.com/docs/guides/function-calling |
-| Reasoning Best Practices | https://platform.openai.com/docs/guides/reasoning-best-practices |
-
-### Google (Gemini)
-
-| Resource | URL |
-|----------|-----|
-| Prompt Design Strategies | https://ai.google.dev/gemini-api/docs/prompting-strategies |
-| Gemini 3 Developer Guide | https://ai.google.dev/gemini-api/docs/gemini-3 |
-| Prompt Engineering Whitepaper | https://www.kaggle.com/whitepaper-prompt-engineering |
-
-### Microsoft (Azure)
+## Security
 
 | Resource | URL |
 |----------|-----|
-| Prompt Engineering Techniques | https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/prompt-engineering |
-| System Message Design | https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/advanced-prompt-engineering |
-| Safety System Messages | https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/system-message |
+| OWASP Top 10 for LLM applications (2025) | https://genai.owasp.org/llm-top-10/ |
+| OWASP LLM prompt injection prevention cheat sheet | https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html |
 
----
+## Academic papers
 
-## Academic Papers
+### Foundational
 
-### Foundational (NeurIPS, EMNLP, ACL)
-
-| Paper | Citation | Key Finding |
+| Paper | Citation | Key finding |
 |-------|----------|-------------|
-| Chain-of-Thought Prompting | Wei et al., NeurIPS 2022 | Intermediate reasoning improves complex tasks |
-| Zero-Shot Reasoners | Kojima et al., NeurIPS 2022 | "Let's think step by step" boosts accuracy |
-| Rethinking Demonstrations | Min et al., EMNLP 2022 | Format matters more than label correctness |
-| Fantastically Ordered Prompts | Lu et al., ACL 2022 | Example order affects performance significantly |
+| Chain-of-Thought Prompting | Wei et al., NeurIPS 2022 | Intermediate reasoning steps improve complex tasks |
+| Large Language Models are Zero-Shot Reasoners | Kojima et al., NeurIPS 2022 | "Let's think step by step" improves reasoning accuracy |
+| Rethinking the Role of Demonstrations | Min et al., EMNLP 2022 | Example format matters more than label correctness |
+| Fantastically Ordered Prompts | Lu et al., ACL 2022 | Example order changes performance substantially |
 
-### ArXiv (2024-2026)
+### arXiv
 
-| Paper | ArXiv ID | Key Finding |
+| Paper | arXiv ID | Key finding |
 |-------|----------|-------------|
-| The Prompt Report | 2406.06608 | 58 prompting techniques catalogued |
-| Prompt Format Impact | 2411.10541 | Format can vary performance by 40% |
-| Prompt Defect Taxonomy | 2509.14404 | 6 defect categories identified |
-| Few-shot Dilemma | 2509.13196 | Performance degrades beyond ~20 examples |
-| Prompting Inversion | 2510.22251 | Advanced techniques hurt newer models |
-| Many-Shot ICL | 2404.11018 | Hundreds of examples can help complex tasks |
+| The Prompt Report | 2406.06608 | Catalogues 58 text prompting techniques |
+| Does Prompt Formatting Have Any Impact on LLM Performance? | 2411.10541 | GPT-3.5-turbo varied by up to 40% across templates on code translation; GPT-4 was less sensitive |
+| "Should I Give Up Now?" Investigating LLM Pitfalls in Software Engineering | 2411.09916 | Unhelpful responses make developers far more likely to abandon the tool |
+| A Taxonomy of Prompt Defects in LLM Systems | 2509.14404 | Six defect dimensions, from specification to maintainability |
+| The Few-shot Dilemma: Over-prompting Large Language Models | 2509.13196 | More examples can lower performance; a smaller chosen set can do better |
+| You Don't Need Prompt Engineering Anymore: The Prompting Inversion | 2510.22251 | Elaborate prompting that helps one model can hurt a stronger one |
+| Many-Shot In-Context Learning | 2404.11018 | Hundreds of examples improve some generative and discriminative tasks |
 
----
+## Benchmarks and frameworks
 
-## Benchmarks and Frameworks
-
-| Resource | URL | Use |
-|----------|-----|-----|
-| Stanford HELM | https://crfm.stanford.edu/helm/ | Holistic LLM evaluation |
+| Resource | Location | Use |
+|----------|----------|-----|
+| Stanford HELM | https://crfm.stanford.edu/helm/ | Multi-metric evaluation; the source of the HELM-inspired questions |
 | IFEval | arXiv:2311.07911 | Instruction-following benchmark |
-| InFoBench | arXiv:2401.03601 | Decomposed requirements following |
-| DeepEval | https://github.com/confident-ai/deepeval | LLM output testing framework |
+| InFoBench | arXiv:2401.03601 | Decomposed requirement following |
 
----
+## How to cite
 
-## Security References
-
-| Resource | URL |
-|----------|-----|
-| OWASP LLM Top 10 2025 | https://genai.owasp.org/llmrisk/ |
-| Prompt Injection Prevention | https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html |
-
----
-
-## How to Cite
-
-When referencing these sources in reviews:
+Link the page and, for research, give the arXiv ID with the finding:
 
 ```markdown
-**Source**: [Anthropic Prompt Engineering](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)
+**Source:** [Skill authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices)
 
-**Research**: arXiv:2411.10541 - Format can vary performance by 40%
+**Research:** arXiv:2411.10541, prompt format changed GPT-3.5-turbo results by up to 40% on one task.
 ```

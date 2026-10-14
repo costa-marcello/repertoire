@@ -1,56 +1,119 @@
-# Bundled Resources Guide
+# Bundled Resources
 
-Skills can include three types of bundled resources in addition to SKILL.md.
+What goes into a skill directory beside SKILL.md, how to decide what to bundle, and the naming, path, and versioning rules that keep a skill portable.
 
-## Scripts (`scripts/`)
+## Contents
 
-Executable code (Python/Bash/etc.) for tasks that require deterministic reliability or are repeatedly rewritten.
+1. [Skill directory layout](#skill-directory-layout)
+2. [Planning resources from use cases](#planning-resources-from-use-cases)
+3. [scripts/](#scripts)
+4. [references/](#references)
+5. [assets/](#assets)
+6. [evals/ and tests/](#evals-and-tests)
+7. [Naming files](#naming-files)
+8. [Privacy and paths](#privacy-and-paths)
+9. [Versioning](#versioning)
 
-- **When to include**: When the same code is being rewritten repeatedly or deterministic reliability is needed
-- **Example**: `scripts/rotate_pdf.py` for PDF rotation tasks
-- **Benefits**: Token efficient, deterministic, may be executed without loading into context
-- **Note**: Scripts may still need to be read by Claude for patching or environment-specific adjustments
+## Skill directory layout
 
-## References (`references/`)
+The skill root holds only these entries; review-skill ignores dotfiles:
 
-Documentation and reference material intended to be loaded as needed into context to inform Claude's process and thinking.
+- `SKILL.md`
+- `LICENSE*`
+- `scripts/`, `references/`, `assets/`
+- `evals/`, `tests/`
 
-- **When to include**: For documentation that Claude should reference while working
-- **Examples**: `references/finance.md` for financial schemas, `references/mnda.md` for company NDA template, `references/policies.md` for company policies, `references/api_docs.md` for API specifications
-- **Use cases**: Database schemas, API documentation, domain knowledge, company policies, detailed workflow guides
-- **Benefits**: Keeps SKILL.md lean, loaded only when Claude determines it's needed
-- **Best practice**: If files are large (>10k words), include grep search patterns in SKILL.md
-- **Avoid duplication**: Information should live in either SKILL.md or references files, not both. Prefer references files for detailed information unless it's truly core to the skill.
+Anything else in the root is an S4 Style note. Keep eval workspaces, reports, and build output in a separate directory.
 
-## Assets (`assets/`)
+## Planning resources from use cases
 
-Files not intended to be loaded into context, but rather used within the output Claude produces.
+For each eval case or concrete request, ask two questions: how would Claude do this from scratch, and what did it have to rebuild or rediscover each time? The baseline transcripts from step 2 answer the second question directly. Code they repeat and facts they had to rediscover are exactly what to bundle.
 
-- **When to include**: When the skill needs files that will be used in the final output
-- **Examples**: `assets/logo.png` for brand assets, `assets/slides.pptx` for PowerPoint templates, `assets/frontend-template/` for HTML/React boilerplate, `assets/font.ttf` for typography
-- **Use cases**: Templates, images, icons, boilerplate code, fonts, sample documents that get copied or modified
-- **Benefits**: Separates output resources from documentation, enables Claude to use files without loading them into context
+**pdf-editor.** Request: "Rotate pages 2 to 4 of this PDF."
+- Every run rewrites the same rotation code.
+- Bundle `pdf-editor/scripts/rotate_pdf.py`.
+- Low freedom: the operation is deterministic and fragile.
 
-## Privacy and Path References
+**frontend-webapp-builder.** Request: "Build me a todo app" or "Build me a dashboard to track my steps."
+- Every run rebuilds the same HTML and React boilerplate.
+- Bundle the template project `frontend-webapp-builder/assets/hello-world/`.
+- Medium freedom: a preferred pattern exists, and the implementation varies.
 
-Skills for public distribution must not contain user-specific or company-specific information.
+**big-query.** Request: "How many users logged in today?"
+- Every run rediscovers the table schemas and relationships.
+- Bundle `big-query/references/schema.md`.
+- High freedom: many valid queries, and context decides.
 
-**Do not include:**
-- Absolute paths to user directories (`/home/username/`, `/Users/username/`, `/mnt/c/Users/username/`)
-- Personal usernames, company names, department names, product names
-- OneDrive paths, cloud storage paths, or environment-specific absolute paths
-- Hardcoded skill installation paths like `~/.claude/skills/`
+| Use case | Freedom | Resource | Typical contents |
+|----------|---------|----------|------------------|
+| Deterministic operations | Low | `scripts/` | Format conversion, validation, migrations |
+| Boilerplate | Medium | `assets/` | Project templates, document templates |
+| Domain knowledge | High | `references/` | Schemas, API docs, policies |
 
-**Do include:**
-- Relative paths within the skill bundle (`scripts/example.py`, `references/guide.md`)
-- Standard placeholders (`~/workspace/project`, `username`, `your-company`)
-- Simple relative paths for bundled scripts (`scripts/script_name.py`) -- Claude resolves the actual location
+## scripts/
+
+**When to bundle a script**
+- The eval transcripts show the agent writing the same code in every run. For example, all three baseline runs wrote a CSV-sniffing helper. Write it once.
+- The operation is fragile or has to be identical on every run: file-format edits, migrations, validation.
+- Running the computation is cheaper than describing it.
+
+**When not to.** Skip a script for a one-line command that Claude writes correctly anyway.
+
+**Contract** (review-skill M6, M10, m13):
+- **Run or read.** SKILL.md says for each script either "Run ..." (only the output enters context) or "Read ... for ...".
+- **Requirements.** SKILL.md names the packages the script needs and the install command (`python -m pip install pypdf`), instead of assuming them.
+- **Non-interactive.**
+  - Inputs come from arguments, flags, or environment variables, never `input()`.
+  - Provide `--help`.
+  - Put data on stdout and diagnostics on stderr.
+  - Return meaningful exit codes, and keep the output size predictable.
+- **Errors.** Catch specific exceptions, and print what failed and how to fix it. No bare `except:`, and no `except Exception: pass`.
+- **Constants.** Comment each constant with the reason for its value.
+- **Output encoding.** Use plain ASCII tags such as `[OK]` and `[FAIL]`, and write UTF-8 to stdout. Emoji crash under the Windows cp1252 console encoding when output is piped.
+- **Invocation.** Write commands with `python`; use `python3` only where `python` is not on the path (on Windows `python3` is often the Microsoft Store stub). In Claude Code, reference scripts through `${CLAUDE_SKILL_DIR}/scripts/`; `frontmatter_reference.md` covers the variants.
+- **Network.** Disclose any network use, and its purpose, in SKILL.md (M10).
+
+## references/
+
+- **Purpose.** Knowledge needed in only some runs: schemas, API docs, policies, detailed guides, long examples.
+- **Links.** SKILL.md links each reference file directly and says when to read it. Do not build chains in which one reference sends Claude to another for essential content (m10).
+- **Length.** A reference file over 100 lines gets a `## Contents` list within its first 30 lines (m9).
+- **Large files.** For very large files, SKILL.md gives a grep pattern that finds the right section, so Claude reads only that part.
+- **One home per fact.** Each fact lives in SKILL.md or in a reference file, not both. Duplicates drift apart and become contradictions (M5).
+- **Variants.** When a skill supports several domains, give each variant its own file (one per cloud provider or framework), so Claude reads only the one it needs.
+- **Teaching material.** Examples that use substitution tokens or injection syntax belong here, not in SKILL.md.
+
+## assets/
+
+Files used in the output and not read into context: templates, images, fonts, icons, boilerplate projects, sample documents to copy or modify. Ask the user for brand files or templates that only they have.
+
+## evals/ and tests/
+
+- **evals/**
+  - It holds `evals/evals.json` (3 or more eval cases) and `evals/trigger_queries.json` (about 10 trigger queries), both written before the skill.
+  - Input files go in `evals/files/`.
+  - Packaging strips `evals/`, so evals never ship. `evals_guide.md` has the formats.
+- **tests/** (optional) holds unit tests for bundled scripts. Using the standard library's `unittest` keeps them free of dependencies.
+
+## Naming files
+
+- **Descriptive names.** A filename says what the file contains: `api-endpoints.md`, `database-schema.md`, `rotate-pdf.py`. Avoid names such as `reference.md`, `notes.md`, or `utils.py`. Test: can someone tell the contents from the name alone?
+- **One separator per skill.** Hyphens (`api-endpoints.md`) and underscores (`api_endpoints.md`) both work. Mixing them in one skill's reference files is S7. When updating a skill, follow the separator its existing files use.
+
+## Privacy and paths
+
+**Leave out:**
+- user-specific absolute paths: home directories with a real user name, cloud-sync folders;
+- real people's names, and company, department, or product names (`sanitization_checklist.md` covers public releases);
+- an assumed install location for the skill's own files, such as a fixed path under the home directory. The skill may be installed per project, per user, or in a plugin;
+- secrets: read them from environment variables instead.
+
+**Use:**
+- paths relative to the skill directory, or `${CLAUDE_SKILL_DIR}/...` in Claude Code;
+- generic placeholders (`<project-root>`, `<user>`, `your-company`);
+- forward slashes, on Windows too (m11). Fenced blocks tagged `powershell`, `ps1`, `cmd`, or `bat` are exempt.
 
 ## Versioning
 
-Do not include version history or version numbers in SKILL.md.
-
-- No version sections (`## Version`, `## Changelog`, `## Release History`) in SKILL.md
-- No version numbers in SKILL.md body content
-- Track versions in marketplace.json under `plugins[].version`
-- Marketplace infrastructure manages versioning. SKILL.md should be timeless content focused on functionality.
+- **No history in SKILL.md.** Do not add a version-history section or version numbers to the body. History lives in git, in the repository CHANGELOG, and in plugin or marketplace manifests (`marketplace_update.md`).
+- **Pinned dependencies.** Pin a dependency version only when the skill needs it, and add a note: "Requires pypdf 4.x (verify against the official docs)". A bare pinned version reads as time-sensitive content (m3).

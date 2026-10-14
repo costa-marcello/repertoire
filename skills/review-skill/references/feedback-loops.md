@@ -1,69 +1,67 @@
-# Feedback Loop Patterns
+# Feedback Loops (M4)
 
-Complex operations need validation checkpoints.
+How to check a skill's workflows for M4: a workflow that deletes, overwrites, publishes, or migrates, or that has 5 or more steps, needs a check before the irreversible step and a final verification.
 
-Cross-reference: Part of `content-quality-checklist.md` Section 6.
+## When M4 applies
 
----
+| Workflow | Needs a check |
+|----------|---------------|
+| Fewer than 5 steps that only read | No |
+| 5 or more steps | Yes: at least one check, and a final verification |
+| Deletes, overwrites, or moves files | Yes: before the step |
+| Publishes, pushes, releases, or sends | Yes: before the step |
+| Migrates data or schemas | Yes: a dry run or validation first |
 
-## Assessment Questions
+## What counts as a check
 
-- [ ] **Multi-step workflows have verification steps**
-- [ ] **Critical operations have rollback/recovery paths**
-- [ ] **Checklists provided for 5+ step workflows**
-- [ ] **Validation runs BEFORE destructive actions**
+A concrete command or observation with a pass condition:
 
----
+- a validator run with its exit code ("`python scripts/validate.py out.docx` exits 0");
+- a diff or listing reviewed before applying (`git diff --stat`, a dry run);
+- a test run;
+- a re-read of the output against stated criteria;
+- for actions that affect other people, showing the user what will happen and waiting for a yes.
 
-## When Feedback Loops Are Required
+"Make sure it looks right" is not a check; it is also an M7 lead.
 
-| Operation Type | Feedback Loop Needed |
-|----------------|---------------------|
-| Single-file edits | No |
-| Multi-file refactors | Yes - verify after each stage |
-| Database operations | Yes - validate before commit |
-| External API calls | Yes - check response before continuing |
-| Document generation | Yes - preview before finalizing |
+## Patterns that pass
 
----
-
-## Feedback Loop Pattern
+Validate, fix, repeat before the irreversible step:
 
 ```markdown
-# GOOD - Validation before proceeding
-1. Make edits to `document.xml`
-2. **Validate immediately**: `python scripts/validate.py`
-3. If validation fails:
-   - Review error message
-   - Fix the issue
-   - Run validation again
-4. **Only proceed when validation passes**
-5. Rebuild: `python scripts/build.py`
+1. Edit `word/document.xml`.
+2. Run `python scripts/validate.py unpacked/`.
+3. If it fails, read the error, fix it, and run step 2 again.
+4. Pack only when step 2 exits 0: `python scripts/pack.py unpacked/ out.docx`.
 ```
 
----
-
-## Checklist Template
-
-For workflows with 5+ steps, provide copy-paste checklist:
+Plan, validate, execute for batch or destructive work:
 
 ```markdown
-Copy this checklist and track progress:
+1. Write the planned changes to `plan.json`.
+2. Run `python scripts/check_plan.py plan.json`; it rejects unknown fields and duplicate targets.
+3. Apply the plan only after step 2 passes, then run `python scripts/verify.py` on the result.
+```
 
-Task Progress:
+A progress checklist for long workflows, which Claude copies and ticks off:
+
+```text
+Task progress:
 - [ ] Step 1: Analyze input
-- [ ] Step 2: Create plan file
-- [ ] Step 3: Validate plan (CHECKPOINT)
-- [ ] Step 4: Execute changes
-- [ ] Step 5: Verify output (CHECKPOINT)
+- [ ] Step 2: Create plan
+- [ ] Step 3: Validate plan (check)
+- [ ] Step 4: Apply changes
+- [ ] Step 5: Verify output (check)
 ```
 
----
+## Patterns that fail
 
-## Missing Loop Detection
+- "Edit the XML, then pack." No validation before packing.
+- "Make all changes, then verify at the end" on a destructive step: the check comes after the damage.
+- A plan that is executed without being validated.
+- Multi-file changes with no intermediate check.
+- A loop with no exit condition: "fix and re-run" needs a limit or a pass condition.
 
-Red flags:
-- "Make all changes, then verify at the end"
-- No validation step between planning and execution
-- Destructive operations without confirmation
-- Multi-file operations without intermediate checks
+## Fix
+
+Add a validate-fix-repeat loop before the irreversible step, a final verification, and an explicit limit or pass condition for any loop.

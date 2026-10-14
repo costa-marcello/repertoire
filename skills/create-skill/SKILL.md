@@ -1,362 +1,222 @@
 ---
 name: create-skill
-description: "Guides users through creating effective Claude Code skills with specialized knowledge, workflows, and tool integrations. Use when users want to create a new skill, update an existing skill, extract business logic into reusable packages, or ask about skill structure, frontmatter, or bundled resources."
+description: "Creates, updates, and validates Claude Code skills (SKILL.md, scripts, references, evals) so they pass review-skill on the first run. Use when the user wants to create a new skill, turn a repeated workflow into a skill, improve or restructure an existing skill, or asks about skill structure, frontmatter, or evals."
 license: MIT
-context: fork
-argument-hint: "[skill-name]"
+argument-hint: "[skill-name] [what it should do]"
 ---
 
 # Create Skill
 
-<context>
+Builds skills evals-first: write eval cases, measure Claude without the skill, write the smallest skill that closes the gaps, then validate until review-skill grades it A with zero Style notes. Every graded rule is in `references/authoring_rules.md`. Write to it from the first draft, because fixing afterwards costs extra passes.
 
-## About Skills
+User input: $ARGUMENTS
 
-Skills extend Claude's capabilities with specialized workflows, tool integrations, domain expertise, and bundled resources. See `references/skill_anatomy.md` for detailed structure.
+Read the user input as `[skill-name] [what it should do]`:
 
-**Key structure:** `SKILL.md` (required) + optional `scripts/`, `references/`, `assets/` directories.
+- **Name and purpose:** take both from it and ask only about what is missing (step 1).
+- **Name only, or empty:** mine the conversation first (a workflow the user just walked through is the best source), then ask for the rest.
+- **A path or the name of an existing skill:** this is an update. Follow the update notes in steps 1, 2, 4, and 5.
+- **A question about skill structure, frontmatter, or evals:** answer it from the matching reference file (table at the end) and stop.
 
-### YAML Frontmatter Reference
+## Ground rules
 
-See `references/frontmatter_reference.md` for the complete field reference table. Key fields:
+- **Edit at the source location, never in `~/.claude/plugins/cache/`.** The cache is overwritten on every plugin refresh. If the path contains `/plugins/cache/`, find the source repository or ask the user where it lives.
+- **Python:** run `python`; use `python3` only where `python` is not on the path (on Windows `python3` is often the Microsoft Store stub).
+- **Script paths** are relative to this skill's directory, not the working directory. In Claude Code that is `${CLAUDE_SKILL_DIR}`, so `scripts/quick_validate.py` means `${CLAUDE_SKILL_DIR}/scripts/quick_validate.py`. Quote paths that contain spaces.
+- **Requirements:** Python 3.10 or later for quick_validate's full checks (older versions skip its m13 import check); PyYAML for quick_validate and package_skill (`python -m pip install pyyaml`); gitleaks for security_scan, whose clean scan packaging requires. Ask the user before installing anything.
+- **No user to reply** (`claude -p`, or running as a subagent): when the input gives a name and purpose, state the plan and the defaults you chose, then continue. Each question takes its stated default, and a step that stops to ask ends the run with the step 10 report. Never install anything then; report the missing tool.
+- **Refused writes:** when a write into `.claude/skills/` is refused, ask the user to allow it or to choose another location, and never work around the permission. With no user to reply, report the refusal and stop.
+- **Workspace:** keep eval drafts, snapshots, and run outputs in one workspace per skill, outside every skill directory. Default to `<skill-name>-workspace/` in the session scratchpad or the system temp directory. Stray files in a skill's root are an S4 finding, and a draft in the baseline's reach spoils it.
 
-- **`name`**: Lowercase, hyphens only (max 64 chars). No reserved words (anthropic, claude). Noun or short-phrase form preferred (pdf, changelog, smart-merge).
-- **`description`**: Third-person verb + triggers (max 1024 chars)
-- **`context: fork`**: Set ONLY for Class A (autonomous) skills — those that run end-to-end without dispatching sub-agents, without pausing for the user, and without relying on the lead's reasoning context. See `references/frontmatter_reference.md` for the full four-class taxonomy. Class B (orchestrator), C (interactive), and D (mode-style reasoning) must run inline.
-
-<example>
-**Task-based skill with subagent execution:**
-```yaml
----
-name: deep-research
-description: "Researches topics thoroughly using multiple sources. Use when the user needs in-depth analysis of code, architecture, or documentation."
-context: fork
-agent: Explore
----
-
-Research $ARGUMENTS thoroughly:
-1. Find relevant files using Glob and Grep
-2. Read and analyze the code
-3. Summarize findings with specific file references
-```
-When invoked as `/deep-research authentication flow`, `$ARGUMENTS` becomes `authentication flow`.
-</example>
-
-<example>
-**Side-effect skill requiring explicit invocation:**
-```yaml
----
-name: deploy-staging
-description: "Deploys the current branch to the staging environment. Use when users request deployment or staging preview."
-context: fork
-disable-model-invocation: true
----
-```
-`disable-model-invocation: true` prevents auto-invocation. The user must run `/deploy-staging` explicitly.
-</example>
-
-See `references/frontmatter_reference.md` for additional examples (inline reference skills, medium-freedom skills with tool restrictions).
-
-### Invocation Control
-
-See `references/frontmatter_reference.md` for the full invocation control matrix and the four-class taxonomy. Key rule: add `context: fork` only to Class A autonomous skills; Class B (orchestrator), C (interactive), and D (mode-style reasoning) must run inline.
-
-### Bundled Resources
-
-See `references/bundled_resources.md` for guidance on `scripts/`, `references/`, and `assets/` directories. For public distribution, use relative paths only -- no absolute paths, personal info, or version numbers.
-
-### Best Practices
-
-Read `references/anthropic_best_practices_summary.md` before creating or updating skills. For complete official documentation: [Anthropic Best Practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices)
-
-</context>
-
-## Skill Creation Process
+## Workflow
 
 <instructions>
 
-**Edit at the source location.** Do not edit skills in `~/.claude/plugins/cache/` -- changes are lost on cache refresh. Before any edit, confirm the file path does not contain `/cache/` or `/plugins/cache/`. Always edit the source repository copy.
+Copy this checklist into the todo list or the reply, and tick items as they complete:
 
-**User input:** $ARGUMENTS
+```text
+Skill progress:
+- [ ] 1. Capture intent (purpose, triggers, output, name, location, target)
+- [ ] 2. Write evals and run the baseline, before the skill directory exists
+- [ ] 3. Plan the contents and the fork decision; get the user's go-ahead
+- [ ] 4. Initialize the skill directory with init_skill.py
+- [ ] 5. Write the skill
+- [ ] 6. Validate: quick_validate, eval runs, review-skill gate (at most 3 passes)
+- [ ] 7. Sanitize, only if the user agrees; validate again after changes
+- [ ] 8. Security scan
+- [ ] 9. Package and update the marketplace, only for distribution
+- [ ] 10. Iterate on real use (at most 2 rounds), then report
+```
 
-If `$ARGUMENTS` is non-empty, extract the skill name and purpose from it. Skip Step 1 and proceed to Step 2. Only ask clarifying questions if the skill's purpose is entirely unclear.
+### Step 1: Capture intent
 
-If `$ARGUMENTS` is empty, begin at Step 1.
+1. Extract what the conversation already shows: tools used, the order of steps, the user's corrections, and the input and output formats.
+2. Ask only for what is still missing, in one message (AskUserQuestion when available): what the skill does, what a user would type to trigger it, what it produces, and where it lives.
+3. Defaults, unless the user says otherwise:
+   - **Location:** `.claude/skills/<skill-name>/` in the current project. Use `~/.claude/skills/` for a personal skill, and the repository's `skills/` directory in a skill or plugin repository.
+   - **Target:** `claude-code`. Switch to `portable` when the user mentions claude.ai, the Claude API, or another Agent Skills client. Portable skills include `name` and use only the portable fields in `references/frontmatter_reference.md`.
+   - **Name:** lowercase letters, digits, and single hyphens, at most 64 characters, equal to the directory name, and specific (`pdf-forms`, not `helper`).
+4. **Updates:** read the whole skill first (SKILL.md, every reference file, every script). Keep its name and directory, and copy it to `<workspace>/skill-snapshot/` before any edit. The snapshot is the baseline.
 
-To create a skill, follow the "Skill Creation Process" in order, skipping steps only if there is a clear reason why they are not applicable.
+Move on when the purpose fits in one sentence and you can name three realistic requests and the expected output.
 
-### Step 1: Understanding the Skill with Concrete Examples
+### Step 2: Write evals and run the baseline
 
-**Skip this step when:** the user has already described what the skill should do (via arguments or prior context).
+Read `references/evals_guide.md` for the formats, the subagent prompts, isolation, and grading.
 
-When the skill's usage patterns are not yet clear, gather concrete examples of how it will be used. Ask the questions below in order. Stop when the skill's functionality, trigger phrases, and example invocations are all clear:
+1. In the workspace, write `evals/evals.json` (3 realistic eval cases) and `evals/trigger_queries.json` (10 trigger queries: 5 that should trigger, 5 near-misses that should not). For a `disable-model-invocation: true` skill, mark all 10 `should_trigger: false` and skip the trigger check, because Claude never sees its description.
+2. Run the baseline before step 4, so no draft exists for it to pick up: one fresh general-purpose subagent per eval case (Agent tool, all in the same turn) with the baseline prompt from `references/evals_guide.md`, which never mentions a skill. For an update, the baseline follows the snapshot.
+3. **Isolate every eval subagent** (here and in step 6), because it acts in the user's real environment and cannot ask anyone. It gets only an inputs folder and an output folder (never one holding `evals.json`), works only in the workspace, uses a local bare repository as any remote, and writes any command that pushes to a real remote, publishes, posts, sends, or opens a PR, issue, release, or tag to `would_run.txt` instead of running it. Side-effect cases use local fixtures; the prompts in `references/evals_guide.md` carry these rules.
+4. Record what each baseline run got wrong, skipped, or worked out from scratch. That list is what the skill teaches; leave out what the baseline already does well.
+5. If the baseline meets every expectation, tell the user the skill may add little or the cases are too easy, and ask whether to continue (the default) or harden the cases.
+6. **Without subagents** (for example on claude.ai): skip the baseline, and run the cases yourself one after another in step 6.
 
-- "What functionality should the skill support?"
-- "Can you give examples of how it would be used?"
-- "What would a user say that should trigger this skill?"
+### Step 3: Plan the contents
 
-Conclude this step when there is a clear sense of the functionality the skill should support.
+Read `references/authoring_rules.md` now if it is not loaded, and `references/bundled_resources.md` for resource decisions.
 
-### Step 2: Planning the Reusable Skill Contents
+1. **Freedom level** per section (`references/anthropic_guidance.md`): exact commands or a script for fragile, ordered operations (migrations, releases); a preferred pattern with parameters where variation is fine; heuristics with a default for open-ended work (review, analysis).
+2. **Resources:** a script when the baseline runs wrote the same code each time; a reference file for knowledge needed in only some runs; an asset for files copied into the output.
+3. **Frontmatter:** start from `name`, `description`, and `license`. Add `argument-hint` when the skill takes input, and `disable-model-invocation: true` for side effects the user should trigger (deploys, releases). Other fields: `references/frontmatter_reference.md`.
+4. **Fork decision:** run the fork decision test in "Deciding on context: fork" in `references/authoring_rules.md`. Default to inline; fork only when all five of its conditions hold.
+5. Show the plan in a few lines (name, draft description, files, freedom level, fork decision) and wait for the user's go-ahead before creating files.
 
-To turn concrete examples into an effective skill, analyze each example by:
+### Step 4: Initialize the skill directory
 
-1. Considering how to execute on the example from scratch
-2. Determining the appropriate level of freedom for Claude
-3. Identifying what scripts, references, and assets would be helpful when executing these workflows repeatedly
-
-**Match specificity to task risk:**
-- **High freedom (text instructions)**: Multiple valid approaches exist; context determines best path (e.g., code reviews, troubleshooting, content analysis)
-- **Medium freedom (pseudocode with parameters)**: Preferred patterns exist with acceptable variation (e.g., API integration patterns, data processing workflows)
-- **Low freedom (exact scripts)**: Operations are fragile, consistency critical, sequence matters (e.g., PDF rotation, database migrations, form validation)
-
-See `references/planning_examples.md` for detailed examples (pdf-editor, frontend-webapp-builder, big-query skills).
-
-Analyze each concrete example to create a list of reusable resources: scripts, references, and assets.
-
-### Step 3: Initializing the Skill
-
-At this point, it is time to actually create the skill.
-
-Skip this step only if the skill being developed already exists, and iteration or packaging is needed. In this case, continue to the next step.
-
-When creating a new skill from scratch, run `init_skill.py` to generate a complete template:
+Skip this step for updates. Run the command below, listing only the resource directories the plan needs, and add `--fork` only when the fork decision test passed:
 
 ```bash
-python3 scripts/init_skill.py <skill-name> --path <output-directory>
+python scripts/init_skill.py <skill-name> --path <parent-dir> --resources scripts,references
 ```
 
-The script creates a skill directory with SKILL.md, frontmatter, resource directories, and example files. Edit or delete any generated file that does not match the skill's scope decided in Step 2.
+It creates `<parent-dir>/<skill-name>/` with a SKILL.md template, skeleton files in `evals/`, and the listed resource directories, empty. On exit 1 it leaves nothing behind. Copy the workspace's `evals.json` and `trigger_queries.json` over the skeletons in `<skill-dir>/evals/`.
 
-### Step 4: Edit the Skill
+### Step 5: Write the skill
 
-When editing the (newly-generated or existing) skill, remember that the skill is being created for another instance of Claude to use. Include information that is non-obvious to Claude. Identify the procedural knowledge, domain-specific details, or reusable assets that would help another Claude instance execute these tasks more effectively, and write them into SKILL.md or the appropriate reference file.
+Read `references/anthropic_guidance.md` for the description and body.
 
-#### Start with Reusable Skill Contents
+1. **Description first:** what the skill does, then "Use when..." with the triggers, key use case first. Open with a third-person verb, no "I" or "you"; a little pushy (Claude tends to under-trigger skills), never all-caps; at most 1,024 characters, no angle brackets.
+2. **Lead with what matters:** after compaction, Claude Code re-attaches only the first 5,000 tokens of an invoked skill. Explain why instead of shouting, give a default instead of a menu, and spend words on what the baseline got wrong.
+3. **Directives, scripts, paths:** a command, a check, or "Default to X; use Y when Z" (the M7 weak verbs fail review); "Run ..." or "Read ... for ..." for each script, with the packages it needs; forward-slash paths relative to the skill directory.
+4. **Keep out of SKILL.md** (see `references/frontmatter_reference.md`): teaching examples with argument-substitution tokens, which are substituted on invocation, and dynamic context injection, which runs on every invocation.
+5. **Structure:** the workflow in one `<instructions>` block and 3 to 5 short `<example>` blocks; SKILL.md under 400 lines and 20,000 characters; detail in `references/`, each file linked directly from SKILL.md with when to read it; a `## Contents` list in the first 30 lines of any reference file over 100 lines.
+6. Replace every TODO placeholder, and delete any resource directory the skill does not use.
+7. **Updates:** after each change, grep SKILL.md and `references/` for every fact you changed (defaults, paths, thresholds) and update each copy, so no two files disagree.
 
-To begin implementation, start with the reusable resources identified above: `scripts/`, `references/`, and `assets/` files. Note that this step may require user input. For example, when implementing a `brand-guidelines` skill, the user may need to provide brand assets or templates to store in `assets/`, or documentation to store in `references/`.
+### Step 6: Validate
 
-Also, delete any example files and directories not needed for the skill. The initialization script creates example files in `scripts/`, `references/`, and `assets/` to demonstrate structure, but most skills won't need all of them.
+A pass runs all three layers. Fix what they find, then start the next pass. Stop after 3 passes.
 
-**When updating an existing skill**: Scan all existing reference files to check if they need corresponding updates. New features often require updates to architecture, workflow, or other existing documentation to maintain consistency.
-
-#### Reference File Naming
-
-Filenames must be self-explanatory without reading contents.
-
-**Pattern**: `<content-type>_<specificity>.md`
-
-**Examples**:
-- Bad: `commands.md`, `cli_usage.md`, `reference.md`
-- Good: `script_parameters.md`, `api_endpoints.md`, `database_schema.md`
-
-**Test**: Can someone understand the file's contents from the name alone?
-
-#### Update SKILL.md
-
-**Before writing: load the review criteria as authoring rules.** Read `references/review_criteria_mirror.md`. It maps every rule `/review-skill` enforces to a concrete authoring instruction. Applying those rules while drafting — rather than patching afterwards — is what makes the skill Grade A on first review. Creation and review share the same checklists; author to them from the start.
-
-**Writing Style:** Write the skill body in **imperative/infinitive form** (verb-first instructions), not second person. Use objective, instructional language (e.g., "To accomplish X, do Y" rather than "You should do X" or "If you need to do X"). The `description` field in frontmatter is the exception: it must be in **third-person verb form** ("Processes...", "Extracts...", "Reviews...") — see `references/frontmatter_reference.md`. Review-skill flags imperative descriptions as an M8 major issue.
-
-To complete SKILL.md, answer the following questions:
-
-1. What is the purpose of the skill, in a few sentences?
-2. When should the skill be used?
-3. In practice, how should Claude use the skill? All reusable skill contents developed above should be referenced so that Claude knows how to use them.
-
-**Use `<example>` blocks** around concrete examples to help Claude distinguish examples from instructions.
-
-#### Consistency Verification
-
-Before finalizing, check for contradictions using Grep:
-
-1. For each default value or rule in SKILL.md, grep the references/ folder for the same topic. Verify values match. Fix any mismatches by updating the stale copy.
-2. For each term used more than twice, grep across all files to confirm the same word refers to the same concept throughout (e.g., do not mix "user" and "customer" for the same entity).
-3. For each reference file mentioned in SKILL.md, open it and confirm the guidance aligns with what SKILL.md states. Delete stale cross-references.
-
-### Step 5: Validation Checkpoint
-
-Validation has two layers. The fast layer (a) catches frontmatter, line-count, and class-taxonomy mistakes cheaply. The authoritative layer (b) is `review-skill`, which applies the three full checklists and assigns a letter grade. Both must pass before packaging.
-
-**(a) Fast pre-flight: `quick_validate.py`.**
+**Layer 1: quick_validate.** Run:
 
 ```bash
-python3 scripts/quick_validate.py <path/to/skill-folder>
+python scripts/quick_validate.py <skill-dir>   # append --portable for the portable target
 ```
 
-Check the output for:
-- Frontmatter errors (missing fields, naming violations, incorrect `context: fork` for the skill's class)
-- Description errors (imperative/second-person voice) and warnings (missing trigger conditions)
-- Line count warnings (under 400 recommended, 500 hard limit)
-- Missing referenced files (paths in SKILL.md that do not exist on disk)
-- `<example>` block count (3-5 target)
+| Exit | Meaning | Action |
+|------|---------|--------|
+| 0 | No definitive Major or Minor | Continue, after the checks below |
+| 1 | At least one definitive Major | Fix each `major` line, `[F]` lines (F triggers) first |
+| 4 | Definitive Minor only | Fix each `minor` line |
+| 2 | Usage error | Check the path argument |
+| 3 | Environment or internal error | Install PyYAML or fix the unreadable file; otherwise report the error |
 
-Fix all errors and warnings before continuing.
+Findings print as `[ID] severity confidence file:line message`, followed by a `RESULT` line with the counts. Exit 0 is not enough: `RESULT` must also show `style=0`. Each `check` line is a lead: read the cited line, then fix it or dismiss it with a reason.
 
-**(b) Authoritative gate: `review-skill` (required before packaging).**
+**Layer 2: eval runs.** Dispatch one fresh with-skill subagent per eval case, all in the same turn, with the with-skill prompt from `references/evals_guide.md`: it reads a copy of the skill without `evals/` and follows the isolation rules of step 2. Grade each expectation and compare the result with the baseline. Read the transcripts as well as the outputs: wasted steps point to instructions to cut.
 
-```
-/review-skill "<absolute/path/to/skill-folder>" report only
-```
+**Layer 3: review-skill gate.** Dispatch a fresh subagent each pass with: `Run /review-skill "<absolute-skill-dir>" report only and return the full report.` The quotes keep a path with spaces as one argument. Append `portable` for the portable target.
+- If it cannot invoke review-skill, it reads review-skill's SKILL.md (`../review-skill/` beside this skill, `.claude/skills/review-skill/`, or `~/.claude/skills/review-skill/`) and follows its report-only mode.
+- If review-skill is unavailable, apply `references/authoring_rules.md` yourself, rule by rule with quoted evidence, and tell the user the review-skill gate did not run.
 
-This runs the full deep review across all three checklists (structural, content quality, 6 research-backed criteria). The target is **Grade A** — 0 major issues, 0 minor issues. If the review returns any major (M1-M8) or minor (m1-m8) finding, fix it and re-run. Do not proceed to Step 6 until the report shows Grade A.
+**The bar:** Grade A (0 Major, 0 Minor) with zero Style notes, a clean Layer 1, and with-skill runs that meet the expectations the baseline missed. After the third pass, stop: report the remaining findings with their locations, and ask the user whether to accept them, keep fixing, or change the scope.
 
-The pre-flight script cannot catch every review-skill rule (weak-verb density, defect taxonomy, anti-patterns, HELM clarity, diverse examples). `/review-skill` is the only gate that guarantees the skill will pass a subsequent independent audit — the "flying colours" outcome.
+### Step 7: Sanitize (optional)
 
-### Step 6: Sanitization Review (Optional)
+When the skill came from a business or internal project and will be shared, ask first (default: no) whether to run a sanitization pass that removes company names, people, internal paths, and jargon. Skip it for public skills built from scratch, private skills, and when the user declines. On a yes, follow `references/sanitization_checklist.md`. If anything changed, run step 6 again with at most 2 passes, then report what remains.
 
-**Ask the user before executing this step:** "This skill appears to be extracted from a business project. Would you like me to perform a sanitization review to remove business-specific content before public distribution?"
+### Step 8: Security scan
 
-Skip this step if:
-- The skill was created from scratch for public use
-- The user explicitly declines sanitization
-- The skill is intended for internal/private use only
-
-**When to perform sanitization:**
-- Skill was extracted from a business/internal project
-- Skill contains domain-specific examples from real systems
-- Skill will be distributed publicly or to other teams
-
-**Sanitization process** (detailed in `references/sanitization_checklist.md`):
-
-1. Run the automated grep scans from the checklist against the skill folder
-2. Review each match and apply the category-specific replacements
-3. Re-run all scan patterns to confirm no matches remain
-4. Read through the skill to verify coherence and functionality
-
-### Step 7: Security Review
-
-Before packaging or distributing a skill, run the security scanner:
+Run:
 
 ```bash
-python3 scripts/security_scan.py <path/to/skill-folder>           # Quick scan (required)
-python3 scripts/security_scan.py <path/to/skill-folder> --verbose  # Detailed review
+python scripts/security_scan.py <skill-dir> --verbose
 ```
 
-Install gitleaks first if not present (`brew install gitleaks` on macOS). The script prints installation instructions and remediation guidance for any issues found.
+`--verbose` adds the pattern checks for dangerous code and network calls; without it, only gitleaks runs. The last line is `RESULT secrets=<n> leads=<n>`.
 
-### Step 8: Packaging a Skill
+- **Exit 1 or 2:** secrets only when `RESULT` shows `secrets` above 0. Each is M10: move it to an environment variable and scan again. Otherwise, and on exit 4 (scan or usage error), read the error and fix the cause.
+- **gitleaks missing (exit 3):** relay the install instructions it prints (`winget install gitleaks` on Windows, `brew install gitleaks` on macOS) and ask whether to install. If the user declines, report that the scan did not run, so step 9 cannot package the skill.
+- **Leads:** confirm each `[M10] major check` line (dangerous code, network calls): remove the call, or disclose the network use and its purpose in SKILL.md. Each `[m11] minor check` line is a user-specific path to replace.
+- **Marker:** a clean scan writes `.security-scan-passed` into the skill directory. Pass `--no-marker` when the skill will not be packaged. Scan again after any later edit.
 
-Package the skill into a distributable zip. The script validates before packaging:
+### Step 9: Package and update the marketplace
+
+Default: skip packaging for a skill used in place (`.claude/skills/`, `~/.claude/skills/`, a plugin repository). Package when the user wants a zip, for example for claude.ai:
 
 ```bash
-python3 scripts/package_skill.py <path/to/skill-folder>            # Output to current dir
-python3 scripts/package_skill.py <path/to/skill-folder> ./dist      # Output to ./dist
+python scripts/package_skill.py <skill-dir> [output-dir]
 ```
 
-The packaging script will:
+It writes `<skill-name>.zip` to the output directory (default: the current directory) and leaves out `evals/`, caches, `.git`, OS files, `.env` files (not `.env.example`), zips, and the scan marker. It refuses on a definitive Major, a link inside the skill, an output directory inside the skill, or when the security marker is missing or no longer matches the content; in that last case, run step 8 again. Only a clean gitleaks scan writes the marker, so without gitleaks the skill cannot be packaged: tell the user, with the install command from step 8.
 
-1. **Validate** the skill automatically, checking:
-   - YAML frontmatter format and required fields
-   - Skill naming conventions and directory structure
-   - Description completeness and quality
-   - **Path reference integrity** - all `scripts/`, `references/`, and `assets/` paths mentioned in SKILL.md must exist
+Update the marketplace only when `.claude-plugin/marketplace.json` exists at the repository root: follow `references/marketplace_update.md`, then run `claude plugin validate .`. Otherwise skip it.
 
-2. **Package** the skill if validation passes, creating a zip file named after the skill (e.g., `my-skill.zip`) that includes all files and maintains the proper directory structure for distribution.
+### Step 10: Iterate and report
 
-**Common validation failure:** If SKILL.md references `scripts/my_script.py` but the file doesn't exist, validation will fail with "Missing referenced files: scripts/my_script.py". Fix any validation errors and run the packaging command again.
+Run at most 2 rounds of items 1 to 3. When failures remain after the second round, stop, list them, and ask the user whether to continue.
 
-### Step 9: Update Marketplace
-
-After packaging, update the marketplace registry so the skill is discoverable. Read `references/marketplace_update.md` for the JSON template and semver versioning rules.
-
-### Step 10: Iterate
-
-After testing the skill, users request improvements based on observed failures.
-
-**Iteration workflow:**
-1. Run the skill on a real task. Record each point where Claude hesitates, asks an unnecessary question, or produces wrong output.
-2. For each failure, grep SKILL.md and references/ to find the responsible section.
-3. Apply the fix: add missing context, replace vague instructions with specific commands, or add an `<example>` block covering the failure case.
-4. Run `python3 scripts/quick_validate.py <path/to/skill-folder>` to confirm no structural regressions.
-5. Re-run the same task to verify the fix resolved the issue.
-
-**Refinement filter:** Only add what solves observed problems. Do not duplicate content that best practices already cover.
+1. **Claude A / Claude B:** a fresh instance (Claude B) uses the skill on real tasks while this session (Claude A) edits it. Note where Claude B hesitates, reads files out of order, misses a reference file, or ignores a section.
+2. **Models:** run the with-skill evals on Haiku, Sonnet, and Opus (the Agent tool's model setting).
+3. **Fixes:** for each failure, add an eval case that reproduces it and run its baseline by the late-baseline rule in `references/evals_guide.md`. Find the responsible section, make the smallest fix, and run step 6 again. Add only what fixes an observed failure.
+4. **Real trigger measurement:** see "Upgrade paths" in `references/evals_guide.md`; `claude plugin eval` needs a plugin (a `plugin.json` or a skills-directory plugin).
+5. **Report to the user:** the skill path, the final quick_validate `RESULT` line, the review-skill grade (or that the gate did not run), baseline versus with-skill results per eval case, and every skipped step with its reason.
 
 </instructions>
 
-## End-to-End Example
+## Examples
 
 <example>
-**User request:** `/create-skill brand-guidelines`
+**Input:** `/create-skill csv-report Summarise a CSV file into a Markdown table of row counts and column types`
 
-**Step 1:** Skipped -- purpose is clear from the name.
-
-**Step 2 (Planning):** Brand guidelines are reference content (high freedom). Resources needed:
-- `references/color_palette.md` -- hex codes, usage rules
-- `references/typography.md` -- font families, sizes, hierarchy
-- `assets/logo.png` -- brand logo file
-
-**Step 3 (Init):**
-```bash
-python3 scripts/init_skill.py brand-guidelines --path skills/
-```
-
-**Step 4 (Edit):** Write SKILL.md with:
-```yaml
----
-name: brand-guidelines
-description: "Applies brand identity standards to UI components, documents, and presentations. Use when creating user-facing output, choosing colours, or selecting typography."
-license: MIT
----
-```
-Body references `references/color_palette.md` and `references/typography.md`. Asks user to provide the logo file for `assets/`.
-
-**Step 5 (Validate):** Run `python3 scripts/quick_validate.py skills/brand-guidelines` -- passes.
-
-**Step 6:** Skipped -- created from scratch for public use.
-
-**Steps 7-9:** Run security scan, package, update marketplace.
+1. Name and purpose come from the input; ask only where it lives (default `.claude/skills/csv-report/`).
+2. Write 3 eval cases (clean, semicolon-delimited, missing file). In the baseline, all three runs write the same parsing code, and two miss the semicolon delimiter.
+3. Bundle a script (low freedom). The fork decision test passes, so initialize with `--fork --resources scripts`, write, and validate until Grade A with zero Style notes.
 </example>
 
 <example>
-**User request:** `/create-skill db-migrate`
+**Input:** "The changelog skill said 'No release needed' on a repo where every PR lands as a merge commit. Fix it."
 
-**Step 1:** Skipped -- purpose clear from the name.
-
-**Step 2 (Planning):** Database migrations are fragile, sequence-dependent operations (low freedom). Resources needed:
-- `scripts/migrate.py` -- runs migrations with rollback on failure
-- `references/migration_patterns.md` -- naming conventions, idempotency rules
-
-**Step 3 (Init):**
-```bash
-python3 scripts/init_skill.py db-migrate --path skills/
-```
-
-**Step 4 (Edit):** Write SKILL.md with:
-```yaml
----
-name: db-migrate
-description: "Generates and runs database migration scripts with rollback support. Use when creating schema changes, adding columns, or restructuring tables."
-license: MIT
-context: fork
-agent: general-purpose
----
-```
-Body wraps the migration workflow in `<instructions>` tags with exact commands. Low freedom: each step specifies the exact script to run and the verification query to confirm success.
-
-**Step 5 (Validate):** Run `python3 scripts/quick_validate.py skills/db-migrate` -- passes with no warnings.
-
-**Steps 6-9:** Skip sanitization (created from scratch), run security scan, package, update marketplace.
+1. Update: find the source copy (not the plugin cache), read every file, and snapshot it to the workspace.
+2. Add an eval case for the failure (conventional-commit titles only in merge-commit bodies); against the snapshot, the baseline reports no release.
+3. Count a merge commit whose body opens with a conventional-commit subject as that commit, update every copy of the old rule, and validate: the new case produces a release entry, and the old cases still pass.
 </example>
 
 <example>
-**User request:** "The changelog skill sometimes misses merge commits. Can you improve it?"
+**Input:** "Turn the release checklist we just walked through into a skill."
 
-**Step 1:** Skipped -- user described the problem.
-
-**Step 2 (Planning):** This is an update, not a new skill. Identify the root cause: the skill's git log parsing likely filters merge commits.
-
-**Step 3:** Skipped -- skill already exists.
-
-**Step 4 (Edit):**
-1. Read the existing SKILL.md and all reference files.
-2. Locate the git log command pattern -- confirm it uses `--no-merges` flag.
-3. Remove `--no-merges` and add a merge commit formatting section.
-4. Update `references/commit_types.md` to include merge commit categorisation.
-5. Run consistency verification: check that no other section contradicts the new merge handling.
-
-**Step 5 (Validate):** Run `python3 scripts/quick_validate.py skills/changelog` -- passes.
-
-**Step 10 (Iterate):** Test on a repository with merge commits. Confirm the changelog now includes them with correct formatting.
+1. Take the steps, commands, and corrections from the conversation; ask only for the name and location.
+2. It waits for the user's confirmation before tagging, so it runs inline. Add `disable-model-invocation: true` (the user triggers releases), and mark all 10 trigger queries `should_trigger: false`.
+3. Run the eval cases on a fixture repository with a local bare remote, so tags and pushes stay in the workspace. Write the confirmation step and a final check that the tag exists on the remote, then validate.
 </example>
+
+<example>
+**Input (claude.ai, no subagents, review-skill not installed):** "Make me a skill that turns meeting transcripts into decisions and action items."
+
+1. Portable target: only portable frontmatter fields; validate with `--portable`.
+2. Skip the baseline, run each eval case yourself, apply `references/authoring_rules.md` rule by rule, and say the review-skill gate did not run.
+3. Packaging needs a clean scan. Without gitleaks there, `scripts/package_skill.py` refuses: say so, and tell the user to install gitleaks (`winget install gitleaks` or `brew install gitleaks`) and package on their own machine.
+</example>
+
+## Reference files
+
+| File | When to read it |
+|------|-----------------|
+| `references/authoring_rules.md` | Before step 3 and while fixing: every graded rule and the fork decision test |
+| `references/anthropic_guidance.md` | Before step 5: descriptions, conciseness, freedom levels, scripts, iteration |
+| `references/frontmatter_reference.md` | When choosing frontmatter fields, substitutions, or invocation control |
+| `references/bundled_resources.md` | In step 3: scripts, references, assets, file naming, paths |
+| `references/evals_guide.md` | In steps 2, 6, and 10: formats, subagent prompts, isolation, grading, upgrade paths |
+| `references/worked_examples.md` | For end-to-end walkthroughs: an inline guideline skill, a forked task skill, an update |
+| `references/sanitization_checklist.md` | In step 7 |
+| `references/marketplace_update.md` | In step 9, only when `.claude-plugin/marketplace.json` exists |
