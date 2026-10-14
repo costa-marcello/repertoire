@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create a new skill skeleton that follows the skillkit authoring rules.
+"""Create a new skill skeleton that follows the Repertoire authoring rules.
 
 The generated SKILL.md, evals/evals.json, and evals/trigger_queries.json contain
 [TODO placeholders. Once every placeholder is replaced, the skill passes

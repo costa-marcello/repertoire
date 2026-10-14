@@ -35,7 +35,7 @@ skill-name/
   scripts/        code Claude runs; only the output enters context
   references/     documentation Claude reads when a step calls for it
   assets/         files used in the output: templates, images, fonts
-  evals/          evals.json and trigger_queries.json (skillkit; not packaged)
+  evals/          evals.json and trigger_queries.json (Repertoire convention; not packaged)
 ```
 
 Claude Code requires no frontmatter field. `name` defaults to the directory name, and `description` falls back to the first non-empty line of the body. Write both anyway. The description decides triggering, and the Agent Skills spec requires both fields. Claude Code ignores unknown fields silently, and malformed YAML loads the body with empty metadata. That is why `quick_validate.py` parses the frontmatter strictly.
@@ -58,7 +58,7 @@ Consequences for authors:
 
 - The context window is shared with the conversation, other skills, and the task, so every paragraph competes for space.
 - Assume Claude is capable. Delete explanations of general concepts. Keep what Claude would get wrong without the skill: project facts, gotchas, exact commands, defaults.
-- Anthropic's limit is a SKILL.md body under 500 lines, and the spec recommends about 5,000 tokens. skillkit's M1 counts the whole file, frontmatter included, so stay under 500 total lines; the house target is under 400 lines and 20,000 characters (S3).
+- Anthropic's limit is a SKILL.md body under 500 lines, and the spec recommends about 5,000 tokens. Repertoire's M1 counts the whole file, frontmatter included, so stay under 500 total lines; the house target is under 400 lines and 20,000 characters (S3).
 - Skills written for earlier models are often too prescriptive for newer ones. When a model follows the intent without a rigid rule, remove the rule.
 
 ## Degrees of freedom
@@ -85,7 +85,7 @@ Mixing levels in one skill is normal. A release skill can leave the notes' wordi
 - **What and when.** State what the skill does and when to use it, key use case first.
 - **Person.** Write in the third person. Anthropic's guidance is to avoid "I can help you" and "You can use this".
   - The imperative "Use this skill when...", which Anthropic's own skills open with, is acceptable (it passes M8).
-  - skillkit prefers a third-person verb opening ("Extracts...") as house style (S6).
+  - Repertoire prefers a third-person verb opening ("Extracts...") as house style (S6).
 - **Terms.** Include the words users actually type: file types, tool names, task verbs.
 - **Pushiness.** Claude tends to under-trigger skills, so make the trigger clause a little pushy: "Use whenever the user mentions X or Y, even without naming Z." Avoid shouting, though. Newer models over-trigger on aggressive wording such as "CRITICAL: you MUST use this skill", so write a plain "Use when..." instead.
 - **Limits.** At most 1,024 characters, with no XML tags (no `<` or `>`).
@@ -105,7 +105,7 @@ Bad: "Helps with documents." It has no trigger, and the capability is vague.
 - **Templates and examples.**
   - Use templates for strict output formats.
   - Use input/output example pairs where output quality depends on style.
-  - Anthropic writes examples as Markdown ("**Example 1:**") and requires neither XML tags nor a fixed number of examples. skillkit's house style wraps the workflow in `<instructions>` and uses 3 to 5 `<example>` blocks (S1, S2), which is never graded.
+  - Anthropic writes examples as Markdown ("**Example 1:**") and requires neither XML tags nor a fixed number of examples. Repertoire's house style wraps the workflow in `<instructions>` and uses 3 to 5 `<example>` blocks (S1, S2), which is never graded.
 - **Conditional detail.** Put it in reference files, with SKILL.md saying when to read each one.
 
 ## Evaluation-driven development

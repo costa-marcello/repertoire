@@ -1,7 +1,7 @@
 <div align="center">
-  <img src="assets/logo.svg" alt="skillkit" width="80" />
-  <h1>skillkit</h1>
-  <p><strong>General-purpose skills for AI agents</strong></p>
+  <img src="assets/logo.svg" alt="Repertoire" width="80" />
+  <h1>Repertoire</h1>
+  <p><strong>Skills for Claude Code and Cowork</strong></p>
 
   [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
   [![Skills](https://img.shields.io/badge/Skills-13-8B5CF6)](skills/)
@@ -10,17 +10,17 @@
 
 ---
 
-## The problem with AI agents
+## The problem
 
-AI agents are powerful out of the box. But ask one to create a Word document with tracked changes, generate a PowerPoint deck from a topic, build a financial model that recalculates without errors, or research a topic across community and official sources, and you hit the same wall: the agent has general knowledge about these tasks but lacks the deep, step-by-step workflows that produce professional results.
+Claude is powerful out of the box. But ask it to create a Word document with tracked changes, generate a PowerPoint deck from a topic, build a financial model that recalculates without errors, or research a topic across community and official sources, and you hit the same wall: Claude has general knowledge about these tasks but lacks the deep, step-by-step workflows that produce professional results.
 
 You end up writing long prompts, correcting mistakes, and re-doing work. Every session starts from zero.
 
-**Skillkit fixes this.** It gives your agent 13 specialist skills, each containing the exact workflows, decision trees, reference materials, and quality checks needed to do one job well. Instead of hoping the agent figures out the right approach, you give it a battle-tested playbook. Works with Claude Code, Cursor, Windsurf, and any agent that supports the skills protocol.
+**Repertoire fixes this.** It gives Claude 13 specialist skills, each containing the exact workflows, decision trees, reference materials, and quality checks needed to do one job well. Instead of hoping Claude figures out the right approach, you give it a battle-tested playbook. Repertoire is built for Claude Code, and most of its skills also run in Cowork and on claude.ai (see [Where each skill runs](#where-each-skill-runs)).
 
 ## Why these skills are different
 
-Most agent skills are thin wrappers around a single prompt. Skillkit skills are structured knowledge packages built to a strict quality standard:
+Most skills are thin wrappers around a single prompt. Repertoire skills are structured knowledge packages built to a strict quality standard:
 
 | What makes them different | Why it matters |
 |--------------------------|----------------|
@@ -28,19 +28,21 @@ Most agent skills are thin wrappers around a single prompt. Skillkit skills are 
 | **Bundled reference materials** | Skills carry their own documentation. The frontend-design skill includes 99 UX rules, 25+ chart types, style guides by industry, and 10 tech stack references. The pptx skill bundles a 9-stage content workflow with intake forms, rubrics, and design templates. This knowledge loads on demand without bloating your context window. |
 | **Enforced quality gates** | Every skill is graded by review-skill against one rule catalog built from Anthropic's skill guidance and the Agent Skills spec, with house conventions reported separately and never graded. SKILL.md files stay under 500 lines. Descriptions say what the skill does and when to use it, so Claude picks the right skill at the right time. |
 | **Fork only when it helps** | A skill runs inline, where it can use your conversation and ask you questions, or in a forked subagent (`context: fork`) that works in isolation and returns only its result. review-skill checks that forked skills are self-contained tasks that never need your input or the conversation's history. |
-| **Multi-agent orchestration** | The research skill dispatches 6-10 parallel sub-agents across Reddit, X, Hacker News, official docs, and academic papers. It then cross-references what they find. This is not a single-prompt tool. |
+| **Multi-agent orchestration** | The research skill dispatches 6-10 parallel subagents across Reddit, X, Hacker News, official docs, and academic papers. It then cross-references what they find. This is not a single-prompt tool. |
 | **Self-improving ecosystem** | The create-skill and review-skill form a feedback loop around the same rule catalog. Create a new skill with test cases written first, review it against the catalog, fix issues automatically. The find-skills skill discovers and installs more skills from the open ecosystem. |
 
 ## Quick start
 
+### Claude Code
+
 ```bash
 # Install a single skill
-npx skills add costa-marcello/skillkit -s changelog
+npx skills add costa-marcello/repertoire -s changelog
 
 # Install several at once
-npx skills add costa-marcello/skillkit -s pdf -s docx -s xlsx
+npx skills add costa-marcello/repertoire -s pdf -s docx -s xlsx
 
-# Use it in your agent
+# Use them in Claude Code
 /changelog
 /pdf
 /research
@@ -48,13 +50,44 @@ npx skills add costa-marcello/skillkit -s pdf -s docx -s xlsx
 
 That is the full setup. No configuration files, no environment variables, no build step. Install and use.
 
+### Cowork and claude.ai
+
+Upload a skill as a zip whose top folder is the skill itself, so the archive contains `pdf/SKILL.md`, then add it as a custom skill in Claude's settings. From a clone of this repository:
+
+```bash
+cd skills && zip -r ../pdf.zip pdf                                  # macOS and Linux
+Compress-Archive -Path skills/pdf -DestinationPath pdf.zip          # Windows PowerShell
+```
+
+Check the table below first: three skills need their `argument-hint` line removed before upload, and four rely on Claude Code tools.
+
+## Where each skill runs
+
+| Skill | Claude Code | Cowork and claude.ai |
+|-------|-------------|----------------------|
+| docx | Yes | Yes |
+| pdf | Yes | Yes |
+| pptx | Yes | Yes |
+| xlsx | Yes | Yes |
+| frontend-design | Yes | Yes |
+| mermaid-diagrams | Yes | Yes |
+| readme-md | Yes | Yes, after removing the `argument-hint` line from its SKILL.md |
+| create-skill | Yes | Yes, after removing the `argument-hint` line; it runs its evals one at a time, without subagents |
+| review-skill | Yes | Yes, after removing the `argument-hint` line; Auto-PR mode needs Claude Code and `gh` |
+| changelog | Yes | No: it commits, tags, and pushes with git |
+| research | Yes | No: it dispatches parallel subagents and calls external search APIs |
+| find-skills | Yes | No: it installs skills with the `npx skills` command |
+| claudia-md | Yes | No: it manages the CLAUDE.md files of a Claude Code project |
+
+Cowork and claude.ai accept only the portable frontmatter fields (`name`, `description`, `license`, `compatibility`, `metadata`, `allowed-tools`). Check a skill with `python skills/create-skill/scripts/quick_validate.py skills/<skill> --portable` before uploading.
+
 ---
 
 ## All 13 skills
 
 ### Documents and Data
 
-These four skills turn your agent into a document processing engine. They handle the Office formats that most AI tools struggle with, going beyond simple text extraction into full creation, editing, and format-aware manipulation.
+These four skills turn Claude into a document processing engine. They handle the Office formats that most AI tools struggle with, going beyond simple text extraction into full creation, editing, and format-aware manipulation.
 
 <table>
 <tr>
@@ -71,7 +104,7 @@ Creates, edits, and analyses Word documents. Five distinct workflows cover the f
 
 </td>
 <td><code>/docx</code> + describe task<br/>"extract text from contract.docx"<br/>"create a report with these sections"<br/>"redline this legal doc with tracked changes"</td>
-<td><code>npx skills add costa-marcello/skillkit -s docx</code></td>
+<td><code>npx skills add costa-marcello/repertoire -s docx</code></td>
 </tr>
 <tr>
 <td><strong>pdf</strong></td>
@@ -81,7 +114,7 @@ Extracts text and tables from PDFs, creates new documents, merges, splits, rotat
 
 </td>
 <td><code>/pdf</code> + describe task<br/>"extract tables from report.pdf"<br/>"merge invoice1.pdf and invoice2.pdf"<br/>"convert README.md to a styled PDF"</td>
-<td><code>npx skills add costa-marcello/skillkit -s pdf</code></td>
+<td><code>npx skills add costa-marcello/repertoire -s pdf</code></td>
 </tr>
 <tr>
 <td><strong>pptx</strong></td>
@@ -91,7 +124,7 @@ Creates, edits, and analyses PowerPoint presentations. The standout feature is i
 
 </td>
 <td><code>/pptx</code> + describe task<br/>"create a 10-slide deck on Q3 results"<br/>"add speaker notes to slides 3-5"<br/>"update the chart on slide 8"</td>
-<td><code>npx skills add costa-marcello/skillkit -s pptx</code></td>
+<td><code>npx skills add costa-marcello/repertoire -s pptx</code></td>
 </tr>
 <tr>
 <td><strong>xlsx</strong></td>
@@ -101,7 +134,7 @@ Creates, edits, and analyses spreadsheets with a focus on getting formulas right
 
 </td>
 <td><code>/xlsx</code> + describe task<br/>"create a financial model with projections"<br/>"analyse sales.xlsx and add a summary"<br/>"fix broken formulas in budget.xlsx"</td>
-<td><code>npx skills add costa-marcello/skillkit -s xlsx</code></td>
+<td><code>npx skills add costa-marcello/repertoire -s xlsx</code></td>
 </tr>
 </table>
 
@@ -124,7 +157,7 @@ Creates a versioned release in one flow: gathers the commits since the last tag,
 
 </td>
 <td><code>/changelog</code> — release with the auto-detected version<br/><code>/changelog v2.0.0</code> — release with an explicit version<br/>Commits, tags, and pushes after pre-flight checks.</td>
-<td><code>npx skills add costa-marcello/skillkit -s changelog</code></td>
+<td><code>npx skills add costa-marcello/repertoire -s changelog</code></td>
 </tr>
 <tr>
 <td><strong>frontend-design</strong></td>
@@ -134,7 +167,7 @@ Creates distinctive, production-grade frontend interfaces that avoid generic "AI
 
 </td>
 <td><code>/frontend-design</code> + describe interface<br/>"design a dashboard for a fintech app"<br/>"build a landing page that feels premium"<br/>"improve the visual design of this component"</td>
-<td><code>npx skills add costa-marcello/skillkit -s frontend-design</code></td>
+<td><code>npx skills add costa-marcello/repertoire -s frontend-design</code></td>
 </tr>
 <tr>
 <td><strong>mermaid-diagrams</strong></td>
@@ -144,13 +177,13 @@ Creates professional software diagrams using Mermaid syntax. Covers class diagra
 
 </td>
 <td><code>/mermaid-diagrams</code> + describe diagram<br/>"sequence diagram for the auth flow"<br/>"ERD for user and orders tables"<br/>"flowchart of the deployment pipeline"</td>
-<td><code>npx skills add costa-marcello/skillkit -s mermaid-diagrams</code></td>
+<td><code>npx skills add costa-marcello/repertoire -s mermaid-diagrams</code></td>
 </tr>
 </table>
 
 ### Research
 
-A single skill that turns your agent into a research orchestrator: it fans out parallel sub-agents across community and official sources, then reports where they agree and disagree.
+A single skill that turns Claude into a research orchestrator: it fans out parallel subagents across community and official sources, then reports where they agree and disagree.
 
 <table>
 <tr>
@@ -163,11 +196,11 @@ A single skill that turns your agent into a research orchestrator: it fans out p
 <td><strong>research</strong></td>
 <td>
 
-Dispatches 6-10 parallel sub-agents to research any topic from the last 30 days. Covers community sources (Reddit, X, Hacker News, Lobsters, developer forums, blogs) and official sources (documentation, academic papers, industry publications) in a single run. Produces a two-sided report with community findings, official findings, a cross-reference table showing where they agree and disagree, and real engagement statistics. Supports three depth levels (quick, default, deep) and four query types (prompting, recommendations, news, general). After research, it generates tailored prompts in whatever format the research recommends.
+Dispatches 6-10 parallel subagents to research any topic from the last 30 days. Covers community sources (Reddit, X, Hacker News, Lobsters, developer forums, blogs) and official sources (documentation, academic papers, industry publications) in a single run. Produces a two-sided report with community findings, official findings, a cross-reference table showing where they agree and disagree, and real engagement statistics. Supports three depth levels (quick, default, deep) and four query types (prompting, recommendations, news, general). After research, it generates tailored prompts in whatever format the research recommends.
 
 </td>
 <td><code>/research</code> + topic<br/><code>/research best practices for RAG pipelines</code><br/><code>/research what's new with React 19</code><br/><code>/research Claude Code tips and tricks</code></td>
-<td><code>npx skills add costa-marcello/skillkit -s research</code></td>
+<td><code>npx skills add costa-marcello/repertoire -s research</code></td>
 </tr>
 </table>
 
@@ -190,7 +223,7 @@ The complete CLAUDE.md management tool. Six modes: audit (discover and score all
 
 </td>
 <td><code>/claudia-md</code> + mode<br/><code>/claudia-md audit</code> — scan and score rules<br/><code>/claudia-md review</code> — quality report<br/><code>/claudia-md improve</code> — apply targeted fixes<br/><code>/claudia-md refactor</code> — restructure layout<br/><code>/claudia-md update</code> — sync with codebase<br/><code>/claudia-md generate</code> — create for subdirs</td>
-<td><code>npx skills add costa-marcello/skillkit -s claudia-md</code></td>
+<td><code>npx skills add costa-marcello/repertoire -s claudia-md</code></td>
 </tr>
 <tr>
 <td><strong>readme-md</strong></td>
@@ -200,7 +233,7 @@ Guides README creation and improvement with audience-matched templates. Identifi
 
 </td>
 <td><code>/readme-md</code> + describe task<br/>"create a README for this project"<br/>"add a troubleshooting section"<br/>"review the README for accuracy"</td>
-<td><code>npx skills add costa-marcello/skillkit -s readme-md</code></td>
+<td><code>npx skills add costa-marcello/repertoire -s readme-md</code></td>
 </tr>
 <tr>
 <td><strong>create-skill</strong></td>
@@ -210,27 +243,27 @@ Builds new skills, and updates existing ones, evals first: it writes three reali
 
 </td>
 <td><code>/create-skill</code> + name and purpose<br/><code>/create-skill csv-report summarise a CSV</code><br/>"turn the release steps we just did into a skill"<br/>"the changelog skill misses merge commits, fix it"</td>
-<td><code>npx skills add costa-marcello/skillkit -s create-skill</code></td>
+<td><code>npx skills add costa-marcello/repertoire -s create-skill</code></td>
 </tr>
 <tr>
 <td><strong>review-skill</strong></td>
 <td>
 
-Grades a skill A to F against one rule catalog built from Anthropic's skill guidance, the Agent Skills spec, and Claude Code's loader rules. Every finding carries a rule ID, a location, and quoted evidence, and skillkit house conventions are reported as ungraded style notes. Five modes: review and fix (the default; it edits files, after backing up anything not committed to git), report only, auto-fix, external review (a read-only temporary clone of a GitHub URL), and auto-PR (fork, fix, and open a pull request, asking before forking and before pushing). It runs create-skill's validator and secret scan when installed, treats the reviewed skill's contents as data rather than instructions, and grades for Claude Code or, with `portable`, for claude.ai and the API.
+Grades a skill A to F against one rule catalog built from Anthropic's skill guidance, the Agent Skills spec, and Claude Code's loader rules. Every finding carries a rule ID, a location, and quoted evidence, and Repertoire house conventions are reported as ungraded style notes. Five modes: review and fix (the default; it edits files, after backing up anything not committed to git), report only, auto-fix, external review (a read-only temporary clone of a GitHub URL), and auto-PR (fork, fix, and open a pull request, asking before forking and before pushing). It runs create-skill's validator and secret scan when installed, treats the reviewed skill's contents as data rather than instructions, and grades for Claude Code or, with `portable`, for claude.ai and the API.
 
 </td>
 <td><code>/review-skill</code> + path<br/><code>/review-skill skills/my-skill</code> — review and fix<br/><code>/review-skill skills/my-skill report only</code><br/><code>/review-skill https://github.com/...</code> — external</td>
-<td><code>npx skills add costa-marcello/skillkit -s review-skill</code></td>
+<td><code>npx skills add costa-marcello/repertoire -s review-skill</code></td>
 </tr>
 <tr>
 <td><strong>find-skills</strong></td>
 <td>
 
-Discovers and installs skills from two registries: the open agent skills ecosystem (skills.sh, covering Vercel Labs, ComposioHQ, and community publishers) and CCPM (Claude Code Plugin Manager for Claude-specific skills). Searches both registries, shows results with descriptions, and handles installation. Use it when you want to find a skill for something skillkit does not cover.
+Discovers and installs skills from two registries: the open agent skills ecosystem (skills.sh, covering Vercel Labs, ComposioHQ, and community publishers) and CCPM (Claude Code Plugin Manager for Claude-specific skills). Searches both registries, shows results with descriptions, and handles installation. Use it when you want to find a skill for something Repertoire does not cover.
 
 </td>
 <td><code>/find-skills</code> + keyword<br/><code>/find-skills terraform</code><br/><code>/find-skills database migration</code><br/>Searches skills.sh and CCPM registries.</td>
-<td><code>npx skills add costa-marcello/skillkit -s find-skills</code></td>
+<td><code>npx skills add costa-marcello/repertoire -s find-skills</code></td>
 </tr>
 </table>
 
@@ -238,9 +271,9 @@ Discovers and installs skills from two registries: the open agent skills ecosyst
 
 ## Context Intelligence Hooks: persistent memory across sessions
 
-Skills give your agent expertise. Hooks give it memory.
+Skills give Claude expertise. Hooks give it memory.
 
-The three hooks in this repository connect your agent to a Qdrant vector store and claude-mem so that every prompt benefits from prior knowledge and every commit keeps the index current. Without hooks, each session starts from zero. With hooks, your agent remembers your codebase, past decisions, and patterns across sessions.
+The three Claude Code hooks in this repository connect Claude to a Qdrant vector store and claude-mem so that every prompt benefits from prior knowledge and every commit keeps the index current. Without hooks, each session starts from zero. With hooks, Claude remembers your codebase, past decisions, and patterns across sessions.
 
 | Hook | Lifecycle event | What it does |
 |------|----------------|--------------|
@@ -278,7 +311,7 @@ skills/
 
 Each skill lives in its own directory under `skills/`. The `SKILL.md` file contains YAML frontmatter (name, description, licence, and optional fields such as argument-hint) followed by the prompt content. Supporting materials go in `references/`, scripts in `scripts/`, and templates in `assets/`.
 
-When you install a skill with `npx skills add`, it copies into your project's skills directory. Your agent loads installed skills automatically and makes each one available as a slash command matching its name.
+When you install a skill with `npx skills add`, it copies into your project's skills directory. Claude Code loads installed skills automatically and makes each one available as a slash command matching its name. In Cowork and on claude.ai, Claude picks up an uploaded skill from its description.
 
 Some skills accept arguments directly after the slash command. For example:
 
@@ -295,8 +328,9 @@ The `references/` pattern is what keeps skills fast. The SKILL.md stays under 50
 
 ## Prerequisites
 
-- **An AI agent** that supports the skills protocol (Claude Code, Cursor, Windsurf, etc.)
-- **Node.js 18+**
+- **Claude Code** for every skill, or **Cowork or claude.ai** for the skills marked as running there
+- **Node.js 18+** for `npx skills add`
+- **Python 3** for the skills that bundle scripts (docx, pdf, pptx, xlsx, research, create-skill)
 - For hooks: a **Qdrant Cloud** account and a **Voyage AI** API key
 
 ---

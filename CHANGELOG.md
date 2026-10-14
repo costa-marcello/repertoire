@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+- **BREAKING**: Renamed the project from skillkit to Repertoire; install skills with `npx skills add costa-marcello/repertoire -s <skill>` (GitHub redirects the old repository URL)
+- Refocused the README on Claude Code and Cowork: install steps for both, and a table of where each skill runs, including which skills need their `argument-hint` line removed before uploading to Cowork or claude.ai
+- Renamed the house-style source in the rule catalog from "skillkit" to "Repertoire"
+
 ## [0.9.0] - 2026-10-14
 
 ### Added
@@ -196,13 +203,14 @@ All notable changes to this project will be documented in this file.
 - Fixed script invocations and variable names after skill rename
 - Fixed review-skill over-specification and deduplicated steps
 
-[0.9.0]: https://github.com/costa-marcello/skillkit/compare/v0.8.0...v0.9.0
-[0.8.0]: https://github.com/costa-marcello/skillkit/compare/v0.7.0...v0.8.0
-[0.7.0]: https://github.com/costa-marcello/skillkit/compare/v0.6.1...v0.7.0
-[0.6.1]: https://github.com/costa-marcello/skillkit/compare/v0.6.0...v0.6.1
-[0.6.0]: https://github.com/costa-marcello/skillkit/compare/v0.5.0...v0.6.0
-[0.5.0]: https://github.com/costa-marcello/skillkit/compare/v0.4.0...v0.5.0
-[0.4.0]: https://github.com/costa-marcello/skillkit/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/costa-marcello/skillkit/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/costa-marcello/skillkit/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/costa-marcello/skillkit/releases/tag/v0.1.0
+[Unreleased]: https://github.com/costa-marcello/repertoire/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/costa-marcello/repertoire/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/costa-marcello/repertoire/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/costa-marcello/repertoire/compare/v0.6.1...v0.7.0
+[0.6.1]: https://github.com/costa-marcello/repertoire/compare/v0.6.0...v0.6.1
+[0.6.0]: https://github.com/costa-marcello/repertoire/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/costa-marcello/repertoire/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/costa-marcello/repertoire/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/costa-marcello/repertoire/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/costa-marcello/repertoire/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/costa-marcello/repertoire/releases/tag/v0.1.0

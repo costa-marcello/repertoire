@@ -14,7 +14,7 @@ Six lenses drawn from Anthropic's prompting guidance and published research. Lik
 
 ## 1. XML tags (S1)
 
-Anthropic's [prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#structure-prompts-with-xml-tags) recommend XML tags when a prompt mixes instructions, context, examples, and inputs, so Claude can tell them apart. Anthropic's skill guidance does not require tags, and Anthropic's own skills use plain Markdown. skillkit uses `<instructions>` and `<example>` as house style, so a gap here is Style.
+Anthropic's [prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#structure-prompts-with-xml-tags) recommend XML tags when a prompt mixes instructions, context, examples, and inputs, so Claude can tell them apart. Anthropic's skill guidance does not require tags, and Anthropic's own skills use plain Markdown. Repertoire uses `<instructions>` and `<example>` as house style, so a gap here is Style.
 
 | Check | Rule |
 |-------|------|

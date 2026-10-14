@@ -1,6 +1,6 @@
 ---
 name: review-skill
-description: "Reviews Claude Code skills against Anthropic's skill guidance and the skillkit rule catalog, assigns a letter grade, and fixes the findings. Use when the user asks to review, grade, audit, or fix a skill, check a SKILL.md before publishing, review a skill from a GitHub URL, or contribute improvements to someone else's skill."
+description: "Reviews Claude Code skills against Anthropic's skill guidance and the Repertoire rule catalog, assigns a letter grade, and fixes the findings. Use when the user asks to review, grade, audit, or fix a skill, check a SKILL.md before publishing, review a skill from a GitHub URL, or contribute improvements to someone else's skill."
 license: MIT
 argument-hint: "[skill-path-or-url] [mode]"
 ---

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a skill directory against the skillkit rule catalog.
+"""Validate a skill directory against the Repertoire rule catalog.
 
 Implements the definitive checks in review-skill/references/rules.md and prints
 heuristic leads as "check" lines. Every check is read-only.

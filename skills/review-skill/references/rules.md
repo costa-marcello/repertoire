@@ -17,7 +17,7 @@ The single source of truth for grading skills. `create-skill/references/authorin
 **Severity is set by impact:**
 - **Major (M)**: the skill fails to load, triggers wrongly, misbehaves at run time, or misleads Claude.
 - **Minor (m)**: the skill works, but less reliably, efficiently, or portably.
-- **Style (S)**: skillkit house convention. Reported in a separate "Style notes" section and never graded.
+- **Style (S)**: Repertoire house convention. Reported in a separate "Style notes" section and never graded.
 
 **Confidence:**
 - **Definitive** checks are decided mechanically, by `quick_validate.py` or by the procedure stated in the rule.
@@ -72,13 +72,13 @@ IDs m5-m8 are retired and are never reused.
 | m13 | Unclear script contract | Minor | Anthropic | heuristic |
 | m14 | MCP tool named without its server | Minor | Anthropic | heuristic |
 | m15 | Emphasis overuse without reasons | Minor | Anthropic | heuristic |
-| S1 | Workflows or examples not wrapped in XML tags | Style | skillkit | definitive |
-| S2 | Fewer than 3 or more than 5 example blocks | Style | skillkit | definitive |
-| S3 | SKILL.md over 400 lines or about 5k tokens | Style | skillkit | definitive |
-| S4 | Unexpected files in the skill root | Style | skillkit | definitive |
-| S5 | No evals | Style | skillkit | definitive |
-| S6 | Description does not open with a third-person verb | Style | skillkit | definitive |
-| S7 | Mixed filename separators in one skill | Style | skillkit | definitive |
+| S1 | Workflows or examples not wrapped in XML tags | Style | Repertoire | definitive |
+| S2 | Fewer than 3 or more than 5 example blocks | Style | Repertoire | definitive |
+| S3 | SKILL.md over 400 lines or about 5k tokens | Style | Repertoire | definitive |
+| S4 | Unexpected files in the skill root | Style | Repertoire | definitive |
+| S5 | No evals | Style | Repertoire | definitive |
+| S6 | Description does not open with a third-person verb | Style | Repertoire | definitive |
+| S7 | Mixed filename separators in one skill | Style | Repertoire | definitive |
 
 ## Major rules
 

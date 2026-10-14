@@ -5,7 +5,7 @@ review-skill runs on its own, but its automated checks come from create-skill's 
 ## Install both skills
 
 ```bash
-npx skills add costa-marcello/skillkit -s create-skill -s review-skill
+npx skills add costa-marcello/repertoire -s create-skill -s review-skill
 ```
 
 ## Where the validator is looked up

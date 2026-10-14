@@ -13,7 +13,7 @@ These are the rules `review-skill` grades against, written as instructions for t
 
 ## Grading in one paragraph
 
-Grade A means 0 Major and 0 Minor findings. Style findings are skillkit house conventions; they are reported but never graded. create-skill still aims for zero Style notes, so that its output matches the kit. Each rule ID counts once per skill. Some checks are definitive (the validator decides) and others heuristic (a reviewer confirms them with quoted evidence), so a clean `quick_validate.py` run is necessary but not sufficient.
+Grade A means 0 Major and 0 Minor findings. Style findings are Repertoire house conventions; they are reported but never graded. create-skill still aims for zero Style notes, so that its output matches the kit. Each rule ID counts once per skill. Some checks are definitive (the validator decides) and others heuristic (a reviewer confirms them with quoted evidence), so a clean `quick_validate.py` run is necessary but not sufficient.
 
 ## Rule index
 
