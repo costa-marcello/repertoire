@@ -15,7 +15,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - **BREAKING**: Plugin installs run skills as `/repertoire:<skill>`, for example `/repertoire:changelog`; `npx skills add costa-marcello/repertoire -s <skill>` still installs a single skill under its bare name
-- **BREAKING**: Removed the docx, pdf, pptx, and xlsx skills; use Anthropic's built-in versions, which come with Claude Code and Cowork
+- **BREAKING**: Removed the docx, pdf, pptx, and xlsx skills; use Anthropic's versions, which are built in to Cowork and come to Claude Code with a claude.ai sign-in or the `document-skills` plugin
 - **BREAKING**: Removed the context intelligence hooks (`context-intelligence-hooks/`, the Qdrant and Voyage hooks)
 - **BREAKING**: Removed review-skill's External Review and Auto-PR modes; review-skill now reviews and fixes skills in your own repository
 - **BREAKING**: Renamed the project from skillkit to Repertoire (GitHub redirects the old repository URL); single skills install with `npx skills add costa-marcello/repertoire -s <skill>`

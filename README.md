@@ -71,7 +71,7 @@ The research skill uses a [SearXNG](https://docs.searxng.org/) instance when one
 
 ### Document skills
 
-Repertoire used to ship docx, pdf, pptx, and xlsx skills. They are gone, because Anthropic's own versions come built in to Claude Code and Cowork.
+Repertoire used to ship docx, pdf, pptx, and xlsx skills. They are gone, because Anthropic ships its own versions: built in to Cowork, and in Claude Code when you sign in with a claude.ai account, or through the `document-skills` plugin (`/plugin marketplace add anthropics/skills`, then `/plugin install document-skills@anthropic-agent-skills`).
 
 ---
 
@@ -238,7 +238,7 @@ The `references/` pattern is what keeps skills fast. The SKILL.md stays under 50
 
 - **Claude Code** or **Cowork**
 - **Python 3** for the skills that bundle scripts (research, create-skill, and review-skill, which runs create-skill's validator); create-skill's validator also needs PyYAML (`python -m pip install pyyaml`)
-- **Node.js 18+** only for `npx skills add`, and **Node.js 22+** for the optional SearXNG server (`mcp-searxng`)
+- **Node.js 22.20+** only for `npx skills add` and the optional SearXNG server (`mcp-searxng` needs 22 or later)
 - Optionally, your own **SearXNG** instance (with Docker or a native install) for the research skill
 
 ---
