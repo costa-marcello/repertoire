@@ -1,6 +1,6 @@
 # Content Quality Lenses
 
-Eight lenses for judging whether a skill works, not only whether it is well formed, plus four newer points from Anthropic's guidance. A lens finds issues; it does not grade. Each issue maps to the rule ID named in the lens heading and is graded by `rules.md`. An issue that fits no rule goes under "Advisory notes" in the report.
+Nine lenses for judging whether a skill works, not only whether it is well formed, plus four newer points from Anthropic's guidance. A lens finds issues; it does not grade. Each issue maps to the rule ID named in the lens heading and is graded by `rules.md`. An issue that fits no rule goes under "Advisory notes" in the report.
 
 Based on [Anthropic's skill authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices).
 
@@ -14,8 +14,9 @@ Based on [Anthropic's skill authoring best practices](https://platform.claude.co
 6. [Feedback loops (M4)](#6-feedback-loops-m4)
 7. [Consistency (M5, m4)](#7-consistency-m5-m4)
 8. [Time-sensitive content (m3)](#8-time-sensitive-content-m3)
-9. [Newer guidance (advisory unless a rule applies)](#9-newer-guidance-advisory-unless-a-rule-applies)
-10. [Quick reference](#quick-reference)
+9. [Runs in Cowork (M11)](#9-runs-in-cowork-m11)
+10. [Newer guidance (advisory unless a rule applies)](#10-newer-guidance-advisory-unless-a-rule-applies)
+11. [Quick reference](#quick-reference)
 
 ## 1. Degrees of freedom (M3)
 
@@ -98,6 +99,7 @@ Scripts should solve the problem, not hand it back to Claude.
 - Bare `except:`, `except Exception: pass`, `input()`, or `getpass.getpass()` in a bundled script: M6.
 - SKILL.md does not say whether to run or read a script, or does not name the packages it needs: m13.
 - Network calls not disclosed in SKILL.md: M10.
+- A script that reaches its own skill's files through an install location, opens a browser, or shells out to `claude -p`: M11 (lens 9).
 
 Full detection and pass/fail patterns: `script-quality.md`.
 
@@ -148,7 +150,38 @@ The v1 endpoint was `api.example.com/v1/messages`.
 
 Look for date-conditional logic, "currently" or "at the time of writing", and pinned versions with no "verify against official docs" note.
 
-## 9. Newer guidance (advisory unless a rule applies)
+## 9. Runs in Cowork (M11)
+
+The default target, `claude-code`, covers Claude Code and Cowork, and the portable target shares the same limits, so this lens applies to every review. Cowork runs the Claude Code engine with the plugin's skills, inside a desktop VM or a cloud container. It has no display, never reads `~/.claude/skills`, and does not run dynamic context injection; cloud sessions also cannot reach local stdio MCP servers or `localhost`.
+
+Check SKILL.md, every Markdown file under `references/`, and every bundled script. Skip `<example>` blocks for the path check.
+
+| Check | What to look for | Confidence |
+|-------|------------------|------------|
+| Context injection | In SKILL.md, a `!` at the start of a line or after whitespace followed by a backtick command, or a fenced block whose opening three backticks are followed by `!`. Code fences count | definitive |
+| Own files through an install location | A path to the skill's own files through `~/.claude/skills/<own-name>/`, the `$HOME` or `%USERPROFILE%` form of it, the same under `.agents/skills/`, or a project-relative `.claude/skills/<own-name>/` or `.agents/skills/<own-name>/` | definitive |
+| Display or browser | A step that opens a GUI window, calls `webbrowser.open`, drives a headed browser, or shows a preview the user must look at, with no file output or headless path | heuristic |
+| Local services | A step that depends on a local stdio MCP server or a `localhost` service and states no fallback | heuristic |
+| `claude -p` | A step or script that shells out to `claude -p` | heuristic |
+| Dotfile-only secrets | Secrets read only from a home-directory dotfile (such as `~/.config/<tool>/.env`), with no environment variable route | heuristic |
+
+quick_validate prints the definitive checks as `[M11] major definitive` lines, and a script that imports `webbrowser` as an `[M11] major check` line; confirm each by reading the cited line. Paths to other skills' files under `~/.claude/skills/` are not M11; they fall under m11's exemption.
+
+Fails, in a skill named `report`:
+
+```markdown
+Run `python ~/.claude/skills/report/scripts/report.py <input>`.
+```
+
+Passes:
+
+```markdown
+Run `python ${CLAUDE_SKILL_DIR}/scripts/report.py <input>`, and write the result to `report.md` (in Cowork, the outputs folder).
+```
+
+The fixes: reach bundled files through `${CLAUDE_SKILL_DIR}` in Markdown and through `Path(__file__).resolve().parent` in scripts; turn injection into an explicit step ("Run `git status`"); write results to files instead of opening them; state the fallback for each local service; read secrets from environment variables.
+
+## 10. Newer guidance (advisory unless a rule applies)
 
 Anthropic's skill and prompting guidance adds four points. Report a gap as an advisory note unless a rule named below applies.
 
@@ -169,4 +202,5 @@ Anthropic's skill and prompting guidance adds four points. Report a gap as an ad
 | Feedback loops | Is there a check before the irreversible step? | M4 |
 | Consistency | Do all files agree? | M5, m4 |
 | Time-sensitive content | Will this be wrong in six months? | m3 |
+| Runs in Cowork | Does it run without a display, injection, install paths, or local-only services? | M11 |
 | Newer guidance | Gotchas, defaults, key instructions first, reasons | advisory, m2, m15 |

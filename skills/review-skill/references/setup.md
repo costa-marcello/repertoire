@@ -4,6 +4,13 @@ review-skill runs on its own, but its automated checks come from create-skill's 
 
 ## Install both skills
 
+The Repertoire plugin installs both, side by side, in Claude Code and in Cowork:
+
+- **Claude Code:** run `/plugin marketplace add costa-marcello/repertoire`, then `/plugin install repertoire@repertoire`.
+- **Cowork:** open Customize > Plugins, choose Add marketplace, and enter `costa-marcello/repertoire`.
+
+To install only these two skills in Claude Code, without the plugin:
+
 ```bash
 npx skills add costa-marcello/repertoire -s create-skill -s review-skill
 ```
@@ -12,16 +19,18 @@ npx skills add costa-marcello/repertoire -s create-skill -s review-skill
 
 SKILL.md step 2 takes the first of these folders that contains `quick_validate.py`:
 
-1. `../create-skill/scripts/` relative to review-skill's folder (`${CLAUDE_SKILL_DIR}/../create-skill/scripts/` in Claude Code)
+1. `${CLAUDE_SKILL_DIR}/../create-skill/scripts/`, the create-skill beside review-skill. Claude Code and Cowork substitute `${CLAUDE_SKILL_DIR}`, and the path also resolves inside the plugin cache and through a linked repository checkout, so a plugin install always finds it here.
 2. `.claude/skills/create-skill/scripts/` in the project
 3. `.agents/skills/create-skill/scripts/` in the project
 4. `~/.claude/skills/create-skill/scripts/`
 5. `~/.agents/skills/create-skill/scripts/`
 
-Check an install with:
+These folders locate create-skill only. review-skill reads its own files relative to its folder (`${CLAUDE_SKILL_DIR}`), never through an install location, because plugin installs and Cowork keep it elsewhere (M11).
+
+Check an install by listing the folder that was found:
 
 ```bash
-ls ~/.claude/skills/create-skill/scripts/
+ls '<dir>'
 ```
 
 It should list `quick_validate.py` and `security_scan.py`.
@@ -61,6 +70,8 @@ With `<dir>` set to the folder found above, and each placeholder kept inside its
 python '<dir>/quick_validate.py' '<target-skill>' [--portable]
 python '<dir>/security_scan.py' '<target-skill>' --verbose --no-marker
 ```
+
+Leave out `--portable` for the default target, `claude-code`, which covers Claude Code and Cowork: plugin skills, with every Claude Code frontmatter field. Add it only for the portable target, a single-skill upload to claude.ai or the Claude API, which accepts only six frontmatter fields.
 
 `--no-marker` keeps security_scan from writing its pass marker into the target, which review-skill relies on in every mode. security_scan ends with `RESULT secrets=<n> leads=<n>`; exit 1 or 2 means secrets only when that line shows `secrets` above 0.
 

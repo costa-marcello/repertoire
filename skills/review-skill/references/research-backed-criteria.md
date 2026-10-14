@@ -48,7 +48,7 @@ Tian et al. (arXiv:2509.14404) sort prompt defects into six dimensions. In a ski
 | Structure and formatting | Bloated SKILL.md, long references without a table of contents, reference chains | M1, m9, m10, S3 |
 | Context and memory | Fork on a skill that needs the conversation; facts that disagree across files; key rules buried after the first 5,000 tokens | M2, M5, advisory |
 | Performance and efficiency | Explaining concepts Claude knows; repeated content | m1, S3 |
-| Maintainability and engineering | User-specific paths, dated logic, drifting terms, unexplained constants | m11, m3, m4, advisory |
+| Maintainability and engineering | User-specific paths, the skill's own files reached through an install location, dated logic, drifting terms, unexplained constants | m11, M11, m3, m4, advisory |
 
 ## 4. Anti-patterns
 
@@ -71,6 +71,8 @@ From Anthropic's skill and prompting guidance:
 | A menu of options with no default | m2 |
 | Instructions to reveal hidden reasoning | M10 |
 | MCP tools named without their server | m14 |
+| Dynamic context injection in SKILL.md, or the skill's own files reached through an install location such as `~/.claude/skills/<own-name>/` | M11 |
+| A step that needs a display or browser, a local stdio MCP server or `localhost` service with no fallback, a `claude -p` call, or secrets only in a home-directory dotfile | M11 (heuristic) |
 | Rigid steps where judgment is needed (newer models need less prescription) | M3 when an open task is forced into fixed steps; otherwise advisory |
 
 From research: elaborate prompting techniques that help one model can hurt a stronger one (arXiv:2510.22251). Treat it as support for simplifying, not as a finding.
@@ -95,6 +97,7 @@ These questions, adapted from Stanford HELM's multi-metric view, help a reviewer
 | Robustness: would a reworded request still trigger the skill? | trigger review (advisory), M8 |
 | Maintainability: can one fact change without breaking another file? | M5, m3, m11 |
 | Safety: are destructive steps checked, and are boundaries stated? | M4, M10 |
+| Portability: does it run in Cowork as well as in Claude Code? | M11; M9 for the portable target |
 
 ## Quick checklist
 
@@ -103,6 +106,6 @@ Deep-review lenses:
 - [ ] XML tags: S1 gaps noted as Style
 - [ ] Examples: count (S2), contradictions (M5), literal arguments (m12)
 - [ ] Defect taxonomy: each dimension checked, issues mapped to IDs
-- [ ] Anti-patterns: OWASP and Anthropic lists checked, issues mapped to IDs
+- [ ] Anti-patterns: OWASP and Anthropic lists checked, including the Cowork rows (M11), issues mapped to IDs
 - [ ] Formatting and HELM questions: observations recorded as advisory
 ```

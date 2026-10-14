@@ -17,25 +17,9 @@
       ]
     },
     {
-      "id": 2,
-      "prompt": "Can you review the pdf skill at https://github.com/anthropics/skills/tree/main/skills/pdf? Don't change anything, I just want to know how it scores.",
-      "expected_output": "An External Review: the URL parts are checked, the repository is cloned with --depth 1 into a fresh mktemp folder with GIT_TERMINAL_PROMPT=0 and GCM_INTERACTIVE=never, the skill folder skills/pdf is reviewed read-only, the report opens with strengths and lists findings with valid rule IDs, and the clone is deleted only after the cleanup guard resolves its path with pwd -P and finds .git inside a tmp.* folder of the temporary folder.",
-      "files": [],
-      "expectations": [
-        "The clone command uses --depth 1, sets GIT_TERMINAL_PROMPT=0 and GCM_INTERACTIVE=never, and clones into a folder created by mktemp -d",
-        "None of the target's scripts are executed and the target is never invoked as a skill; only create-skill's validator and security scan are run, the scan with --no-marker",
-        "No file in the clone is edited, no fork is created, and nothing is pushed",
-        "The report includes the URL and the commit hash, and opens with a Strengths section",
-        "Every finding carries a rule ID that exists in rules.md, a file:line, and quoted evidence",
-        "No finding treats a description that starts with 'Use this skill when' as M8, and no finding asks for context: fork",
-        "The grade matches the bands in rules.md for the counted Major and Minor IDs",
-        "The cleanup resolves the recorded path with pwd -P and checks for .git before rm -rf; afterwards the recorded clone path no longer exists, and nothing outside it was deleted"
-      ]
-    },
-    {
       "id": 3,
       "prompt": "Fix my skill. Put this in api-tester/SKILL.md in a scratch folder (it is not in git) and run /review-skill on it with fix:\n\n---\nname: api-tester\ndescription: \"Test your APIs\"\ncontext: fork\nagent: general-purpose\n---\n\n# API Tester\n\n1. Ask the user which environment to test against.\n2. Send a request to each endpoint listed in endpoints.txt.\n3. Handle errors appropriately.\n4. Ensure the responses are valid.\n5. Retry as needed.\n6. Report the failures.\n",
-      "expected_output": "Auto-Fix: the folder is outside any git repository, so a backup of api-tester is copied to a mktemp folder with a command that checks SKILL.md exists in the copy and prints the path, which is reported; context: fork and agent are removed (M2); the description is rewritten in the third person with a 'Use when...' clause (M8); the weak-verb steps get concrete defaults or checks (M7); the validator is re-run after the fixes; the loop stops within 3 passes; the summary shows the before grade (D or F, from at least M2 and M8), the after grade, and the backup path.",
+      "expected_output": "Auto-Fix: the folder is outside any git repository, so a backup of api-tester is copied to a mktemp folder with a command that checks SKILL.md exists in the copy and prints the path, which is reported; context: fork and agent are removed (M2); the description is rewritten in the third person with a 'Use when...' clause (M8); the weak-verb steps get concrete defaults or checks (M7); the validator is re-run after the fixes; the loop stops within 3 passes; no regression run starts, because the folder is not in the user's own repository; the summary shows the before grade (D or F, from at least M2 and M8), the after grade, and the backup path.",
       "files": [],
       "expectations": [
         "A backup copy is made before any edit, the copy is checked to contain SKILL.md, and its printed path is told to the user",
@@ -44,6 +28,7 @@
         "Steps 3, 4, and 5 are replaced with concrete actions, defaults, or checks",
         "The validator or the rules walk is run again after the fixes",
         "The fix summary reports at most 3 passes, a before grade of D or F that matches the counted Major IDs (at least M2 and M8), and the after grade",
+        "No regression run starts and no subagent runs api-tester's eval cases, and the fix summary says the regression run did not run because the folder is not in the user's own repository",
         "Style findings are reported but not fixed, because the user did not ask for Style fixes"
       ]
     },
@@ -58,6 +43,20 @@
         "No backup is made and no fix summary is printed",
         "Every finding carries a rule ID that exists in rules.md, a file:line, and quoted evidence",
         "Style notes are listed under 'Style notes (not graded)', and the grade matches the bands in rules.md for the counted Major and Minor IDs"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "I changed my word-count skill and want to know if its evals still pass. In a scratch folder (not in git), save the two files below as word-count/SKILL.md and word-count/evals/evals.json, and save word-count/evals/files/notes.txt with the text \"one two three four five six\\tseven eight nine ten eleven twelve\". Then run /review-skill on word-count with report only regression.\n\nword-count/SKILL.md:\n\n---\nname: word-count\ndescription: \"Counts the words in a text file and writes the total to count.txt. Use when the user asks how many words a file has.\"\n---\n\n# Word Count\n\nCount the words in the given file, splitting on spaces, and write the total to count.txt.\n\nword-count/evals/evals.json:\n\n{\"skill_name\": \"word-count\", \"evals\": [{\"id\": 1, \"prompt\": \"how many words are in notes.txt?\", \"expected_output\": \"count.txt holds 12.\", \"files\": [\"evals/files/notes.txt\"], \"expectations\": [\"count.txt contains 12\"]}]}\n",
+      "expected_output": "Review Only with a regression request. The regression run does not start, because word-count sits in a scratch folder outside the user's own repository (and, when this case runs as an eval, because a regression run never starts inside an eval run). The report header gives that reason, nobody is asked whether to run the evals, no subagent runs word-count's eval case, no M12 finding appears, and no file in word-count/ changes.",
+      "files": [],
+      "expectations": [
+        "The report states the mode as Review Only",
+        "The report says the regression run did not run and gives the reason: the skill is not in the user's own repository, or the review is running inside an eval run",
+        "No subagent is dispatched to run word-count's eval case, and no under-test copy of word-count is made",
+        "The user is not asked whether to run the evals, because a check failed before that question",
+        "No M12 finding appears, and every finding carries a rule ID that exists in rules.md, a file:line, and quoted evidence",
+        "word-count/SKILL.md and word-count/evals/evals.json are unchanged, and no .security-scan-passed file exists in word-count/"
       ]
     }
   ]
