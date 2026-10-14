@@ -1,5 +1,24 @@
 # Sequence Diagrams
 
+## Contents
+
+1. [Basic Syntax](#basic-syntax)
+2. [Participants and Actors](#participants-and-actors)
+3. [Message Types](#message-types)
+4. [Activations](#activations)
+5. [Alt/Else (Conditional Logic)](#altelse-conditional-logic)
+6. [Opt (Optional)](#opt-optional)
+7. [Par (Parallel)](#par-parallel)
+8. [Loop](#loop)
+9. [Break (Early Exit)](#break-early-exit)
+10. [Notes](#notes)
+11. [Sequence Numbers](#sequence-numbers)
+12. [Links and Tooltips](#links-and-tooltips)
+13. [Comprehensive Example: User Authentication Flow](#comprehensive-example-user-authentication-flow)
+14. [API Request/Response Example](#api-requestresponse-example)
+15. [Microservices Communication](#microservices-communication)
+16. [Best Practices](#best-practices)
+
 Sequence diagrams show interactions between participants over time. They're ideal for API flows, authentication sequences, and system component interactions.
 
 <example name="Basic Syntax">

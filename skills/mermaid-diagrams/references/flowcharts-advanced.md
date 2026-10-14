@@ -1,5 +1,16 @@
 # Flowcharts - Advanced
 
+## Contents
+
+1. [Styling](#styling)
+2. [Comprehensive Example: User Registration Flow](#comprehensive-example-user-registration-flow)
+3. [Algorithm Example: Binary Search](#algorithm-example-binary-search)
+4. [CI/CD Pipeline](#cicd-pipeline)
+5. [E-Commerce Checkout Flow](#e-commerce-checkout-flow)
+6. [Decision Matrix Example](#decision-matrix-example)
+7. [Best Practices](#best-practices)
+8. [Common Patterns](#common-patterns)
+
 Styling, comprehensive examples, and common patterns for flowcharts.
 
 ## Styling

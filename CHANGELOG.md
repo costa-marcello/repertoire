@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Added a single rule catalog (`review-skill/references/rules.md`) that both skills share: every rule has an ID, a source (Anthropic, the Agent Skills spec, Claude Code, or skillkit), a severity, and a detection method, and create-skill's `authoring_rules.md` mirrors it rule for rule
 - Added evals-first authoring to create-skill: three eval cases and ten trigger prompts written before the skill, a baseline run without the skill, and with-skill runs during validation
 - Added `evals/` test cases to create-skill and review-skill, and unit tests for the scripts and the rule alignment (`python -m unittest discover -s tests/create_review`)
+- Added a `## Contents` section that links each `##` heading to every reference file longer than 100 lines (41 files across 9 skills), clearing all m9 findings
 
 ### Changed
 - Refocused the project from a coding-agent skill kit into a smaller general-purpose collection of 13 skills

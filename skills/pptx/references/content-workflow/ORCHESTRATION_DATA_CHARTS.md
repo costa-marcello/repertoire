@@ -1,5 +1,10 @@
 # ORCHESTRATION_DATA_CHARTS.md
 
+## Contents
+
+1. [Stage 8b: Data Synthesis](#stage-8b-data-synthesis)
+2. [Stage 8c: Chart Generation](#stage-8c-chart-generation)
+
 > **Purpose**: Detailed specifications for Stage 8b (Data Synthesis) and Stage 8c (Chart Generation) in orchestration mode.
 >
 > **Navigation**: [← Back to Overview](ORCHESTRATION_OVERVIEW.md) | [Next: PPTX Creation →](ORCHESTRATION_PPTX.md)

@@ -1,5 +1,14 @@
 # Other Diagram Types
 
+## Contents
+
+1. [State Diagrams](#state-diagrams)
+2. [Git Graphs](#git-graphs)
+3. [Gantt Charts](#gantt-charts)
+4. [Pie Charts](#pie-charts)
+5. [Quadrant Charts](#quadrant-charts)
+6. [Best Practices by Diagram Type](#best-practices-by-diagram-type)
+
 State diagrams, git graphs, gantt charts, and pie/quadrant charts for specialized visualization needs.
 
 ## State Diagrams

@@ -2,6 +2,15 @@
 
 # Subfolder CLAUDE.md Examples
 
+## Contents
+
+1. [tests/CLAUDE.md](#testsclaudemd)
+2. [src/components/CLAUDE.md](#srccomponentsclaudemd)
+3. [src/api/CLAUDE.md](#srcapiclaudemd)
+4. [When to Create Subfolder Files](#when-to-create-subfolder-files)
+5. [Auto-Generated Examples](#auto-generated-examples)
+6. [Generated vs Hand-Crafted](#generated-vs-hand-crafted)
+
 Real-world examples of subfolder-specific CLAUDE.md files.
 
 ---

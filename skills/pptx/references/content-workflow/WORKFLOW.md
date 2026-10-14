@@ -1,5 +1,19 @@
 # PPT Creation Workflow
 
+## Contents
+
+1. [Stage 0: Archive Input](#stage-0-archive-input)
+2. [Stage 1: Structure Goals](#stage-1-structure-goals)
+3. [Stage 2: Storyline (Pyramid Principle)](#stage-2-storyline-pyramid-principle)
+4. [Stage 3: Outline & Slide Titles (Assertion-Style)](#stage-3-outline--slide-titles-assertion-style)
+5. [Stage 4: Evidence & Charts](#stage-4-evidence--charts)
+6. [Stage 5: Layout & Accessibility](#stage-5-layout--accessibility)
+7. [Stage 6: Speaker Notes](#stage-6-speaker-notes)
+8. [Stage 7: Self-Check & Scoring](#stage-7-self-check--scoring)
+9. [Stage 8: Package Deliverables](#stage-8-package-deliverables)
+10. [Stage 9: Reuse Instructions](#stage-9-reuse-instructions)
+11. [Workflow Summary Checklist](#workflow-summary-checklist)
+
 > **From Simple Topic to Presentation-Ready Output**
 >
 > This workflow guides you through 10 stages, from gathering user intent to packaging final deliverables. Each stage has clear inputs, actions, and outputs. Follow this sequence to ensure consistent, high-quality results.

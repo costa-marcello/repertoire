@@ -1,5 +1,14 @@
 # Execution Checklists
 
+## Contents
+
+1. [Audit Mode](#audit-mode)
+2. [Review Mode](#review-mode)
+3. [Improve Mode](#improve-mode)
+4. [Refactor Mode](#refactor-mode)
+5. [Update Mode](#update-mode)
+6. [Generate Mode](#generate-mode)
+
 <!-- v1.0.0 | 2026-01-30 -->
 
 Mode-specific checklists for tracking progress during CLAUDE.md operations.

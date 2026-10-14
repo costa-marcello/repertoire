@@ -1,5 +1,12 @@
 # Entity Relationship Diagrams - Patterns
 
+## Contents
+
+1. [Blog Platform Schema](#blog-platform-schema)
+2. [Social Media Schema](#social-media-schema)
+3. [Best Practices](#best-practices)
+4. [Common Patterns](#common-patterns)
+
 Real-world schema examples, best practices, and common database design patterns.
 
 <example name="Blog Platform">

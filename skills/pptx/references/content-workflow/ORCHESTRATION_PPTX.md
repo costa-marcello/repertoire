@@ -1,5 +1,14 @@
 # ORCHESTRATION_PPTX.md
 
+## Contents
+
+1. [Stage 8d: Dual-Path PPTX Creation (Parallel Execution)](#stage-8d-dual-path-pptx-creation-parallel-execution)
+2. [Stage 8e: Dual-Path Chart Insertion (Parallel Execution)](#stage-8e-dual-path-chart-insertion-parallel-execution)
+3. [Quality Gates](#quality-gates)
+4. [Error Handling](#error-handling)
+5. [Examples](#examples)
+6. [Version History](#version-history)
+
 > **Purpose**: Comprehensive specifications for Stage 8d (Dual-Path PPTX Creation) and Stage 8e (Chart Insertion) in orchestration mode.
 >
 > **Navigation**: [← Back to Overview](ORCHESTRATION_OVERVIEW.md) | [← Data & Charts](ORCHESTRATION_DATA_CHARTS.md)

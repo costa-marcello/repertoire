@@ -1,5 +1,13 @@
 # Office Open XML Technical Reference
 
+## Contents
+
+1. [Technical Guidelines](#technical-guidelines)
+2. [Document Content Patterns](#document-content-patterns)
+3. [File Updates](#file-updates)
+4. [Document Library (Python)](#document-library-python)
+5. [Tracked Changes (Redlining)](#tracked-changes-redlining)
+
 This document covers:
 - [Technical Guidelines](#technical-guidelines) - Schema compliance rules and validation requirements
 - [Document Content Patterns](#document-content-patterns) - XML patterns for headings, lists, tables, formatting, etc.

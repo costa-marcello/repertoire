@@ -1,5 +1,10 @@
 # PDF Form Filling Workflow
 
+## Contents
+
+1. [Fillable fields](#fillable-fields)
+2. [Non-fillable fields](#non-fillable-fields)
+
 Complete these steps in order. Do not skip ahead to writing code.
 
 First, check whether the PDF has fillable form fields. Run this script from this file's directory:

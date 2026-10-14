@@ -1,5 +1,15 @@
 # C4 Model Diagrams
 
+## Contents
+
+1. [C4 Model Levels](#c4-model-levels)
+2. [C4 Context Diagram](#c4-context-diagram)
+3. [C4 Container Diagram](#c4-container-diagram)
+4. [C4 Component Diagram](#c4-component-diagram)
+5. [Microservices Architecture Example](#microservices-architecture-example)
+6. [Best Practices](#best-practices)
+7. [Common Architecture Patterns](#common-architecture-patterns)
+
 The C4 model provides a hierarchical way to visualize software architecture at different levels of abstraction: Context, Containers, Components, and Code.
 
 ## C4 Model Levels

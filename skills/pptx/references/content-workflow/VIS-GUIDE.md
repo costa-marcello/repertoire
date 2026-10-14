@@ -1,5 +1,18 @@
 # Data Visualization Selection & Labeling Standards
 
+## Contents
+
+1. [Chart Selection Dictionary](#chart-selection-dictionary)
+2. [Chart Selection Quick Reference](#chart-selection-quick-reference)
+3. [Labeling & Annotation Standards](#labeling--annotation-standards)
+4. [Number Formatting Best Practices](#number-formatting-best-practices)
+5. [Color & Accessibility](#color--accessibility)
+6. [Chart Dos and Don'ts](#chart-dos-and-donts)
+7. [Assertion-Evidence Chart Writing](#assertion-evidence-chart-writing)
+8. [Advanced: When to Use Specialized Charts](#advanced-when-to-use-specialized-charts)
+9. [Placeholder Charts (When Data Is Missing)](#placeholder-charts-when-data-is-missing)
+10. [References & Further Learning](#references--further-learning)
+
 > **Purpose**: Choose the right chart type for your data and message, then label it properly for clarity and accessibility. This guide follows industry best practices from the Financial Times, Edward Tufte, and the Assertion-Evidence framework.
 
 ---

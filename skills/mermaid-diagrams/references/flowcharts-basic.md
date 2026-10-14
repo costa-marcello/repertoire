@@ -1,5 +1,12 @@
 # Flowcharts - Basics
 
+## Contents
+
+1. [Basic Syntax](#basic-syntax)
+2. [Node Shapes](#node-shapes)
+3. [Connections](#connections)
+4. [Subgraphs](#subgraphs)
+
 Flowcharts visualize processes, algorithms, decision trees, and user journeys. They show step-by-step progression through a system or workflow.
 
 <example name="Basic Syntax">

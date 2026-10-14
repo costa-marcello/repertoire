@@ -1,5 +1,20 @@
 # PDF Cookbook -- Python and CLI Patterns
 
+## Contents
+
+1. [Text Extraction](#text-extraction)
+2. [Table Extraction](#table-extraction)
+3. [OCR for Scanned PDFs](#ocr-for-scanned-pdfs)
+4. [Merge PDFs](#merge-pdfs)
+5. [Split PDF](#split-pdf)
+6. [Rotate Pages](#rotate-pages)
+7. [Extract Metadata](#extract-metadata)
+8. [Add Watermark](#add-watermark)
+9. [Password Protection](#password-protection)
+10. [Extract Images](#extract-images)
+11. [Create PDF with reportlab](#create-pdf-with-reportlab)
+12. [CLI Tools Quick Reference](#cli-tools-quick-reference)
+
 Quick-reference code patterns for common PDF operations. Use `advanced-features.md` for pypdfium2, JavaScript, and advanced CLI.
 
 ---

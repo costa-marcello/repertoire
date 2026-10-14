@@ -1,5 +1,12 @@
 # Make a README
 
+## Contents
+
+1. [README 101](#readme-101)
+2. [Suggestions for a Good README](#suggestions-for-a-good-readme)
+3. [FAQ](#faq)
+4. [What's Next?](#whats-next)
+
 > Source: [makeareadme.com](https://www.makeareadme.com) by Danny Guo
 > 
 > "Because no one can read your mind (yet)"

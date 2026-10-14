@@ -1,5 +1,16 @@
 # Update Mode: Codebase Scanning & Sync Workflow
 
+## Contents
+
+1. [Phase U1: Codebase Scan](#phase-u1-codebase-scan)
+2. [Phase U2: Existing CLAUDE.md Read](#phase-u2-existing-claudemd-read)
+3. [Phase U3: Drift Detection](#phase-u3-drift-detection)
+4. [Phase U4: Change Preview](#phase-u4-change-preview)
+5. [Phase U5: User Approval](#phase-u5-user-approval)
+6. [Phase U6: Apply Updates](#phase-u6-apply-updates)
+7. [Greenfield Mode (No Existing CLAUDE.md)](#greenfield-mode-no-existing-claudemd)
+8. [Monorepo Handling](#monorepo-handling)
+
 <!-- v1.0.0 | 2026-02-13 -->
 
 Detailed algorithm for the Update mode. The SKILL.md contains the compact summary; this reference provides the full scanning heuristics.

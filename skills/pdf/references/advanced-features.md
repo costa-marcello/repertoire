@@ -1,5 +1,16 @@
 # PDF Processing Advanced Reference
 
+## Contents
+
+1. [pypdfium2 Library (Apache/BSD License)](#pypdfium2-library-apachebsd-license)
+2. [JavaScript Libraries](#javascript-libraries)
+3. [Advanced Command-Line Operations](#advanced-command-line-operations)
+4. [Advanced Python Techniques](#advanced-python-techniques)
+5. [Complex Workflows](#complex-workflows)
+6. [Performance Optimization Tips](#performance-optimization-tips)
+7. [Troubleshooting Common Issues](#troubleshooting-common-issues)
+8. [License Information](#license-information)
+
 This document contains advanced PDF processing features, detailed examples, and additional libraries not covered in the main skill instructions.
 
 ## pypdfium2 Library (Apache/BSD License)

@@ -1,5 +1,18 @@
 # Generation Workflow
 
+## Contents
+
+1. [Overview](#overview)
+2. [Phase G1: Directory Discovery](#phase-g1-directory-discovery)
+3. [Phase G2: Directory Scoring](#phase-g2-directory-scoring)
+4. [Phase G3: Content Extraction](#phase-g3-content-extraction)
+5. [Phase G4: Preview Generation](#phase-g4-preview-generation)
+6. [Phase G5: User Approval](#phase-g5-user-approval)
+7. [Phase G6: File Creation](#phase-g6-file-creation)
+8. [Good vs Bad Generated Content](#good-vs-bad-generated-content)
+9. [Framework-Specific Heuristics](#framework-specific-heuristics)
+10. [Common Mistakes to Avoid](#common-mistakes-to-avoid)
+
 <!-- v1.0 | 2026-02-02 -->
 
 Detailed workflow for Generate mode — creating CLAUDE.md files in subdirectories that benefit from instant context.

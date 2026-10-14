@@ -1,5 +1,14 @@
 # Office Open XML Technical Reference for PowerPoint
 
+## Contents
+
+1. [Technical Guidelines](#technical-guidelines)
+2. [Presentation Structure](#presentation-structure)
+3. [File Updates](#file-updates)
+4. [Slide Operations](#slide-operations)
+5. [Common Errors to Avoid](#common-errors-to-avoid)
+6. [Validation Checklist for Template-Based Presentations](#validation-checklist-for-template-based-presentations)
+
 **Important: Read this entire document before starting.** Critical XML schema rules and formatting requirements are covered throughout. Incorrect implementation can create invalid PPTX files that PowerPoint cannot open.
 
 ## Technical Guidelines

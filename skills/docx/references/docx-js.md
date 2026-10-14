@@ -1,5 +1,20 @@
 # DOCX Library Tutorial
 
+## Contents
+
+1. [Setup](#setup)
+2. [Text & Formatting](#text--formatting)
+3. [Styles & Professional Formatting](#styles--professional-formatting)
+4. [Lists (ALWAYS USE PROPER LISTS - NEVER USE UNICODE BULLETS)](#lists-always-use-proper-lists---never-use-unicode-bullets)
+5. [Tables](#tables)
+6. [Links & Navigation](#links--navigation)
+7. [Images & Media](#images--media)
+8. [Page Breaks](#page-breaks)
+9. [Headers/Footers & Page Setup](#headersfooters--page-setup)
+10. [Tabs](#tabs)
+11. [Constants & Quick Reference](#constants--quick-reference)
+12. [Critical Issues & Common Mistakes](#critical-issues--common-mistakes)
+
 Generate .docx files with JavaScript/TypeScript.
 
 ## Setup

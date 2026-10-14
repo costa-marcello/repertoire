@@ -1,5 +1,13 @@
 # CLAUDE.md Update Guidelines
 
+## Contents
+
+1. [Core Principle](#core-principle)
+2. [What TO Add](#what-to-add)
+3. [What NOT to Add](#what-not-to-add)
+4. [Diff Format for Updates](#diff-format-for-updates)
+5. [Validation Checklist](#validation-checklist)
+
 ## Core Principle
 
 Only add information that will genuinely help future Claude sessions. The context window is precious - every line must earn its place.

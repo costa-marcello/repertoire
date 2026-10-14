@@ -1,5 +1,20 @@
 # Advanced Mermaid Features
 
+## Contents
+
+1. [Layout Options](#layout-options)
+2. [Look Options](#look-options)
+3. [Complete Configuration Example](#complete-configuration-example)
+4. [Click Events and Links](#click-events-and-links)
+5. [Tooltips](#tooltips)
+6. [Comments and Documentation](#comments-and-documentation)
+7. [Directional Hints](#directional-hints)
+8. [Responsive Sizing](#responsive-sizing)
+9. [SVG Export Options](#svg-export-options)
+10. [Performance Considerations](#performance-considerations)
+11. [Integration Examples](#integration-examples)
+12. [Best Practices for Advanced Features](#best-practices-for-advanced-features)
+
 Configuration, layout options, and integration patterns for creating professional diagrams.
 
 <example name="Layout: Dagre Default">

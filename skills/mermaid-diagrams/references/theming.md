@@ -1,5 +1,16 @@
 # Theming and Styling
 
+## Contents
+
+1. [Frontmatter Configuration](#frontmatter-configuration)
+2. [Themes](#themes)
+3. [Custom Theme Variables](#custom-theme-variables)
+4. [Diagram-Specific Styling](#diagram-specific-styling)
+5. [Subgraph Styling](#subgraph-styling)
+6. [Complex Styling Example](#complex-styling-example)
+7. [Accessibility Considerations](#accessibility-considerations)
+8. [Best Practices for Theming](#best-practices-for-theming)
+
 Visual customization for Mermaid diagrams including themes, colors, and styling options.
 
 <example name="Frontmatter Configuration">

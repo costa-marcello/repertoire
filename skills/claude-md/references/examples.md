@@ -2,6 +2,15 @@
 
 # Before/After Examples
 
+## Contents
+
+1. [Example 1: Bloated → Well-Organized (Standard Refactor)](#example-1-bloated--well-organized-standard-refactor)
+2. [Example 2: Already Well-Organized (Skip Refactor)](#example-2-already-well-organized-skip-refactor)
+3. [Example 3: What to Keep vs What to Remove](#example-3-what-to-keep-vs-what-to-remove)
+4. [Example 4: Compaction That Preserves Meaning](#example-4-compaction-that-preserves-meaning)
+5. [Example 5: Instruction Placement (Research-Backed)](#example-5-instruction-placement-research-backed)
+6. [Key Takeaways](#key-takeaways)
+
 Research-backed transformations showing how to refactor while preserving meaning.
 
 **Key principle:** Optimize for relevance, not brevity. A 150-line file with reasoning beats a 50-line file that lost meaning.

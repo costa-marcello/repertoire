@@ -1,5 +1,17 @@
 # UX Guidelines
 
+## Contents
+
+1. [Priority 1: Accessibility (CRITICAL)](#priority-1-accessibility-critical)
+2. [Priority 2: Touch & Interaction (CRITICAL)](#priority-2-touch--interaction-critical)
+3. [Priority 3: Performance (HIGH)](#priority-3-performance-high)
+4. [Priority 4: Layout & Responsive (HIGH)](#priority-4-layout--responsive-high)
+5. [Priority 5: Typography & Color (MEDIUM)](#priority-5-typography--color-medium)
+6. [Priority 6: Animation (MEDIUM)](#priority-6-animation-medium)
+7. [Priority 7: Style Selection (MEDIUM)](#priority-7-style-selection-medium)
+8. [Priority 8: Charts & Data (LOW)](#priority-8-charts--data-low)
+9. [Common Pitfalls (Do/Don't Quick Reference)](#common-pitfalls-dodont-quick-reference)
+
 30+ rules organised by priority. All tables follow Do/Don't/Why format.
 
 ## Priority 1: Accessibility (CRITICAL)

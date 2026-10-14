@@ -1,5 +1,21 @@
 # Minimal Intake Questionnaire (10 Items)
 
+## Contents
+
+1. [1. Who is the audience?](#1-who-is-the-audience)
+2. [2. What is the core objective?](#2-what-is-the-core-objective)
+3. [3. What is the desired action or decision?](#3-what-is-the-desired-action-or-decision)
+4. [4. What is the presentation duration and slide count limit?](#4-what-is-the-presentation-duration-and-slide-count-limit)
+5. [5. What tone and style should the presentation have?](#5-what-tone-and-style-should-the-presentation-have)
+6. [6. What is the topic scope and boundaries?](#6-what-is-the-topic-scope-and-boundaries)
+7. [7. Are there must-include points or forbidden topics?](#7-are-there-must-include-points-or-forbidden-topics)
+8. [8. Do you have data or tables available?](#8-do-you-have-data-or-tables-available)
+9. [9. Are there brand or visual constraints?](#9-are-there-brand-or-visual-constraints)
+10. [10. What deliverable format do you prefer?](#10-what-deliverable-format-do-you-prefer)
+11. [Usage Instructions](#usage-instructions)
+12. [Example Interaction](#example-interaction)
+13. [Safe Defaults Summary Table](#safe-defaults-summary-table)
+
 > **Purpose**: Gather essential context to produce a high-quality presentation. If the user doesn't provide information after 2 prompts, use the **safe default** for each item and clearly document the assumption in speaker notes.
 
 ---

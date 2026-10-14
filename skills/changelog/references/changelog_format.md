@@ -1,5 +1,15 @@
 # Changelog Format Specification
 
+## Contents
+
+1. [Keep a Changelog Standard](#keep-a-changelog-standard)
+2. [Conventional Commits Integration](#conventional-commits-integration)
+3. [Writing Style Guidelines](#writing-style-guidelines)
+4. [Anti-Patterns to Avoid](#anti-patterns-to-avoid)
+5. [Complete Example](#complete-example)
+6. [Tool Integration](#tool-integration)
+7. [Release Workflow Reference](#release-workflow-reference)
+
 Comprehensive reference for Keep a Changelog format, Conventional Commits integration, and best practices from industry standards.
 
 ## Keep a Changelog Standard

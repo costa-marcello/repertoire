@@ -1,5 +1,20 @@
 # CLAUDE.md Templates
 
+## Contents
+
+1. [Key Principles](#key-principles)
+2. [Recommended Sections](#recommended-sections)
+3. [Template: Root CLAUDE.md (Research-Backed)](#template-root-claudemd-research-backed)
+4. [Template: Project Root (Minimal)](#template-project-root-minimal)
+5. [Template: Project Root (Comprehensive)](#template-project-root-comprehensive)
+6. [Template: Rule File (.claude/rules/*.md)](#template-rule-file-clauderulesmd)
+7. [Edge Cases](#edge-cases)
+8. [Template: Package/Module (Monorepo)](#template-packagemodule-monorepo)
+9. [Template: Monorepo Root](#template-monorepo-root)
+10. [Template: Triage Assessment](#template-triage-assessment)
+11. [Template: Refactoring Complete](#template-refactoring-complete)
+12. [Update Principles](#update-principles)
+
 Research-backed templates for CLAUDE.md structure. These are **examples**, not mandates — adapt to your project's needs.
 
 **Key principle:** Include reasoning ("why") with rules. Anthropic's own prompts are ~23k tokens — optimize for relevance, not arbitrary line limits.

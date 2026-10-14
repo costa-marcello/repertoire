@@ -1,5 +1,24 @@
 # PPT Quality Scoring Rubric
 
+## Contents
+
+1. [Scoring System](#scoring-system)
+2. [1. Goal Clarity (0-10 points)](#1-goal-clarity-0-10-points)
+3. [2. Story Structure (0-10 points)](#2-story-structure-0-10-points)
+4. [3. Slide Assertions (0-10 points)](#3-slide-assertions-0-10-points)
+5. [4. Evidence Quality (0-10 points)](#4-evidence-quality-0-10-points)
+6. [5. Chart Fit (0-10 points)](#5-chart-fit-0-10-points)
+7. [6. Visual & Accessibility (0-10 points)](#6-visual--accessibility-0-10-points)
+8. [7. Coherence & Transitions (0-10 points)](#7-coherence--transitions-0-10-points)
+9. [8. Speakability (0-10 points)](#8-speakability-0-10-points)
+10. [9. Deliverables Complete (0-10 points)](#9-deliverables-complete-0-10-points)
+11. [10. Robustness (0-10 points)](#10-robustness-0-10-points)
+12. [Scoring Workflow](#scoring-workflow)
+13. [Iteration Limits](#iteration-limits)
+14. [Common Score Ranges & Interpretations](#common-score-ranges--interpretations)
+15. [Self-Evaluation Checklist (Quick Version)](#self-evaluation-checklist-quick-version)
+16. [Final Delivery Criteria](#final-delivery-criteria)
+
 > **Purpose**: Systematically evaluate presentation quality and identify areas for improvement. A score ≥ 75/100 is required before delivery. If score < 75, refine the weakest items and re-score (max 2 iterations).
 
 ---

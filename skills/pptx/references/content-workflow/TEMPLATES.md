@@ -1,5 +1,12 @@
 # Slide Template Library (Assertion-Evidence Style)
 
+## Contents
+
+1. [Core Slide Templates](#core-slide-templates)
+2. [Micro-Templates (Quick Patterns for Specific Data Types)](#micro-templates-quick-patterns-for-specific-data-types)
+3. [Template Selection Decision Tree](#template-selection-decision-tree)
+4. [Best Practices](#best-practices)
+
 > **Rule**: All slide headings must be **assertion sentences** (complete, testable claims), not topic labels. Body content provides **evidence** (charts, tables, diagrams, bullet points). Keep to **3-5 bullet points maximum** per slide. Place data sources in the footer (bottom-right).
 
 ---

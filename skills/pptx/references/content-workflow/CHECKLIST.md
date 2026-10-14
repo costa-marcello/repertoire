@@ -1,5 +1,22 @@
 # Pre-Flight Checklist
 
+## Contents
+
+1. [How to Use This Checklist](#how-to-use-this-checklist)
+2. [Section 1: Content Completeness](#section-1-content-completeness)
+3. [Section 2: Story & Structure](#section-2-story--structure)
+4. [Section 3: Evidence & Data](#section-3-evidence--data)
+5. [Section 4: Visual Design & Accessibility](#section-4-visual-design--accessibility)
+6. [Section 5: Speaker Notes & Timing](#section-5-speaker-notes--timing)
+7. [Section 6: Deliverables (Output Files)](#section-6-deliverables-output-files)
+8. [Section 7: Polish & Enhancements (Optional but Recommended)](#section-7-polish--enhancements-optional-but-recommended)
+9. [Section 8: Final Sanity Checks](#section-8-final-sanity-checks)
+10. [Checklist Summary](#checklist-summary)
+11. [What to Do If Items Are Unchecked](#what-to-do-if-items-are-unchecked)
+12. [After Checklist: Next Steps](#after-checklist-next-steps)
+13. [Quick Reference: Most Common Issues](#quick-reference-most-common-issues)
+14. [Checklist Completion Log](#checklist-completion-log)
+
 > **Purpose**: Final quality assurance before delivery. Use this checklist **before** running the full RUBRIC.md scoring. This ensures all required elements are present and obvious issues are caught early.
 
 ---

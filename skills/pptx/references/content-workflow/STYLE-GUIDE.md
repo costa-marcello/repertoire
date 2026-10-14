@@ -1,5 +1,20 @@
 # Layout & Style Guide (Neutral Theme)
 
+## Contents
+
+1. [Canvas & Grid System](#canvas--grid-system)
+2. [Typography](#typography)
+3. [Color Palette (Neutral Theme, WCAG AA Compliant)](#color-palette-neutral-theme-wcag-aa-compliant)
+4. [Spacing & Layout](#spacing--layout)
+5. [Visual Elements](#visual-elements)
+6. [Page Density & White Space](#page-density--white-space)
+7. [Accessibility (WCAG 2.1 AA Compliance)](#accessibility-wcag-21-aa-compliance)
+8. [Animation & Transitions (Use Sparingly)](#animation--transitions-use-sparingly)
+9. [Slide-Specific Layouts](#slide-specific-layouts)
+10. [Customization Guide (Replace with Your Brand)](#customization-guide-replace-with-your-brand)
+11. [Quick Reference Checklist](#quick-reference-checklist)
+12. [Tools & Resources](#tools--resources)
+
 > **Purpose**: Ensure consistent, accessible, professional visual design across all slides. This neutral theme supports easy customization with your own brand colors and fonts.
 
 ---

@@ -1,5 +1,12 @@
 # CLAUDE.md Quality Criteria
 
+## Contents
+
+1. [Scoring Rubric (100 points total)](#scoring-rubric-100-points-total)
+2. [Rule Quality Dimensions (Quick Assessment)](#rule-quality-dimensions-quick-assessment)
+3. [Assessment Process](#assessment-process)
+4. [Red Flags](#red-flags)
+
 ## Scoring Rubric (100 points total)
 
 ### 1. Commands/Workflows (12 points)

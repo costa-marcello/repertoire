@@ -1,5 +1,13 @@
 # Sub-Agent Prompt Templates
 
+## Contents
+
+1. [MCP-First Tool Instructions](#mcp-first-tool-instructions)
+2. [Query Quality Protocol](#query-quality-protocol)
+3. [Community Agent Template](#community-agent-template)
+4. [Official Agent Template](#official-agent-template)
+5. [Query Generation by QUERY_TYPE](#query-generation-by-query_type)
+
 <!-- Templates used by the research skill orchestrator to construct sub-agent prompts.
      Variables: {TOPIC}, {QUERY_TYPE}, {FOCUS}, {QUERIES}, {DATE_FROM}, {CURRENT_YEAR}, {MCP_TOOLS} -->
 

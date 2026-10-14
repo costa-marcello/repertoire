@@ -1,5 +1,14 @@
 # Entity Relationship Diagrams - Basics
 
+## Contents
+
+1. [Basic Syntax](#basic-syntax)
+2. [Defining Entities](#defining-entities)
+3. [Entity Attributes](#entity-attributes)
+4. [Relationships](#relationships)
+5. [Data Types](#data-types)
+6. [Comprehensive Example: E-Commerce Database](#comprehensive-example-e-commerce-database)
+
 ERDs model database schemas, showing tables (entities), their columns (attributes), and relationships between tables. Essential for database design and documentation.
 
 <example name="Basic Syntax">

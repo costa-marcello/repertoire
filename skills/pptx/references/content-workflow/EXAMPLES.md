@@ -1,5 +1,13 @@
 # Usage Examples
 
+## Contents
+
+1. [Example A: Ultra-Simple Topic (No Data)](#example-a-ultra-simple-topic-no-data)
+2. [Example B: Business Monthly Review (With Data)](#example-b-business-monthly-review-with-data)
+3. [Key Takeaways from Examples](#key-takeaways-from-examples)
+4. [Comparison Table](#comparison-table)
+5. [When to Use Which Approach](#when-to-use-which-approach)
+
 > **Purpose**: Demonstrate the full ppt-creator workflow with two realistic scenarios—one ultra-simple topic with no data, and one business scenario with data. These examples show how the skill handles minimal input, applies defaults, generates placeholders, and delivers ≥75 score presentations.
 
 ---

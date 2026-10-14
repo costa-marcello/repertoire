@@ -1,5 +1,14 @@
 # Output Format
 
+## Contents
+
+1. [Report Template](#report-template)
+2. [Official Section Template](#official-section-template)
+3. [Cross-Reference Table](#cross-reference-table)
+4. [Stats Footer](#stats-footer)
+5. [Invitation](#invitation)
+6. [Post-Prompt Footer](#post-prompt-footer)
+
 <!-- Template for the two-sided research report produced by the research skill. -->
 
 ## Report Template

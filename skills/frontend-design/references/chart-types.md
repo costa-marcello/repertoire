@@ -1,5 +1,15 @@
 # Chart Types Reference
 
+## Contents
+
+1. [Comparison Charts](#comparison-charts)
+2. [Trend & Time Series](#trend--time-series)
+3. [Distribution Charts](#distribution-charts)
+4. [Composition Charts](#composition-charts)
+5. [Relationship Charts](#relationship-charts)
+6. [Specialized Charts](#specialized-charts)
+7. [Selection Guidelines](#selection-guidelines)
+
 Quick reference for selecting the right visualization. Contains 25+ chart types organized by analytical purpose.
 
 ## Comparison Charts

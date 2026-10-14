@@ -1,5 +1,9 @@
 # Template-Based Presentation Workflow
 
+## Contents
+
+1. [Workflow](#workflow)
+
 Create presentations that follow an existing template's design by duplicating, rearranging, and replacing placeholder content.
 
 ## Workflow

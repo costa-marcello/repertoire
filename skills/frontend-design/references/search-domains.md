@@ -1,5 +1,11 @@
 # Search Domains Reference
 
+## Contents
+
+1. [Available Domains](#available-domains)
+2. [Available Stacks](#available-stacks)
+3. [Rule Categories by Priority](#rule-categories-by-priority)
+
 This reference defines the design knowledge domains and technology stacks available within this skill. When applying the frontend-design workflow:
 
 1. **Domains** categorize design knowledge (styles, colors, typography, etc.) - use them to identify which aspect of design you're working on and find relevant recommendations
