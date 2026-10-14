@@ -1,0 +1,19 @@
+{
+  "name": "repertoire",
+  "owner": {
+    "name": "Costa Marcello"
+  },
+  "description": "Repertoire: skills for Claude Code and Cowork, plus an opt-in SearXNG search server for the research skill.",
+  "plugins": [
+    {
+      "name": "repertoire",
+      "source": "./",
+      "description": "Skills for Claude Code and Cowork: create and review skills, research a topic with parallel subagents, write changelogs, READMEs and CLAUDE.md files, draw Mermaid diagrams, design frontends, and find more skills."
+    },
+    {
+      "name": "repertoire-searxng",
+      "source": "./plugins/repertoire-searxng",
+      "description": "Opt-in SearXNG MCP server for the research skill. Needs your own SearXNG instance; runs in Claude Code and desktop Cowork, not in cloud Cowork sessions."
+    }
+  ]
+}

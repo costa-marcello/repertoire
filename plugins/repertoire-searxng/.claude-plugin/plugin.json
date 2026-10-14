@@ -1,0 +1,36 @@
+{
+  "name": "repertoire-searxng",
+  "description": "Adds the SearXNG MCP server (mcp-searxng) so the research skill can search the web through your own SearXNG instance. Needs a running SearXNG with the JSON format enabled. Runs in Claude Code and desktop Cowork, not in cloud Cowork sessions.",
+  "author": {
+    "name": "Costa Marcello"
+  },
+  "homepage": "https://github.com/costa-marcello/repertoire/tree/main/plugins/repertoire-searxng",
+  "repository": "https://github.com/costa-marcello/repertoire",
+  "license": "MIT",
+  "keywords": [
+    "searxng",
+    "search",
+    "mcp",
+    "research"
+  ],
+  "userConfig": {
+    "searxng_url": {
+      "type": "string",
+      "title": "SearXNG URL",
+      "description": "Address of your SearXNG instance, with the JSON format enabled. Keep the default if SearXNG runs on this computer on port 8888.",
+      "default": "http://localhost:8888"
+    }
+  },
+  "mcpServers": {
+    "searxng": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-searxng@2.5.1"
+      ],
+      "env": {
+        "SEARXNG_URL": "${user_config.searxng_url}"
+      }
+    }
+  }
+}
