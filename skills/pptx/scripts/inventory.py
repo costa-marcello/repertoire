@@ -384,8 +384,9 @@ class ShapeData:
         except (AttributeError, KeyError, TypeError, ValueError) as e:
             print(
                 f"Warning: could not read the layout font size for shape "
-                f"'{getattr(shape, 'name', '?')}' ({type(e).__name__}: {e}); "
-                "omitting default_font_size. Check the placeholder in the slide layout.",
+                f"'{getattr(shape, 'name', '?')}' on layout '{getattr(slide_layout, 'name', '?')}' "
+                f"({type(e).__name__}: {e}); omitting default_font_size. "
+                f"Check that placeholder in layout '{getattr(slide_layout, 'name', '?')}'.",
                 file=sys.stderr,
             )
         return None

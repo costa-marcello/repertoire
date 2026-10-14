@@ -120,10 +120,10 @@ Three skills that cover releases, UI implementation, and visual documentation.
 <td><strong>changelog</strong></td>
 <td>
 
-Generates changelogs and manages the full release lifecycle. Three modes: `/changelog` updates the changelog and commits automatically, `/changelog push` completes the Unreleased section and pushes to remote, `/changelog release` creates a versioned entry, commits, tags, and pushes. Auto-detects the next semantic version from commit types (breaking, feat, fix) or accepts an explicit version (`/changelog release v2.0.0`). Translates developer commit messages into user-friendly descriptions. Runs pre-flight checks (clean working directory, branch sync, no duplicate tags) before git operations. Follows Keep a Changelog format and Conventional Commits conventions.
+Creates a versioned release in one flow: gathers the commits since the last tag, writes a dated Keep a Changelog entry, then commits, tags, and pushes. Every invocation is a release. Auto-detects the next semantic version from commit types (breaking, feat, fix) or accepts an explicit one (`/changelog v2.0.0`), and stops with "No release needed" when only docs, test, ci, or chore commits landed. Translates developer commit messages into user-friendly descriptions. Runs pre-flight checks (clean working directory, branch sync, no duplicate tags) before git operations. Follows Keep a Changelog format and Conventional Commits conventions.
 
 </td>
-<td><code>/changelog</code> — update + commit<br/><code>/changelog push</code> — also push<br/><code>/changelog release</code> — version, tag, push<br/><code>/changelog release v2.0.0</code> — explicit ver</td>
+<td><code>/changelog</code> — release with the auto-detected version<br/><code>/changelog v2.0.0</code> — release with an explicit version<br/>Commits, tags, and pushes after pre-flight checks.</td>
 <td><code>npx skills add costa-marcello/skillkit -s changelog</code></td>
 </tr>
 <tr>
@@ -284,8 +284,8 @@ Some skills accept arguments directly after the slash command. For example:
 
 ```bash
 /research quantum computing        # Researches quantum computing
-/changelog push                    # Complete unreleased, commit, push
-/changelog release                 # Versioned release, commit, tag, push
+/changelog                         # Versioned release: entry, commit, tag, push
+/changelog v2.0.0                  # Same, with an explicit version
 /review-skill skills/my-skill      # Review and fix a specific skill
 ```
 

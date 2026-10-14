@@ -527,7 +527,7 @@ RE-SCORE after improvements → 78/100 ✓ (ready to deliver)
 - Example commands for customization
 
 **Example Reuse Guide**:
-```
+````
 ## 5-Step Guide: Customize This Presentation
 
 ### Step 1: Replace Placeholder Charts with Your Data
@@ -563,7 +563,7 @@ If python-pptx is available:
 python -m pypandoc slides.md -o presentation.pptx
 ```
 Or use online converters: https://www.marp.app/
-```
+````
 
 ---
 

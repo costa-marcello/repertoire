@@ -125,9 +125,9 @@ def duplicate_slide(pres, index):
         except (AttributeError, KeyError, ValueError) as e:
             print(
                 f"Warning: could not copy media relationship {rel_id} "
-                f"({rel.reltype}) to the duplicated slide ({type(e).__name__}: {e}); "
-                "images or media on that slide may be missing. "
-                "Open the output and check the slide.",
+                f"({rel.reltype}) to the duplicate of template slide {index} ({type(e).__name__}: {e}); "
+                "images or media on that duplicate may be missing. "
+                f"Open the output and check the copies of template slide {index}.",
                 file=sys.stderr,
             )
 
