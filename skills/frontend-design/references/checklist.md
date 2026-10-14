@@ -1,28 +1,29 @@
 # Pre-Delivery Checklist
 
-Before delivering UI code, verify these items. Each one can be checked in the code, so the list works without a display; headless screenshots (SKILL.md, Pre-Delivery Verification) are extra evidence, not a requirement.
+Walk this list against the source code in step 3 of Pre-Delivery Verification. Every item can be checked without a display; headless screenshots are extra evidence, not a requirement.
 
 ## Visual Quality
 
-- [ ] No emojis used as icons (use SVG instead)
-- [ ] All icons from consistent icon set (Heroicons/Lucide)
-- [ ] Brand logos are correct (verified from Simple Icons)
-- [ ] Hover states don't cause layout shift (hover rules change only colour, shadow, transform, or opacity)
-- [ ] Use theme colors directly (bg-primary) not var() wrapper
+- [ ] No emojis used as icons; icons come from one SVG set (the project's own, otherwise Lucide)
+- [ ] Brand logos come from the brand's official assets or Simple Icons, never redrawn from memory
+- [ ] Hover rules change only colour, shadow, transform, or opacity, so nothing shifts layout
+- [ ] Colours come from tokens, with no hex outside the token definitions; in Tailwind, tokens are registered in the theme and used as `bg-primary`, not `bg-[var(--primary)]`
+- [ ] The display and body fonts are actually loaded, and each font stack ends with a fallback
 
 ## Interaction
 
-- [ ] All clickable elements have `cursor-pointer`
-- [ ] Hover states provide clear visual feedback
-- [ ] Transitions are smooth (150-300ms)
-- [ ] Focus states visible for keyboard navigation
+- [ ] Clickable elements show `cursor: pointer` (Tailwind `cursor-pointer`)
+- [ ] Hover gives clear visual feedback; decorative hover effects sit inside `@media (hover: hover)`
+- [ ] Hover, focus, and press transitions last 150-300ms
+- [ ] Every interactive element has a visible `:focus-visible` style
+- [ ] Touch targets are at least 44x44px
 
-## Light/Dark Mode
+## Light and Dark Mode (when the design ships both)
 
-- [ ] Light mode text has sufficient contrast (4.5:1 minimum)
-- [ ] Glass/transparent elements visible in light mode
-- [ ] Borders visible in both modes
-- [ ] Both modes checked: every colour token has a light and a dark value, and each text pair meets 4.5:1 in both
+- [ ] Every colour token has a light and a dark value
+- [ ] The contrast check passes in both modes
+- [ ] Glass and translucent surfaces stay readable in light mode
+- [ ] Borders are visible in both modes
 
 ## Layout
 
@@ -33,13 +34,15 @@ Before delivering UI code, verify these items. Each one can be checked in the co
 
 ## Accessibility
 
-- [ ] All images have alt text
+- [ ] Every text/background pair passes `scripts/contrast.py`: 4.5:1 for body text, 3:1 for large text, focus rings, and input borders
+- [ ] Meaningful images have descriptive alt text; decorative ones use `alt=""`
 - [ ] Form inputs have labels
-- [ ] Color is not the only indicator
+- [ ] Colour is not the only indicator
+- [ ] Animations stop or shrink under `prefers-reduced-motion: reduce`, and every loop has an off switch
 
 ## Performance
 
-- [ ] Images optimized (WebP, srcset, lazy loading)
-- [ ] Animations use transform/opacity only
+- [ ] Images optimised (WebP or AVIF, `srcset`, `loading="lazy"` below the fold)
+- [ ] No animation or transition changes layout properties (`width`, `height`, `margin`, `top`)
 - [ ] Content doesn't jump during loading (images and embeds reserve space with width/height or `aspect-ratio`)
 - [ ] Skeleton screens for async content

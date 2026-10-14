@@ -4,14 +4,15 @@
     {
       "id": 1,
       "prompt": "Build a single-file landing page (index.html with inline CSS, no build step) for Ember & Oak, a small-batch coffee roaster that sells monthly bean subscriptions. Save it in the output folder.",
-      "expected_output": "One index.html with a committed aesthetic direction: a distinctive display and body font pairing (not Inter, Roboto, Arial, or a system stack), 3-5 colour custom properties used throughout, a staggered entry animation and hover states that animate only transform, opacity, or filter, :focus-visible styles on every link and button, a mobile media query, semantic landmarks, and alt text. Verification is done from the code, and the final message gives the file's path without claiming the page was viewed in a browser.",
+      "expected_output": "One index.html with a committed aesthetic direction: a distinctive display and body font pairing (not Inter, Roboto, Arial, or a system stack) that is actually loaded and has a fallback stack, 3-5 colour custom properties used throughout, a staggered entry animation and hover states that animate only transform, opacity, filter, or colour and are reduced under prefers-reduced-motion, :focus-visible styles on every link and button, a mobile media query, semantic landmarks, and alt text. Verification is done from the code, and the final message gives the file's path without claiming the page was viewed in a browser.",
       "files": [],
       "expectations": [
         "Writes one index.html in the output folder, with inline CSS and no build step",
-        "Uses a display font and a body font, neither of which is Inter, Roboto, Arial, or a bare system-ui stack",
+        "Uses a display font and a body font, neither of which is Inter, Roboto, Arial, or a bare system-ui stack; both are loaded (a font link or @font-face) and each font-family ends with a fallback",
         "Defines 3-5 colour custom properties on :root, and hex colours appear only in those definitions",
         "Every a and button element has a :focus-visible style",
         "Animations and transitions change only transform, opacity, filter, or colour; none animates margin, height, or width",
+        "The entry animation is disabled or reduced inside a prefers-reduced-motion media query, and no animation loops without one",
         "Has a media query that covers a 375px-wide screen, and uses main plus at least one of nav, section, or article",
         "Every img element has an alt attribute",
         "The final message gives the file's path and does not claim the page was viewed in a browser unless a headless screenshot was actually taken"

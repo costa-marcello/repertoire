@@ -4,9 +4,13 @@
   {"query": "build a responsive pricing section in React with Tailwind for our SaaS", "should_trigger": true},
   {"query": "which chart type should our analytics dashboard use to show funnel drop-off?", "should_trigger": true},
   {"query": "add entrance animations and hover effects to these feature cards", "should_trigger": true},
+  {"query": "restyle this signup form so it stops looking like a template", "should_trigger": true},
+  {"query": "add hover and focus states to these nav links", "should_trigger": true},
   {"query": "write the API endpoint that returns our pricing plans as JSON", "should_trigger": false},
   {"query": "the dashboard's SQL query takes eight seconds, can you speed it up?", "should_trigger": false},
   {"query": "draw a sequence diagram of how the login form talks to the auth service", "should_trigger": false},
   {"query": "set up the GitHub Actions workflow that deploys our frontend to Vercel", "should_trigger": false},
-  {"query": "fix the token refresh logic in our React app's auth hook", "should_trigger": false}
+  {"query": "fix the token refresh logic in our React app's auth hook", "should_trigger": false},
+  {"query": "plot monthly revenue in matplotlib for my quarterly report", "should_trigger": false},
+  {"query": "write unit tests for the Button component", "should_trigger": false}
 ]

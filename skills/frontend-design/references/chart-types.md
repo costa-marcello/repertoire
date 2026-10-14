@@ -7,10 +7,11 @@
 3. [Distribution Charts](#distribution-charts)
 4. [Composition Charts](#composition-charts)
 5. [Relationship Charts](#relationship-charts)
-6. [Specialized Charts](#specialized-charts)
-7. [Selection Guidelines](#selection-guidelines)
+6. [Specialised Charts](#specialised-charts)
+7. [Selection Guide](#selection-guide)
+8. [Building Charts in a UI](#building-charts-in-a-ui)
 
-Quick reference for selecting the right visualization. Contains 25+ chart types organized by analytical purpose.
+Chart selection for dashboards and other UI surfaces: 25+ chart types organised by the question they answer, then how to build and theme them. Start from the question in the Selection Guide, then check the type's row.
 
 ## Comparison Charts
 
@@ -55,10 +56,10 @@ Show parts of a whole.
 | Chart Type | Best For | Data Requirements | Example Use Case |
 |------------|----------|-------------------|------------------|
 | **Pie Chart** | Simple part-to-whole (2-5 parts) | 1 categorical + 1 numeric | Market share (few competitors) |
-| **Donut Chart** | Part-to-whole with center metric | 1 categorical + 1 numeric | Budget allocation with total |
+| **Donut Chart** | Part-to-whole with a centre metric | 1 categorical + 1 numeric | Budget allocation with total |
 | **Treemap** | Hierarchical part-to-whole | Nested categorical + 1 numeric | File system usage, org spend |
 | **Sunburst** | Multi-level hierarchy | Nested categorical + 1 numeric | Product category breakdown |
-| **Waffle Chart** | Percentage visualization | 1 numeric (percentage) | Survey results, progress |
+| **Waffle Chart** | Percentage visualisation | 1 numeric (percentage) | Survey results, progress |
 
 ## Relationship Charts
 
@@ -73,9 +74,9 @@ Show correlations and connections.
 | **Sankey Diagram** | Flow between stages | Source + target + value | User journey, budget flow |
 | **Chord Diagram** | Bi-directional relationships | Matrix of relationships | Migration patterns, trade flows |
 
-## Specialized Charts
+## Specialised Charts
 
-Purpose-built visualizations.
+Purpose-built visualisations.
 
 | Chart Type | Best For | Data Requirements | Example Use Case |
 |------------|----------|-------------------|------------------|
@@ -88,7 +89,7 @@ Purpose-built visualizations.
 
 ---
 
-## Selection Guidelines
+## Selection Guide
 
 ### By Question Type
 
@@ -100,6 +101,7 @@ Purpose-built visualizations.
 | "How is it distributed?" | Histogram, Box Plot, Violin |
 | "Is there a relationship?" | Scatter, Bubble, Heatmap |
 | "How does it flow?" | Sankey, Funnel |
+| "Where do users drop off?" | Funnel, or a horizontal bar per step in step order |
 
 ### By Data Size
 
@@ -116,6 +118,14 @@ Purpose-built visualizations.
 |---------|-------------|-------------------|
 | Pie with 10+ slices | Impossible to compare | Horizontal bar, sorted |
 | 3D charts | Distorts perception | 2D equivalents |
-| Dual Y-axes | Misleading correlations | Separate charts or normalize |
-| Truncated Y-axis | Exaggerates differences | Start at zero or show break |
+| Dual Y-axes | Misleading correlations | Separate charts or normalise |
+| Bar chart axis not starting at zero | Exaggerates differences, because bar length encodes the value | Start bar axes at zero; a line chart may zoom in, with the axis labelled |
 | Too many lines (>5) | Visual noise | Highlight key series, dim others |
+
+## Building Charts in a UI
+
+- **Library:** use the chart library the project already has. Otherwise default to Recharts in React and Chart.js in plain JavaScript, and draw sparklines as inline SVG with no library.
+- **Theming:** take series colours from the design's CSS tokens. SVG libraries such as Recharts accept `var(--token)` colours and follow a theme switch. Canvas libraries such as Chart.js read colours once at creation, so on a theme change read the new token values and call `chart.update()`.
+- **Colour:** at most 5 series colours, told apart by lightness as well as hue so colour-blind users can separate them; add direct labels or patterns so colour is not the only cue.
+- **Accessibility:** give the chart a text summary (`aria-label` or a caption), and put the data in a table next to it or behind a "Show data" toggle.
+- **Contrast:** lines, bars, and axis labels are graphics and text: 3:1 for marks, 4.5:1 for small labels, checked with `scripts/contrast.py` in every theme.
