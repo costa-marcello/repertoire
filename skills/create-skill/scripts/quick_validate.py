@@ -1,545 +1,1536 @@
 #!/usr/bin/env python3
-"""
-Quick validation script for skills - minimal version
+"""Validate a skill directory against the skillkit rule catalog.
+
+Implements the definitive checks in review-skill/references/rules.md and prints
+heuristic leads as "check" lines. Every check is read-only.
+
+Usage:
+    python scripts/quick_validate.py <skill-dir> [--portable]
+
+Output, one line per finding, then a summary line:
+    [<ID>] <major|minor|style> <definitive|check> <file>:<line> <message>
+    RESULT major=<n> minor=<n> style=<n> checks=<n>
+
+Exit codes: 0 no definitive Major or Minor, 1 a definitive Major (F counts as
+Major), 2 usage error, 3 environment error (including any internal error),
+4 definitive Minor only. Check lines and Style findings never change the exit
+code.
+
+Requires Python 3.8 or later and PyYAML: python -m pip install pyyaml
+(the m13 import check also needs Python 3.10 or later; older versions print a
+check line instead).
 """
 
-import sys
+from __future__ import annotations
+
+import argparse
+import ast
+import json
 import os
+import posixpath
 import re
+import sys
+import unicodedata
+from bisect import bisect_right
+from dataclasses import dataclass
 from pathlib import Path
 
-
-def find_invalid_frontmatter_indentation(frontmatter: str) -> list[tuple[int, str]]:
-    """
-    Detect non-space indentation characters in YAML frontmatter.
-
-    YAML indentation must use ASCII spaces. Tabs or non-ASCII whitespace
-    (e.g., NBSP) can cause YAML parse errors.
-    """
-    issues = []
-    for line_no, line in enumerate(frontmatter.splitlines(), start=1):
-        # Scan leading whitespace only.
-        for ch in line:
-            if not ch.isspace():
-                break
-            if ch != ' ':
-                issues.append((line_no, ch))
-                break
-    return issues
+try:
+    import yaml
+except ImportError:  # main() reports this as an environment error (exit 3)
+    yaml = None
 
 
-def describe_whitespace(ch: str) -> str:
-    if ch == '\t':
-        return "TAB"
-    return f"U+{ord(ch):04X}"
+# --- Contract ---------------------------------------------------------------
+
+EXIT_OK = 0
+EXIT_MAJOR = 1
+EXIT_USAGE = 2  # argparse's own exit code for usage errors
+EXIT_ENV = 3
+EXIT_MINOR = 4
+
+MAJOR, MINOR, STYLE = "major", "minor", "style"
+DEFINITIVE, CHECK = "definitive", "check"
+
+PYYAML_HINT = "[env] PyYAML is required: python -m pip install pyyaml"
+SKILL_FILE = "SKILL.md"
+
+# Output order: rule IDs in the order rules.md lists them.
+RULE_ORDER = (
+    "F", "M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10",
+    "m1", "m2", "m3", "m4", "m9", "m10", "m11", "m12", "m13", "m14", "m15",
+    "S1", "S2", "S3", "S4", "S5", "S6", "S7",
+)
+_RULE_RANK = {rule_id: rank for rank, rule_id in enumerate(RULE_ORDER)}
+_SEVERITY_RANK = {MAJOR: 0, MINOR: 1, STYLE: 2}
+_CONFIDENCE_RANK = {DEFINITIVE: 0, CHECK: 1}
+
+# --- Thresholds (each mirrors a number in rules.md) -------------------------
+
+MAX_SKILL_LINES = 500  # M1: Anthropic's and the spec's ceiling for SKILL.md
+STYLE_MAX_LINES = 400  # S3: house target that leaves headroom under the M1 ceiling
+STYLE_MAX_CHARS = 20000  # S3: about 5k tokens at roughly 4 characters per token, counted with LF endings
+MAX_NAME_LENGTH = 64  # M9: Agent Skills spec limit for name
+MAX_DESCRIPTION_LENGTH = 1024  # M9: spec limit for description
+MAX_LISTING_LENGTH = 1536  # m12: Claude Code truncates description + when_to_use here
+MAX_COMPATIBILITY_LENGTH = 500  # M9 (portable): spec limit for compatibility
+REFERENCE_TOC_MIN_LINES = 100  # m9: references longer than this need a table of contents
+REFERENCE_TOC_WINDOW = 30  # m9: the contents heading must appear within this many lines
+WEAK_VERB_THRESHOLD = 3  # M7: three or more weak directives make a lead
+EMPHASIS_THRESHOLD = 3  # m15: three or more shouted directives make a lead
+MIN_EXAMPLES = 3  # S2: house minimum of <example> blocks
+MAX_EXAMPLES = 5  # S2: house maximum before examples belong in references/
+MIN_EVAL_CASES = 3  # S5: Anthropic's checklist asks for at least three evaluations
+NEGATION_WINDOW = 120  # M2: characters before a match searched for a negation (the clause bounds it further)
+MAX_LISTED_LINES = 8  # message length cap when a finding lists extra line numbers
+FRONTMATTER_FIRST_LINE = 2  # YAML reports 0-based lines; its line 0 is file line 2, after the opening ---
+
+# --- Vocabularies -------------------------------------------------------------
+
+# \Z, not $: "$" also matches before a final newline, so "demo\n" would pass.
+NAME_PATTERN = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
+RESERVED_NAME_WORDS = ("anthropic", "claude")
+RESERVED_FOLDER = "synced"
+RESERVED_FOLDER_PREFIX = "anthropic-skills"
+TEMPLATE_MARKER = "[TODO"
+INIT_PLACEHOLDER_FILES = ("scripts/example.py", "references/api_reference.md", "assets/example_asset.txt")
+
+CLAUDE_CODE_KEYS = frozenset({
+    "name", "description", "when_to_use", "argument-hint", "arguments",
+    "disable-model-invocation", "user-invocable", "allowed-tools", "disallowed-tools",
+    "model", "effort", "context", "agent", "background", "hooks", "paths", "shell",
+    "metadata", "license", "compatibility",
+})
+PORTABLE_KEYS = frozenset({"name", "description", "license", "compatibility", "metadata", "allowed-tools"})
+FORK_ONLY_KEYS = ("agent", "background")  # m12: dead keys without context: fork
+READ_ONLY_AGENTS = frozenset({"Explore", "Plan"})
+
+ALLOWED_ROOT_DIRS = frozenset({"scripts", "references", "assets", "evals", "tests"})
+LICENSE_PREFIX = "LICENSE"
+BUNDLED_DIRS = ("scripts", "references", "assets", "evals")
+SHELL_FENCE_TAGS = frozenset({"powershell", "ps1", "pwsh", "cmd", "bat"})
+INSTRUCTIONS_TAG = "<instructions>"
+
+WEAK_VERBS = (
+    "consider", "ensure", "handle appropriately", "handle properly",
+    "as needed", "as appropriate", "if applicable", "where relevant",
+)
+EMPHASIS_WORDS = ("MUST", "NEVER", "ALWAYS", "CRITICAL", "IMPORTANT", "REQUIRED", "MANDATORY")
+
+# m11: generic names that are not a real person's home folder. Shared and Public
+# are system folders on macOS and Windows.
+PLACEHOLDER_USER_NAMES = frozenset({
+    "username", "user", "you", "your-name", "name", "me", "example", "shared", "public",
+})
+PLACEHOLDER_NAME_STARTS = ("<", "{", "$", "%")
+
+# S6: capitalised words ending in "s" that are not third-person verbs.
+S6_NON_VERBS = frozenset({
+    "Its", "Has", "Does", "Always", "Perhaps", "Sometimes", "Various", "Docs", "Tools",
+    "Utils", "Utilities", "Helpers", "Tips", "Notes", "Rules", "Guidelines",
+    "Instructions", "Settings", "Series", "News", "Lots", "Yes", "Hers", "Ours",
+    "Yours", "Theirs", "Towards", "Besides",
+})
+S6_NON_VERB_ENDINGS = ("ss", "us", "is", "as")  # Class, Status, This/Analysis, Was/Canvas
+
+# M8: words before a capital "I" that make it a roman numeral, not the pronoun.
+ROMAN_NUMERAL_CONTEXT_RE = re.compile(
+    r"\b(?:phase|part|type|class|level|tier|stage|grade|chapter|section|volume|appendix|act|book|war)\s+$",
+    re.IGNORECASE,
+)
+
+# m13: import names whose pip package name differs.
+PIP_NAMES = {
+    "yaml": "pyyaml", "PIL": "pillow", "cv2": "opencv-python", "bs4": "beautifulsoup4",
+    "docx": "python-docx", "pptx": "python-pptx", "sklearn": "scikit-learn",
+    "dateutil": "python-dateutil", "fitz": "pymupdf", "dotenv": "python-dotenv",
+}
+
+# M6: interactive input in Python scripts.
+INPUT_BUILTINS = ("input", "raw_input")
+STDIN_READ_METHODS = frozenset({"read", "readline", "readlines"})
+
+# --- Patterns -----------------------------------------------------------------
+
+FRONTMATTER_RE = re.compile(
+    r"\A\ufeff?---[ \t]*\r?\n(.*?)(?:\r?\n)?^---[ \t]*\r?$", re.DOTALL | re.MULTILINE
+)
+# Any indent, so a fence nested in a list item still counts. A backtick fence's
+# info string cannot contain a backtick (CommonMark), so "```csv``` is ..." is inline code.
+FENCE_OPEN_RE = re.compile(r"^[ \t]*(`{3,}(?=[^`]*$)|~{3,})[ \t]*([^\s`]*)")
+EXAMPLE_OPEN_RE = re.compile(r"^\s*<example>")
+INLINE_CODE_RE = re.compile(r"`[^`\n]+`")
+IDENTIFIER_CODE_RE = re.compile(r"`([A-Za-z_][\w:.]*)`")
+QUOTE_RE = re.compile(
+    r"\"[^\"\n]*\"|\u201c[^\u201d\n]*\u201d|(?<!\w)'[^'\n]+'(?!\w)|\u2018[^\u2019\n]*\u2019"
+)
+# The scheme must start a word and is at most 32 characters, so a long run such as
+# "a-a-a-..." costs linear time instead of rescanning from every position.
+URL_RE = re.compile(r"(?<![\w+.-])[a-zA-Z][\w+.-]{0,31}://[^\s)>\]\"'`]*")
+
+_CURLY_AND_DASHES = "\u2018\u2019\u201c\u201d\u2013\u2014"
+_PATH_BOUNDARY = r"(?:^|(?<=[\s'\"`(\[=:*" + _CURLY_AND_DASHES[:4] + r"]))"
+_PATH_CHAR = r"[^\s'\"`()\[\]|,;" + _CURLY_AND_DASHES + r"]"
+BUNDLED_PATH_RE = re.compile(
+    _PATH_BOUNDARY
+    + r"(?P<root>\$\{CLAUDE_SKILL_DIR\}/|\$CLAUDE_SKILL_DIR/|\./)?"
+    + r"(?:\.\./(?P<sibling>[A-Za-z0-9][\w.-]*)/)?"
+    + r"(?P<path>(?:" + "|".join(BUNDLED_DIRS) + r")/(?:[\w.{}<>*$-]" + _PATH_CHAR + r"*)?)",
+    re.MULTILINE,
+)
+# "_scripts/x.py_" (Markdown emphasis): the underscore that opens a word is not part of the path.
+EMPHASIS_UNDERSCORE_RE = re.compile(r"(?<![^\s(\[])_(?=(?:" + "|".join(BUNDLED_DIRS) + r")/)")
+PATH_TRAILING_CHARS = ".,;:)]*!?'\"_" + _CURLY_AND_DASHES
+PATH_SUFFIX_RE = re.compile(r"(?::\d+(?:-\d+)?(?::\d+)?|::?[A-Za-z_][\w.]*(?:\(\))?)$")  # :10-20, :main
+PATH_PLACEHOLDER_CHARS = "<>{}*$"
+MARKDOWN_LINK_RE = re.compile(r"\]\(([^)\s\[\]()]+)\)")
+
+ASK_USER_RE = re.compile(
+    "|".join((
+        r"\bAskUserQuestion\b",
+        r"\bask(?:s|ing)?\s+the\s+user\b",
+        r"\basks\s+for\s+(?:confirmation|approval|permission|clarification|input)\b",
+        r"\b(?:confirm|check)(?:s|ing)?\s+with\s+the\s+user\b",
+        r"\bprompt(?:s|ing)?\s+the\s+user\b",
+        r"\bwait(?:s|ing)?\s+for\s+(?:the\s+)?user(?:'s|\u2019s)?\b",
+        r"\bwait(?:s|ing)?\s+for\s+(?:your|their)\s+"
+        r"(?:confirmation|approval|permission|response|reply|input|answer)\b",
+        r"\bwait(?:s|ing)?\s+for\s+(?:confirmation|approval|permission|a\s+reply|a\s+response|an\s+answer)\b",
+        r"\bhave\s+the\s+user\s+(?:choose|pick|select|decide|confirm|approve)\b",
+        r"\b(?:get|obtain|request)s?\s+the\s+user(?:'s|\u2019s)\s+(?:confirmation|approval)\b",
+        r"\b(?:after|once|when|if|until|before|unless)\s+the\s+user\s+"
+        r"(?:confirms|approves|responds|replies|agrees|answers)\b",
+        # Not "unless the user selects otherwise", which names a default rather than a wait.
+        r"\b(?:after|once|when|if|until)\s+the\s+user\s+(?:chooses|selects)\b",
+    )),
+    re.IGNORECASE,
+)
+# Generic asking verbs count only as an instruction, so that descriptive prose such as
+# "Users often ask for CSV summaries" or "if the request gets approval" is not a pause.
+IMPERATIVE_ASK_RE = re.compile(
+    "|".join((
+        r"\bask\s+(?:which|whether|what|for)\b",
+        r"\b(?:get|obtain|request)\s+(?:confirmation|approval)\b",
+    )),
+    re.IGNORECASE,
+)
+# What may precede an instruction on its line: nothing, a list marker or step label,
+# emphasis, sentence or clause punctuation, or a joining word ("then ask which ...").
+IMPERATIVE_PREFIX_RE = re.compile(
+    r"(?:^|[.:;!?]|\b(?:then|and|or|first|next|always|please|to)\b|^\s*(?:[-*+]|\d+[.)])"
+    r"|\*\*|__)\s*$",
+    re.IGNORECASE,
+)
+# A match that is itself a time or condition clause ("until the user approves")
+# is not negated by a negation that governs another verb ("Do not proceed until ...").
+TEMPORAL_ASK_RE = re.compile(r"(?:after|once|when|if|until|before|unless)\b", re.IGNORECASE)
+# M2 clauses run to sentence or clause punctuation, a paragraph or block break,
+# or a table cell; a single newline inside a paragraph is a soft wrap.
+CLAUSE_BREAK_RE = re.compile(
+    r"[.!?;:,](?=\s|$)"
+    r"|[\u2013\u2014]"
+    r"|\n[ \t]*\n"
+    r"|\n(?=[ \t]*(?:[-*+][ \t]|\d+[.)][ \t]|#|>|\||<))"
+    r"|\|"
+)
+CONJUNCTION_RE = re.compile(r"\b(?:and|but|so|then)\b", re.IGNORECASE)
+CONDITION_RE = re.compile(
+    r"\b(?:if|when|whenever|unless|once|until|while|where|wherever|after|before|because|since|in\s+case)\b",
+    re.IGNORECASE,
+)
+# Negations that govern the whole clause when no condition precedes them.
+CLAUSE_NEGATION_RE = re.compile(r"\b(?:not|never|cannot|nor)\b|n't\b|n\u2019t\b", re.IGNORECASE)
+_NEGATION_FILLERS = (
+    "ever", "even", "directly", "explicitly", "interactively", "first", "yet", "again", "once", "then",
+    "to", "try", "attempt", "need", "needs", "have", "has", "be", "able", "allowed", "required",
+    "necessary", "should", "must", "will", "can", "you", "we", "they", "it", "is", "are", "of", "any",
+    "circumstances", "point", "time", "bother", "go", "and", "or", "wait", "pause", "stop",
+)
+_NEGATORS = (
+    r"(?:\b(?:not|never|cannot|nor|no|without|avoid|avoiding|refrain\s+from|instead\s+of|rather\s+than)"
+    r"|n't|n\u2019t)"
+)
 
 
-def find_path_references(content: str) -> list[str]:
-    """
-    Extract path references from SKILL.md content.
-    Looks for patterns like scripts/xxx, references/xxx, assets/xxx
+def _adjacent_negation(fillers: tuple[str, ...]) -> re.Pattern:
+    """A negator followed only by filler words up to the match ("do not ever ask")."""
+    return re.compile(
+        _NEGATORS + r"(?:\s+(?:" + "|".join(fillers) + r")\b)*\s*$", re.IGNORECASE
+    )
 
-    Filters out:
-    - Placeholder paths (xxx, example, etc.)
-    - Paths in example contexts (lines containing "Example:", "e.g.", etc.)
-    - Generic documentation examples
-    - Paths prefixed with file:// (e.g., file://scripts/xxx) - these are external tool references, not skill-internal paths
-    - Paths inside <example> blocks (illustrative, not real references)
-    """
-    # Pattern to match bundled resource paths (scripts/, references/, assets/)
-    # Use negative lookbehind to exclude file:// prefixed paths.
-    # Require the first character after the slash to be alphanumeric so bare
-    # directory mentions like "assets/." or "assets/," (in prose) are not flagged.
-    pattern = r'(?<!file://)(?:scripts|references|assets)/\w[\w./-]*'
 
-    # Strip content inside <example> blocks before scanning
-    # These blocks contain illustrative paths, not real file references
-    stripped_content = re.sub(r'<example>.*?</example>', '', content, flags=re.DOTALL)
+ADJACENT_NEGATION_RE = _adjacent_negation(_NEGATION_FILLERS)
+TEMPORAL_ADJACENT_NEGATION_RE = _adjacent_negation(tuple(w for w in _NEGATION_FILLERS if w != "stop"))
+_NOT = r"(?:\s+not|\s+never|n't|n\u2019t)"
+POST_NEGATION_RE = re.compile(  # "`AskUserQuestion` is not available"
+    r"\s*(?:tool\s+)?(?:"
+    r"(?:is|are|was|were)" + _NOT + r"\s+(?:\w+\s+)?"
+    r"(?:available|allowed|permitted|possible|supported|usable|an\s+option)\b"
+    r"|(?:is|are)\s+(?:unavailable|disabled|forbidden)\b"
+    r"|(?:cannot|can't|can\u2019t|won't|won\u2019t|(?:will|must|may|should)" + _NOT + r")\s+be\s+"
+    r"(?:used|called|available|asked)\b"
+    r"|(?:does|do)" + _NOT + r"\s+(?:exist|work|apply)\b"
+    r")",
+    re.IGNORECASE,
+)
+WORKFLOW_TOOL_RE = re.compile(r"\bWorkflow\s+tool\b|`Workflow`|\bWorkflow\(")
+CONVERSATION_RE = re.compile(
+    r"\bthis conversation\b|\bearlier in the conversation\b|\bthe conversation so far\b"
+    r"|\bwe are discussing\b|\bwe're discussing\b|\bwe\u2019re discussing\b|\bprevious message\b",
+    re.IGNORECASE,
+)
+NUMBERED_STEP_RE = re.compile(r"^\s*\d+[.)]\s+\S")
+STEP_HEADING_RE = re.compile(r"^#{1,6}\s*Step\s+\d+", re.IGNORECASE)
+WRITE_STEP_RE = re.compile(
+    r"\b(?:Write|Edit|MultiEdit|NotebookEdit)\b"
+    r"|(?i:\b(?:write|edit|modify|overwrite|delete|create)s?\s+(?:the\s+|a\s+|an\s+|each\s+|every\s+)?"
+    r"(?:\w+\s+)?files?\b)"
+)
+# M8 trigger clauses, exactly as rules.md lists them.
+TRIGGER_RES = tuple(re.compile(pattern, re.IGNORECASE) for pattern in (
+    r"\buse\s+(?:this\s+skill\s+)?(?:when|whenever|for|if)\b",
+    r"\buse\s+it\s+when\b",
+    r"\btriggers\s+(?:on|when)\b",
+    r"\binvoke\s+(?:this\s+skill\s+)?when\b",
+    r"\bactivates\s+when\b",
+    r"\bwhen\s+(?:the\s+users?|users)\b",
+))
+# M8 first and second person, exactly as rules.md lists them: I, I'm, we, our,
+# Let me, you, your, you're. "I" must stand alone, so "I/O" and "I-beam" pass.
+PERSON_RE = re.compile(
+    r"(?<![\w/.+-])I(?:'m|\u2019m)?(?![\w/+&-]|\.\w)"
+    r"|(?i:\blet\s+me\b|\byou(?:'re|\u2019re)|\b(?:we|our|you|your)\b)"
+)
+_SOFT_SPACE = r"(?:[ \t]*\n[ \t]*|[ \t]+)"  # spaces, or one soft line wrap
+WEAK_VERB_RE = re.compile(
+    r"\bhandle(?:" + _SOFT_SPACE + r"[\w'-]+){0,3}?" + _SOFT_SPACE + r"(?:appropriately|properly)\b"
+    r"|\b(?:consider|ensure|as" + _SOFT_SPACE + r"needed|as" + _SOFT_SPACE + r"appropriate"
+    r"|if" + _SOFT_SPACE + r"applicable|where" + _SOFT_SPACE + r"relevant)\b",
+    re.IGNORECASE,
+)
+EMPHASIS_RE = re.compile(r"\b(?:" + "|".join(EMPHASIS_WORDS) + r")\b")
+# The two forms of dynamic context injection Claude Code runs. The fence form is
+# written without overlapping quantifiers so an unclosed "```!" costs linear time.
+INJECTION_INLINE_RE = re.compile(r"(?:^|(?<=\s))!`[^`]+`", re.MULTILINE)
+INJECTION_FENCE_RE = re.compile(r"```![\s\S]*?```")
+ARGUMENT_TOKEN_RE = re.compile(r"(?<!\\)\$(?:ARGUMENTS(?:\[\d+\])?|\d)")
+TOC_HEADING_RE = re.compile(r"^#{1,6}\s*(?:table of )?contents\b", re.IGNORECASE)
+DRIVE_BACKSLASH_RE = re.compile(r"\b[A-Za-z]:\\")
+BUNDLED_BACKSLASH_RE = re.compile(r"\b(?:scripts|references|assets)\\")
+_USER_PATH_BOUNDARY = r"(?:^|(?<=[\s'\"`(=:\[]))"
+USER_DIR_RE = re.compile(
+    _USER_PATH_BOUNDARY + r"(?:/mnt/[a-z])?/(?:Users|home)/(?P<unix>[^/\\\s`'\"|)\]]+)"
+    r"|\b[A-Za-z]:[\\/]+[Uu]sers[\\/]+(?P<win>[^/\\\s`'\"|)\]]+)"
+)
+REAL_NAME_RE = re.compile(r"^[\w.-]+$")
+SHELL_READ_RE = re.compile(
+    r"(?:^|[;&|(]|\bthen\b|\bdo\b|\belse\b)\s*read\s+(?:-\w*p\w*\b|[A-Za-z_]\w*\s*(?:$|[;&|)]))"
+)
+_TRY_NODES = tuple({ast.Try, getattr(ast, "TryStar", ast.Try)})
 
-    # Find all matches with their line context
-    unique_paths = set()
-    for line in stripped_content.split('\n'):
-        # Skip lines that are clearly examples or documentation
-        line_lower = line.lower()
-        if any(x in line_lower for x in [
-            'example:', 'examples:', 'e.g.', 'for example',
-            '- **example', '- example:', 'such as',
-            'pattern:', 'usage:', '❌', '✅',
-            '- **allowed', '- **best practice', 'would be helpful',
-            'like `scripts/', 'like `references/', 'like `assets/',
-            'include `scripts/', 'include `references/', 'include `assets/',
-            '**skill response**:', '**analysis**:', '**user request**:',
-            'skill response:', 'from other skills:',
-            # Skip lines with env var prefixed paths (external references)
-            '$create_skill', '$skill_creator',
-            # Skip merge/rename examples
-            '\u2192',  # → arrow
-        ]):
+
+class ValidatorEnvironmentError(Exception):
+    """The validator cannot run here (PyYAML missing, SKILL.md unreadable)."""
+
+
+def _one_line(text: str) -> str:
+    """Collapse whitespace, so a finding never spans more than one output line."""
+    return " ".join(str(text).split())
+
+
+@dataclass(frozen=True)
+class Finding:
+    """One validator finding, printed in the rules.md contract format."""
+
+    rule_id: str
+    severity: str  # major | minor | style
+    confidence: str  # definitive | check
+    file: str  # POSIX path relative to the skill directory
+    line: int  # 1-based; 0 when the finding has no line
+    message: str
+
+    def format(self) -> str:
+        return (f"[{self.rule_id}] {self.severity} {self.confidence} "
+                f"{_one_line(self.file)}:{self.line} {_one_line(self.message)}")
+
+
+def severity_of(rule_id: str) -> str:
+    """F and M* are Major, m* Minor, S* Style."""
+    if rule_id == "F" or rule_id.startswith("M"):
+        return MAJOR
+    if rule_id.startswith("m"):
+        return MINOR
+    return STYLE
+
+
+def _sort_key(finding: Finding) -> tuple:
+    return (
+        _SEVERITY_RANK[finding.severity],
+        _CONFIDENCE_RANK[finding.confidence],
+        _RULE_RANK.get(finding.rule_id, len(RULE_ORDER)),
+        finding.file,
+        finding.line,
+    )
+
+
+class _Collector:
+    def __init__(self) -> None:
+        self.items: list[Finding] = []
+
+    def add(self, rule_id: str, confidence: str, file: str, line: int, message: str) -> None:
+        self.items.append(Finding(rule_id, severity_of(rule_id), confidence, file, line, _one_line(message)))
+
+    def sorted(self) -> list[Finding]:
+        return sorted(self.items, key=_sort_key)
+
+
+class _View:
+    """Lines joined into one string, with offsets mapped back to file line numbers."""
+
+    def __init__(self, lines: list[str], first_line: int) -> None:
+        self.text = "\n".join(lines)
+        self.first_line = first_line
+        self._starts = []
+        position = 0
+        for line in lines:
+            self._starts.append(position)
+            position += len(line) + 1
+
+    def line_of(self, offset: int) -> int:
+        return self.first_line + bisect_right(self._starts, offset) - 1
+
+
+@dataclass
+class _Skill:
+    root: Path
+    raw: str  # SKILL.md as decoded, for the splitlines() counts of M1 and S3
+    lines: list[str]  # SKILL.md with the BOM removed and newlines normalised to \n
+    meta: dict
+    body_index: int  # 0-based index of the first body line
+    portable: bool
+
+    @property
+    def body_lines(self) -> list[str]:
+        return self.lines[self.body_index:]
+
+    @property
+    def body_first_line(self) -> int:
+        return self.body_index + 1
+
+
+# --- Shared helpers -----------------------------------------------------------
+
+def name_errors(name: str) -> list[str]:
+    """Spec problems with a skill name (M9). Also used by init_skill.py."""
+    problems = []
+    if not NAME_PATTERN.fullmatch(name):
+        problems.append(
+            "use lowercase letters, digits, and single hyphens, with no leading or trailing hyphen"
+        )
+    if len(name) > MAX_NAME_LENGTH:
+        problems.append(f"is {len(name)} characters; the limit is {MAX_NAME_LENGTH}")
+    return problems
+
+
+def folder_name_errors(folder: str) -> list[str]:
+    """Reserved folder names that Claude Code will not load (M9)."""
+    lowered = folder.lower()
+    if lowered == RESERVED_FOLDER:
+        return [f"the folder name '{folder}' is reserved by Claude Code"]
+    if lowered.startswith(RESERVED_FOLDER_PREFIX):
+        return [f"folder names starting with '{RESERVED_FOLDER_PREFIX}' are reserved"]
+    return []
+
+
+def _blank(match: re.Match) -> str:
+    return re.sub(r"[^\n]", " ", match.group(0))
+
+
+def _mask(pattern: re.Pattern, text: str) -> str:
+    """Replace each match with spaces so offsets and line numbers stay valid."""
+    return pattern.sub(_blank, text)
+
+
+def _mask_inline_code(text: str, keep_identifiers: bool = False) -> str:
+    if keep_identifiers:
+        text = IDENTIFIER_CODE_RE.sub(lambda m: " " + m.group(1) + " ", text)
+    return _mask(INLINE_CODE_RE, text)
+
+
+def _fence_tags(lines: list[str]) -> list[str | None]:
+    """Per line: None outside fenced code, else the fence's info tag ('' when untagged)."""
+    tags: list[str | None] = []
+    marker = None
+    tag = None
+    for line in lines:
+        if marker is None:
+            match = FENCE_OPEN_RE.match(line)
+            if match:
+                marker, tag = match.group(1), match.group(2).lower()
+                tags.append(tag)
+            else:
+                tags.append(None)
             continue
+        tags.append(tag)
+        stripped = line.strip()
+        if stripped and set(stripped) == {marker[0]} and len(stripped) >= len(marker):
+            marker = None
+    return tags
 
-        # Find paths in this line
-        matches = re.findall(pattern, line)
-        for path in matches:
-            # Skip obvious placeholders and example paths
-            if any(x in path.lower() for x in [
-                'example', 'xxx', '<', '>', 'my-', 'my_',
-                'schema.md', 'hello-world', 'rotate_pdf', 'template',
-                'api_reference', 'guide.md', 'logo', 'font',
-                'learning-guide',
-            ]):
+
+def _example_mask(lines: list[str]) -> list[bool]:
+    """Per line: True inside an <example> block whose opening tag starts a line."""
+    inside = False
+    mask = []
+    for line in lines:
+        if not inside and EXAMPLE_OPEN_RE.match(line):
+            inside = True
+        mask.append(inside)
+        if inside and "</example>" in line:
+            inside = False
+    return mask
+
+
+def _read_error(exc: Exception) -> str:
+    """Say why a file could not be read: the OS error text, or where the UTF-8 decoding failed."""
+    if isinstance(exc, UnicodeDecodeError):
+        return f"is not valid UTF-8 (byte offset {exc.start})"
+    if isinstance(exc, OSError):
+        return f"could not be read ({exc.strerror or exc})"
+    return f"could not be read ({type(exc).__name__}: {exc})"
+
+
+def _read_text_or_error(path: Path) -> tuple[str | None, str]:
+    """Read a bundled text file as UTF-8: (text, '') or (None, why it failed)."""
+    try:
+        return path.read_text(encoding="utf-8-sig"), ""
+    except (OSError, UnicodeDecodeError) as exc:
+        return None, _read_error(exc)
+
+
+def _read_text(path: Path) -> str | None:
+    """Read a bundled text file as UTF-8, or return None when it cannot be read."""
+    return _read_text_or_error(path)[0]
+
+
+def _rel(root: Path, path: Path) -> str:
+    return path.relative_to(root).as_posix()
+
+
+def _iter_files(directory: Path, pattern: str):
+    skipped = {"__pycache__", "node_modules", ".git"}
+    if not directory.is_dir():
+        return
+    for path in sorted(directory.rglob(pattern)):
+        if path.is_file() and not skipped.intersection(path.relative_to(directory).parts):
+            yield path
+
+
+def _line_list(lines: list[int]) -> str:
+    shown = ", ".join(str(n) for n in lines[:MAX_LISTED_LINES])
+    return shown + (", ..." if len(lines) > MAX_LISTED_LINES else "")
+
+
+def _key_line(skill: _Skill, key: str) -> int:
+    pattern = re.compile(rf"^{re.escape(key)}\s*:")
+    for index in range(1, skill.body_index):
+        if pattern.match(skill.lines[index]):
+            return index + 1
+    return 1
+
+
+def _folder_name(root: Path) -> str:
+    """The skill's directory name as Claude Code sees it.
+
+    os.path.abspath normalises "." and ".." without following links, so a skill
+    installed through a symlink or junction keeps the link's name.
+    """
+    return Path(os.path.abspath(root)).name
+
+
+def extract_bundled_paths(lines: list[str], first_line: int = 1) -> list[tuple[int, str | None, str]]:
+    """Find this skill's bundled-path mentions: (line, sibling skill or None, path).
+
+    Skips URLs, <example> blocks whose tags start a line, and placeholder tokens.
+    A path ending in "/" names a directory.
+    """
+    found = []
+    examples = _example_mask(lines)
+    for offset, line in enumerate(lines):
+        if examples[offset]:
+            continue
+        masked = EMPHASIS_UNDERSCORE_RE.sub(" ", _mask(URL_RE, line))
+        for match in BUNDLED_PATH_RE.finditer(masked):
+            token = _clean_path_token(match.group("path"))
+            if token is None:
                 continue
-            unique_paths.add(path)
+            found.append((first_line + offset, match.group("sibling"), token))
+    return found
 
-    return list(unique_paths)
+
+def _clean_path_token(token: str) -> str | None:
+    """Strip what rules.md M5 says is not part of a path; None when the token is not a file reference."""
+    token = re.split(r"[#?]", token, maxsplit=1)[0]
+    token = token.rstrip(PATH_TRAILING_CHARS)
+    token = PATH_SUFFIX_RE.sub("", token).rstrip(PATH_TRAILING_CHARS)  # :10-20 line ranges, :function
+    if any(char in token for char in PATH_PLACEHOLDER_CHARS):
+        return None
+    if "xxx" in token.lower() or "..." in token or "\u2026" in token:
+        return None
+    head, _, rest = token.partition("/")
+    if not rest.strip("/"):
+        return head + "/"  # a bare "references/" mention names a directory
+    # Filename-ish: an extension, a trailing slash (directory), or a nested path.
+    # Prose such as "scripts/commands" (meaning "scripts or commands") has none.
+    if "." not in rest.rsplit("/", 1)[-1] and not token.endswith("/") and "/" not in rest.rstrip("/"):
+        return None
+    return token
 
 
-def validate_path_references(skill_path: Path, content: str) -> tuple[bool, list[str]]:
+def _find_on_disk(base: Path, rel: str, want_dir: bool, listings: dict) -> tuple[bool, str | None]:
+    """Look up rel under base one segment at a time, comparing names case-sensitively.
+
+    Returns (found, spelling): found is True when rel exists with exactly this
+    letter case; spelling is the on-disk name when only the case differs, which a
+    case-insensitive file system (Windows, default macOS) would otherwise hide.
     """
-    Verify all path references in SKILL.md actually exist.
+    target = base / rel
+    plain = target.is_dir() if want_dir else target.exists()
+    normalised = posixpath.normpath(rel)
+    parts = [part for part in normalised.split("/") if part not in ("", ".")]
+    if not parts or parts[0] == "..":
+        return plain, None
+    current = base
+    spelled = []
+    case_differs = False
+    for part in parts:
+        key = str(current)
+        if key not in listings:
+            try:  # NFC, so a name stored decomposed (macOS) still compares equal
+                listings[key] = [unicodedata.normalize("NFC", name) for name in os.listdir(current)]
+            except OSError:
+                listings[key] = None
+        names = listings[key]
+        if names is None:
+            return plain, None  # an unlistable folder: fall back to the plain existence check
+        part = unicodedata.normalize("NFC", part)
+        if part in names:
+            actual = part
+        else:
+            folded = [name for name in names if name.casefold() == part.casefold()]
+            if not folded:
+                return False, None
+            actual = folded[0]
+            case_differs = True
+        spelled.append(actual)
+        current = current / actual
+    if want_dir and not current.is_dir():
+        return False, None
+    if case_differs:
+        return False, "/".join(spelled)
+    return True, None
 
-    Returns:
-        (all_exist, missing_paths)
+
+# --- Parsing ------------------------------------------------------------------
+
+def _read_skill_md(path: Path) -> str:
+    try:
+        data = path.read_bytes()
+    except OSError as exc:
+        raise ValidatorEnvironmentError(f"[env] cannot read {path}: {exc.strerror or exc}") from exc
+    try:
+        return data.decode("utf-8-sig")
+    except UnicodeDecodeError as exc:
+        raise ValidatorEnvironmentError(
+            f"[env] {path} is not valid UTF-8 (byte offset {exc.start}); re-save it as UTF-8"
+        ) from exc
+
+
+def _parse(root: Path, raw: str, out: _Collector, portable: bool) -> _Skill | None:
+    text = raw.lstrip("\ufeff").replace("\r\n", "\n").replace("\r", "\n")
+    match = FRONTMATTER_RE.match(text)
+    if not match:
+        out.add("F", DEFINITIVE, SKILL_FILE, 1,
+                "no YAML frontmatter: start the file with a '---' line and close the block with another '---' line")
+        return None
+    try:
+        meta = yaml.safe_load(match.group(1))
+    except (yaml.YAMLError, ValueError) as exc:
+        mark = getattr(exc, "problem_mark", None)
+        line = mark.line + FRONTMATTER_FIRST_LINE if mark is not None else 1
+        problem = getattr(exc, "problem", None) or str(exc).splitlines()[0]
+        out.add("F", DEFINITIVE, SKILL_FILE, line,
+                f"frontmatter is not valid YAML ({problem}); quote values that contain ': ' or start with '[' or '{{'")
+        return None
+    except (RecursionError, MemoryError) as exc:
+        out.add("F", DEFINITIVE, SKILL_FILE, 1,
+                f"frontmatter is nested too deeply to parse ({type(exc).__name__}); flatten it")
+        return None
+    if not isinstance(meta, dict):
+        out.add("F", DEFINITIVE, SKILL_FILE, 1, "frontmatter must be a mapping of keys to values")
+        return None
+    body_index = text.count("\n", 0, match.end()) + 1
+    return _Skill(root, raw, text.split("\n"), meta, body_index, portable)
+
+
+# --- Checks -------------------------------------------------------------------
+
+def _check_f_triggers(skill: _Skill, out: _Collector) -> bool:
+    """Report missing description or empty body; return True when the description is usable."""
+    description = skill.meta.get("description")
+    usable = False
+    if "description" not in skill.meta:
+        out.add("F", DEFINITIVE, SKILL_FILE, 1, "description is missing from the frontmatter")
+    elif description is None or (isinstance(description, str) and not description.strip()):
+        out.add("F", DEFINITIVE, SKILL_FILE, _key_line(skill, "description"), "description is empty")
+    elif not isinstance(description, str):
+        out.add("F", DEFINITIVE, SKILL_FILE, _key_line(skill, "description"),
+                f"description must be a string (YAML read it as {type(description).__name__}); quote it")
+    else:
+        usable = True
+    if not "\n".join(skill.body_lines).strip():
+        out.add("F", DEFINITIVE, SKILL_FILE, skill.body_first_line,
+                "the body is empty: add the instructions after the frontmatter")
+    return usable
+
+
+def _check_size(skill: _Skill, out: _Collector) -> None:
+    line_count = len(skill.raw.splitlines())
+    if line_count > MAX_SKILL_LINES:
+        out.add("M1", DEFINITIVE, SKILL_FILE, 0,
+                f"SKILL.md has {line_count} lines (limit {MAX_SKILL_LINES}); move detail into references/")
+    char_count = len("\n".join(skill.lines))  # LF line endings, so a CRLF checkout counts the same
+    if line_count > STYLE_MAX_LINES or char_count > STYLE_MAX_CHARS:
+        out.add("S3", DEFINITIVE, SKILL_FILE, 0,
+                f"SKILL.md has {line_count} lines and {char_count} characters "
+                f"(house limits {STYLE_MAX_LINES} lines, {STYLE_MAX_CHARS} characters)")
+
+
+def _is_negated(text: str, match: re.Match) -> bool:
+    """True when the ask or wait in match is negated in its own clause (rules.md M2).
+
+    A negation counts when it follows the mention ("`AskUserQuestion` is not
+    available"), when it sits right before it with only filler words between
+    ("do not ever ask the user"), or when it governs the clause and no condition
+    comes before it ("The subagent cannot reach or ask the user"). A negation
+    inside a preceding condition ("If the format is not given ask the user")
+    does not count.
     """
-    referenced_paths = find_path_references(content)
-    missing = []
-
-    for ref_path in referenced_paths:
-        full_path = skill_path / ref_path
-        if not full_path.exists():
-            missing.append(ref_path)
-
-    return len(missing) == 0, missing
-
-
-ORCHESTRATOR_TOOLS = ('Task', 'TeamCreate', 'TaskCreate', 'SendMessage')
-
-
-NEGATION_MARKERS = ('without ', 'not ', "doesn't ", "don't ", 'never ', 'no sub')
-
-
-def _positive_match(pattern: str, text: str) -> bool:
-    """Return True iff the pattern matches somewhere not preceded by a negation marker."""
-    for m in re.finditer(pattern, text, re.IGNORECASE):
-        preceding = text[max(0, m.start() - 30):m.start()].lower()
-        if any(neg in preceding for neg in NEGATION_MARKERS):
-            continue
+    if POST_NEGATION_RE.match(text, match.end()):
         return True
+    start = match.start()
+    prefix = text[max(0, start - NEGATION_WINDOW):start]
+    breaks = list(CLAUSE_BREAK_RE.finditer(prefix))
+    if breaks:
+        prefix = prefix[breaks[-1].end():]
+    temporal = TEMPORAL_ASK_RE.match(match.group(0)) is not None
+    adjacent = TEMPORAL_ADJACENT_NEGATION_RE if temporal else ADJACENT_NEGATION_RE
+    if adjacent.search(prefix):
+        return True
+    if temporal:
+        return False
+    conjunctions = list(CONJUNCTION_RE.finditer(prefix))
+    if conjunctions:
+        prefix = prefix[conjunctions[-1].end():]
+    condition = CONDITION_RE.search(prefix)
+    limit = condition.start() if condition else len(prefix)
+    return CLAUSE_NEGATION_RE.search(prefix[:limit]) is not None
+
+
+def _check_fork(skill: _Skill, out: _Collector, nofence: list[str]) -> None:
+    if skill.meta.get("context") != "fork":
+        return
+    first = skill.body_first_line
+    asking = _View([_mask_inline_code(line, keep_identifiers=True) for line in nofence], first)
+    reported = set()
+    imperative = [
+        match for match in IMPERATIVE_ASK_RE.finditer(asking.text)
+        if IMPERATIVE_PREFIX_RE.search(asking.text[asking.text.rfind("\n", 0, match.start()) + 1:match.start()])
+    ]
+    for match in [*ASK_USER_RE.finditer(asking.text), *imperative]:
+        if _is_negated(asking.text, match):
+            continue
+        line = asking.line_of(match.start())
+        if line not in reported:
+            reported.add(line)
+            out.add("M2", DEFINITIVE, SKILL_FILE, line,
+                    f"context: fork is set but the body asks or waits for the user ('{_one_line(match.group(0))}'); "
+                    "a forked subagent cannot ask, so remove context: fork")
+
+    for offset, line in enumerate(nofence):
+        if WORKFLOW_TOOL_RE.search(line):
+            out.add("M2", CHECK, SKILL_FILE, first + offset,
+                    "forked skill uses the Workflow tool, which subagents do not get")
+    prose = _View([_mask_inline_code(line) for line in nofence], first)
+    for match in CONVERSATION_RE.finditer(prose.text):
+        out.add("M2", CHECK, SKILL_FILE, prose.line_of(match.start()),
+                f"forked skill depends on the conversation ('{match.group(0)}'), which a fork does not see")
+    if not any(NUMBERED_STEP_RE.match(line) or STEP_HEADING_RE.match(line) for line in nofence):
+        out.add("M2", CHECK, SKILL_FILE, 0,
+                "forked skill has no numbered steps; confirm it has an explicit task and is not guideline-only")
+    agent = skill.meta.get("agent")
+    if isinstance(agent, str) and agent in READ_ONLY_AGENTS:
+        match = WRITE_STEP_RE.search(prose.text)
+        if match:
+            out.add("M2", CHECK, SKILL_FILE, prose.line_of(match.start()),
+                    f"agent: {agent} is read-only but the body writes or edits files ('{match.group(0)}')")
+
+
+def _check_bundled_paths(skill: _Skill, out: _Collector) -> None:
+    listings: dict = {}
+    parents = [Path(os.path.abspath(skill.root)).parent, skill.root.resolve().parent]
+    problems: dict[tuple[str | None, str, str | None], list[int]] = {}
+    for line, sibling, token in extract_bundled_paths(skill.body_lines, skill.body_first_line):
+        want_dir = token.endswith("/")
+        rel = token.rstrip("/")
+        if sibling:
+            results = [_find_on_disk(parent, f"{sibling}/{rel}", want_dir, listings) for parent in parents]
+            found = any(result[0] for result in results)
+            spelling = next((result[1] for result in results if result[1]), None)
+        else:
+            found, spelling = _find_on_disk(skill.root, rel, want_dir, listings)
+        if not found:
+            problems.setdefault((sibling, token, spelling), []).append(line)
+    for (sibling, token, spelling), lines in problems.items():
+        also = f" (also lines {_line_list(lines[1:])})" if len(lines) > 1 else ""
+        kind = "directory" if token.endswith("/") else "file"
+        on_disk = (spelling or "") + ("/" if token.endswith("/") else "")
+        case_note = f"the name on disk is {on_disk}, so only the letter case differs"
+        if sibling:
+            state = case_note if spelling else "which is missing"
+            out.add("M5", CHECK, SKILL_FILE, lines[0],
+                    f"references ../{sibling}/{token}{also}, {state}; "
+                    "confirm the sibling skill is a documented optional install")
+        elif token.startswith("evals/"):
+            state = case_note if spelling else "which is missing"
+            out.add("M5", CHECK, SKILL_FILE, lines[0],
+                    f"references {token}{also}, {state}; packaging strips evals/, "
+                    "so confirm whether this names another skill's evals")
+        elif spelling:
+            out.add("M5", DEFINITIVE, SKILL_FILE, lines[0],
+                    f"references the bundled {kind} {token}{also}, but {case_note}; "
+                    "fix the case, because Linux and claude.ai are case-sensitive")
+        else:
+            out.add("M5", DEFINITIVE, SKILL_FILE, lines[0],
+                    f"references the bundled {kind} {token}{also}, which does not exist; fix the path or add it")
+
+
+def _is_catch_all(node: ast.expr | None) -> bool:
+    if isinstance(node, ast.Name):
+        return node.id in ("Exception", "BaseException")
+    if isinstance(node, ast.Attribute):
+        return node.attr in ("Exception", "BaseException")
+    if isinstance(node, ast.Tuple):
+        return any(_is_catch_all(element) for element in node.elts)
     return False
 
 
-def detect_orchestrator_skill(frontmatter: str, body: str) -> tuple[bool, list[str]]:
-    """Detect orchestrator skills (dispatch sub-agents). These must NOT have context: fork.
-
-    Strong signal: allowed-tools contains Task/TeamCreate/TaskCreate/SendMessage — definitive.
-    Weak signals: body prose about dispatching sub-agents — only counted if preceded by a
-    positive context (not 'without dispatching ...'). A skill flagged only by weak signals
-    needs at least two independent ones to be classified as an orchestrator.
-    """
-    reasons = []
-    strong_signal = False
-
-    allowed_tools_match = re.search(r'allowed-tools:\s*(.+)', frontmatter)
-    if allowed_tools_match:
-        tools_field = allowed_tools_match.group(1)
-        hits = [t for t in ORCHESTRATOR_TOOLS if re.search(rf'\b{t}\b', tools_field)]
-        if hits:
-            reasons.append(f"allowed-tools contains {', '.join(hits)} (sub-agent dispatch)")
-            strong_signal = True
-
-    body_signals = [
-        (r'\bspawn(?:s|ing)?\s+(?:sub-?)?agents?\b', "body mentions spawning sub-agents"),
-        (r'\bdispatch(?:es|ing)?\s+(?:sub-?)?agents?\b', "body mentions dispatching sub-agents"),
-        (r'\bparallel\s+(?:sub-?)?agents?\b', "body mentions parallel sub-agents"),
-        (r'\bTaskOutput\b', "body references TaskOutput collection"),
-    ]
-    weak_hits = []
-    for pattern, reason in body_signals:
-        if _positive_match(pattern, body):
-            weak_hits.append(reason)
-
-    if strong_signal:
-        reasons.extend(weak_hits)
-        return True, reasons
-
-    if len(weak_hits) >= 2:
-        return True, weak_hits
-
-    return False, reasons + weak_hits
+def _only_pass(body: list[ast.stmt]) -> bool:
+    return all(
+        isinstance(stmt, ast.Pass)
+        or (isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant) and stmt.value.value is Ellipsis)
+        for stmt in body
+    )
 
 
-def detect_interactive_skill(body: str) -> tuple[bool, list[str]]:
-    """
-    Detect interactive skills (present a report/plan/prompt to the user, then resume
-    on the user's response). These must NOT have context: fork because a forked
-    subagent returns only a final summary, collapsing the two-stage flow.
-    """
-    reasons = []
-
-    pause_patterns = [
-        r'\bpresent(?:s|ing)?\s+(?:the\s+)?(?:report|plan|findings|summary)\s+to\s+the\s+user\b',
-        r'\bshow(?:s|ing)?\s+(?:the\s+)?(?:report|plan|findings)\s+to\s+the\s+user\b',
-        r'\bask\s+the\s+user\s+(?:to|for|whether|if)\b',
-        r'\bwait\s+for\s+(?:user|the\s+user\'s)\s+(?:confirmation|approval|response)\b',
-    ]
-    resume_patterns = [
-        r'\b(?:after|once|when)\s+the\s+user\s+(?:confirms|approves|responds|replies)\b',
-        r'\bif\s+the\s+user\s+(?:confirms|approves|agrees)\b',
-        r'\bupon\s+(?:user\s+)?(?:confirmation|approval)\b',
-        r'\bthen\s+(?:apply|proceed|continue|resume)\b',
-    ]
-
-    has_pause = any(re.search(p, body, re.IGNORECASE) for p in pause_patterns)
-    has_resume = any(re.search(p, body, re.IGNORECASE) for p in resume_patterns)
-
-    if has_pause and has_resume:
-        reasons.append("body defines a user-visible pause AND a later step that resumes on the user's response")
-
-    if re.search(r'Review\s*[-\+]?\s*then\s*[-\+]?\s*Fix', body, re.IGNORECASE):
-        reasons.append("'Review-then-Fix' pattern (interactive by construction)")
-    if re.search(r'Plan\s*[-\+]?\s*then\s*[-\+]?\s*Apply', body, re.IGNORECASE):
-        reasons.append("'Plan-then-Apply' pattern (interactive by construction)")
-
-    return len(reasons) > 0, reasons
+_FUNCTION_NODES = (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)
+_COMPREHENSION_NODES = (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)
 
 
-MODE_STYLE_VERB_PATTERN = re.compile(
-    r'\b(?:thinks?|analyses?|analyzes?|reasons?|considers?|reflects?|ponders?)\b',
-    re.IGNORECASE,
-)
-ACTIVE_VERB_PATTERN = re.compile(
-    r'\b(?:extracts?|generates?|runs?|creates?|builds?|writes?|edits?|reads?|parses?|transforms?|executes?|processes?)\b',
-    re.IGNORECASE,
-)
-IO_TOOL_PATTERN = re.compile(r'\b(?:Bash|Write|Edit|NotebookEdit|Task|WebFetch)\b')
-
-
-def detect_mode_style_skill(frontmatter: str, body: str, skill_path) -> tuple[bool, list[str]]:
-    """
-    Detect mode-style reasoning skills (Class D). These must NOT have context: fork.
-
-    A skill is Class D when its value comes from Claude's reasoning in the lead
-    context, not from tool use or external I/O. Signals are heuristic; callers should
-    treat this as a warning-worthy signal rather than a hard error unless the
-    combination is strong.
-    """
-    reasons = []
-
-    allowed_tools_match = re.search(r'allowed-tools:\s*(.+)', frontmatter)
-    if allowed_tools_match:
-        tools_field = allowed_tools_match.group(1)
-        if not IO_TOOL_PATTERN.search(tools_field):
-            reasons.append("allowed-tools is restricted to passive/read-only tools")
+def _bound_names(scope: ast.AST) -> set[str]:
+    """Names bound directly in one scope (module, class, function, or lambda), not in nested scopes."""
+    names: set[str] = set()
+    if isinstance(scope, _FUNCTION_NODES):
+        args = scope.args
+        for arg in (*getattr(args, "posonlyargs", ()), *args.args, *args.kwonlyargs, args.vararg, args.kwarg):
+            if arg is not None:
+                names.add(arg.arg)
+        stack = list(scope.body) if isinstance(scope.body, list) else [scope.body]
     else:
-        reasons.append("no allowed-tools field (no tool-using work)")
+        stack = list(getattr(scope, "body", ()))
+    while stack:
+        node = stack.pop()
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            names.add(node.name)
+            continue
+        if isinstance(node, (ast.Lambda, *_COMPREHENSION_NODES)):
+            continue
+        if isinstance(node, ast.Name) and isinstance(node.ctx, (ast.Store, ast.Del)):
+            names.add(node.id)
+        elif isinstance(node, ast.alias):
+            names.add((node.asname or node.name).split(".")[0])
+        elif isinstance(node, ast.ExceptHandler) and node.name:
+            names.add(node.name)
+        stack.extend(ast.iter_child_nodes(node))
+    return names
 
-    scripts_dir = skill_path / 'scripts'
-    if not scripts_dir.exists():
-        reasons.append("no scripts/ directory")
 
-    if not IO_TOOL_PATTERN.search(body):
-        reasons.append("body has no Bash/Write/Edit steps")
+def _builtin_input_calls(tree: ast.Module) -> list[ast.Call]:
+    """Calls to input() or raw_input() that reach the builtin.
 
-    desc_match = re.search(r'description:\s*["\']?(.+?)["\']?\s*$', frontmatter, re.MULTILINE)
-    if desc_match:
-        description = desc_match.group(1)
-        mode_verb_hit = MODE_STYLE_VERB_PATTERN.search(description)
-        active_verb_hit = ACTIVE_VERB_PATTERN.search(description)
-        if mode_verb_hit and not active_verb_hit:
-            reasons.append(f"description uses stance verb '{mode_verb_hit.group(0)}' without manipulation verb")
+    The name is shadowed only when it is bound at module level or in a function
+    that encloses the call, the way Python resolves it; a local variable named
+    input in another function does not hide a real call.
+    """
+    calls = []
+    # A function that declares "global input" and assigns it rebinds the module name.
+    declared_global = {
+        name for node in ast.walk(tree) if isinstance(node, ast.Global) for name in node.names
+    }
+    module_names = frozenset(_bound_names(tree) | (declared_global & set(INPUT_BUILTINS)))
+    # Each entry: (node, names visible at this point, names visible to nested functions).
+    stack = [(child, module_names, module_names) for child in ast.iter_child_nodes(tree)]
+    while stack:
+        node, visible, enclosing = stack.pop()
+        if isinstance(node, _FUNCTION_NODES):
+            inner = enclosing | _bound_names(node)
+            body = node.body if isinstance(node.body, list) else [node.body]
+            stack.extend((child, inner, inner) for child in body)
+            outer = [*getattr(node, "decorator_list", ()), *node.args.defaults,
+                     *(d for d in node.args.kw_defaults if d is not None)]
+            stack.extend((child, visible, enclosing) for child in outer)
+            continue
+        if isinstance(node, ast.ClassDef):
+            class_names = enclosing | _bound_names(node)
+            stack.extend((child, class_names, enclosing) for child in node.body)
+            outer = [*node.decorator_list, *node.bases, *node.keywords]
+            stack.extend((child, visible, enclosing) for child in outer)
+            continue
+        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                and node.func.id in INPUT_BUILTINS and node.func.id not in visible):
+            calls.append(node)
+        stack.extend((child, visible, enclosing) for child in ast.iter_child_nodes(node))
+    return calls
 
-    trigger_keyword_match = re.search(
-        r'when the user says\s+["\']([A-Z_][A-Z_0-9]{2,})["\']', frontmatter, re.IGNORECASE,
+
+def _interactive_reads(tree: ast.Module) -> tuple[list[tuple[int, str]], list[int]]:
+    """getpass() calls (definitive) and sys.stdin reads (leads) in one script.
+
+    Returns ([(line, call name)], [stdin read lines]). A script that calls
+    isatty() guards its terminal input, so its stdin reads are not leads.
+    """
+    sys_names, stdin_names, getpass_modules, getpass_functions = set(), set(), set(), set()
+    guarded = False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name == "sys":
+                    sys_names.add(alias.asname or "sys")
+                elif alias.name == "getpass":
+                    getpass_modules.add(alias.asname or "getpass")
+        elif isinstance(node, ast.ImportFrom) and not node.level:
+            for alias in node.names:
+                if node.module == "sys" and alias.name == "stdin":
+                    stdin_names.add(alias.asname or "stdin")
+                elif node.module == "getpass" and alias.name == "getpass":
+                    getpass_functions.add(alias.asname or "getpass")
+        elif isinstance(node, ast.Attribute) and node.attr == "isatty":
+            guarded = True
+
+    def is_stdin(expr: ast.AST) -> bool:
+        if isinstance(expr, ast.Attribute) and expr.attr == "buffer":
+            expr = expr.value
+        if isinstance(expr, ast.Attribute) and expr.attr == "stdin":
+            return isinstance(expr.value, ast.Name) and expr.value.id in sys_names
+        return isinstance(expr, ast.Name) and expr.id in stdin_names
+
+    password_calls: list[tuple[int, str]] = []
+    stdin_lines: list[int] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            func = node.func
+            if (isinstance(func, ast.Attribute) and func.attr == "getpass"
+                    and isinstance(func.value, ast.Name) and func.value.id in getpass_modules):
+                password_calls.append((node.lineno, f"{func.value.id}.getpass"))
+            elif isinstance(func, ast.Name) and func.id in getpass_functions:
+                password_calls.append((node.lineno, func.id))
+            elif isinstance(func, ast.Attribute) and func.attr in STDIN_READ_METHODS and is_stdin(func.value):
+                stdin_lines.append(node.lineno)
+            elif any(is_stdin(arg) for arg in node.args):
+                stdin_lines.append(node.lineno)
+        elif isinstance(node, (ast.For, ast.AsyncFor)) and is_stdin(node.iter):
+            stdin_lines.append(node.lineno)
+        elif isinstance(node, ast.comprehension) and is_stdin(node.iter):
+            stdin_lines.append(getattr(node.iter, "lineno", 0))
+    return password_calls, ([] if guarded else sorted(set(stdin_lines)))
+
+
+def _parse_script(path: Path, rel: str, out: _Collector) -> ast.Module | None:
+    source, error = _read_text_or_error(path)
+    if source is None:
+        out.add("M6", CHECK, rel, 0, f"{error}; review its error handling by hand")
+        return None
+    try:
+        return ast.parse(source, filename=rel)
+    except (SyntaxError, ValueError) as exc:
+        line = getattr(exc, "lineno", None) or 0
+        out.add("M6", CHECK, rel, line,
+                f"does not parse as Python 3 ({type(exc).__name__}); review its error handling by hand")
+    except (RecursionError, MemoryError) as exc:
+        out.add("M6", CHECK, rel, 0,
+                f"is too deeply nested to parse ({type(exc).__name__}); review its error handling by hand")
+    return None
+
+
+def _check_python_script(tree: ast.Module, rel: str, out: _Collector) -> None:
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ExceptHandler):
+            if node.type is None:
+                out.add("M6", DEFINITIVE, rel, node.lineno,
+                        "bare 'except:' hides every error; catch specific exceptions and print how to fix them")
+            elif _is_catch_all(node.type) and _only_pass(node.body):
+                out.add("M6", DEFINITIVE, rel, node.lineno,
+                        "'except Exception: pass' swallows errors; catch specific exceptions and report them")
+    for call in _builtin_input_calls(tree):
+        out.add("M6", DEFINITIVE, rel, call.lineno,
+                f"{call.func.id}() waits for interactive input; take it from arguments or environment variables")
+    password_calls, stdin_lines = _interactive_reads(tree)
+    for line, name in password_calls:
+        out.add("M6", DEFINITIVE, rel, line,
+                f"{name}() waits for interactive input; take the secret from an environment variable")
+    if stdin_lines:
+        also = f" (also lines {_line_list(stdin_lines[1:])})" if len(stdin_lines) > 1 else ""
+        out.add("M6", CHECK, rel, stdin_lines[0],
+                f"reads sys.stdin{also}; confirm it never waits on an interactive terminal "
+                "(check sys.stdin.isatty() or take a file argument)")
+
+
+def _check_shell_script(path: Path, rel: str, out: _Collector) -> None:
+    source, error = _read_text_or_error(path)
+    if source is None:
+        out.add("M6", CHECK, rel, 0, f"{error}; review it by hand")
+        return
+    for number, line in enumerate(source.splitlines(), 1):
+        if line.lstrip().startswith("#"):
+            continue
+        if SHELL_READ_RE.search(line):
+            out.add("M6", CHECK, rel, number,
+                    "'read' may wait for interactive input; confirm stdin is always piped or take an argument")
+
+
+def _catches_import_error(handler: ast.ExceptHandler) -> bool:
+    names = {"ImportError", "ModuleNotFoundError", "Exception", "BaseException"}
+    if handler.type is None:
+        return True
+    candidates = handler.type.elts if isinstance(handler.type, ast.Tuple) else [handler.type]
+    return any(isinstance(c, ast.Name) and c.id in names for c in candidates)
+
+
+def _unguarded_imports(tree: ast.Module):
+    guarded = set()
+    for node in ast.walk(tree):
+        if isinstance(node, _TRY_NODES) and any(_catches_import_error(h) for h in node.handlers):
+            for statement in node.body:
+                guarded.update(id(sub) for sub in ast.walk(statement))
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)) and id(node) not in guarded:
+            yield node
+
+
+def _check_scripts(skill: _Skill, out: _Collector) -> None:
+    scripts_dir = skill.root / "scripts"
+    py_files = list(_iter_files(scripts_dir, "*.py"))
+    local_modules = {path.stem for path in py_files}
+    if scripts_dir.is_dir():
+        local_modules.update(p.name for p in scripts_dir.rglob("*") if p.is_dir())
+    local_modules.update(p.name for p in skill.root.iterdir() if p.is_dir())
+    skill_text = "\n".join(skill.lines)
+    undeclared: dict[str, tuple[str, int]] = {}
+    stdlib = getattr(sys, "stdlib_module_names", None)  # Python 3.10 and later
+    if stdlib is None and py_files:
+        out.add("m13", CHECK, _rel(skill.root, py_files[0]), 0,
+                "the import check needs Python 3.10 or later and was skipped; confirm by hand that "
+                "SKILL.md names every third-party package the scripts import")
+
+    for path in py_files:
+        rel = _rel(skill.root, path)
+        tree = _parse_script(path, rel, out)
+        if tree is None:
+            continue
+        _check_python_script(tree, rel, out)
+        if stdlib is None:
+            continue
+        for node in _unguarded_imports(tree):
+            if isinstance(node, ast.ImportFrom):
+                if node.level or not node.module:
+                    continue
+                modules = [node.module]
+            else:
+                modules = [alias.name for alias in node.names]
+            for module in modules:
+                top = module.split(".")[0]
+                if top in stdlib or top in local_modules or top in undeclared:
+                    continue
+                names = [top] + ([PIP_NAMES[top]] if top in PIP_NAMES else [])
+                if any(re.search(rf"\b{re.escape(n)}\b", skill_text, re.IGNORECASE) for n in names):
+                    continue
+                undeclared[top] = (rel, node.lineno)
+    for module, (rel, line) in undeclared.items():
+        package = PIP_NAMES.get(module, module)
+        out.add("m13", CHECK, rel, line,
+                f"imports '{module}', which is not in the standard library and SKILL.md does not name it; "
+                f"add 'Requires {package}: pip install {package}'")
+
+    for path in _iter_files(scripts_dir, "*.sh"):
+        _check_shell_script(path, _rel(skill.root, path), out)
+
+
+def _check_weak_verbs_and_emphasis(skill: _Skill, out: _Collector, nofence: list[str]) -> None:
+    quiet = _View([_mask(QUOTE_RE, _mask_inline_code(line)) for line in nofence], skill.body_first_line)
+    weak = [quiet.line_of(m.start()) for m in WEAK_VERB_RE.finditer(quiet.text)]
+    if len(weak) >= WEAK_VERB_THRESHOLD:
+        out.add("M7", CHECK, SKILL_FILE, weak[0],
+                f"{len(weak)} weak-verb uses (lines {_line_list(weak)}); confirm which are directives "
+                "with no concrete action or default")
+    shouted = [quiet.line_of(m.start()) for m in EMPHASIS_RE.finditer(quiet.text)]
+    if len(shouted) >= EMPHASIS_THRESHOLD:
+        out.add("m15", CHECK, SKILL_FILE, shouted[0],
+                f"{len(shouted)} all-caps directives (lines {_line_list(shouted)}); "
+                "state each rule in plain words with its reason")
+
+
+def _person_phrases(text: str) -> list[str]:
+    """First- and second-person words outside quotes and inline code (M8)."""
+    masked = _mask(QUOTE_RE, _mask_inline_code(text))
+    phrases = []
+    for match in PERSON_RE.finditer(masked):
+        if match.group(0).startswith("I") and ROMAN_NUMERAL_CONTEXT_RE.search(masked[:match.start()]):
+            continue  # "Phase I", "Type I"
+        phrases.append(match.group(0))
+    return phrases
+
+
+def _check_description(skill: _Skill, out: _Collector) -> None:
+    description = skill.meta["description"]
+    line = _key_line(skill, "description")
+    when_to_use = skill.meta.get("when_to_use")
+    when_to_use = when_to_use if isinstance(when_to_use, str) else ""
+    trigger_text = description if skill.portable else f"{description}\n{when_to_use}"
+    if not any(pattern.search(trigger_text) for pattern in TRIGGER_RES):
+        where = "description" if skill.portable else "description or when_to_use"
+        out.add("M8", DEFINITIVE, SKILL_FILE, line,
+                f"no trigger clause in the {where}; add 'Use when ...' with the key use case first")
+    fields = [("description", description)]
+    if not skill.portable and when_to_use:
+        fields.append(("when_to_use", when_to_use))
+    for field, value in fields:
+        phrases = _person_phrases(value)
+        if phrases:
+            out.add("M8", DEFINITIVE, SKILL_FILE, _key_line(skill, field),
+                    f"{field} uses first or second person ({', '.join(dict.fromkeys(phrases))}); "
+                    "write it in the third person")
+
+    if len(description) > MAX_DESCRIPTION_LENGTH:
+        out.add("M9", DEFINITIVE, SKILL_FILE, line,
+                f"description is {len(description)} characters (limit {MAX_DESCRIPTION_LENGTH})")
+    if "<" in description or ">" in description:
+        out.add("M9", DEFINITIVE, SKILL_FILE, line, "description contains '<' or '>'; remove the angle brackets")
+    if not skill.portable and len(description) + len(when_to_use) > MAX_LISTING_LENGTH:
+        out.add("m12", DEFINITIVE, SKILL_FILE, line,
+                f"description plus when_to_use is {len(description) + len(when_to_use)} characters; "
+                f"the skill listing truncates at {MAX_LISTING_LENGTH}")
+    _check_description_opening(description, line, out)
+
+
+def _check_description_opening(description: str, line: int, out: _Collector) -> None:
+    if TEMPLATE_MARKER in description:
+        return  # an unfilled template; M9 already reports the placeholder
+    match = re.match(r"[^A-Za-z]*([A-Za-z][A-Za-z'-]*)", description)
+    word = match.group(1) if match else ""
+    third_person = (
+        word[:1].isupper()
+        and word.endswith("s")
+        and not word.lower().endswith(S6_NON_VERB_ENDINGS)
+        and word not in S6_NON_VERBS
     )
-    if trigger_keyword_match:
-        reasons.append(f"invoked by keyword trigger '{trigger_keyword_match.group(1)}' (reasoning modifier pattern)")
-
-    is_mode_style = len(reasons) >= 3
-    return is_mode_style, reasons
+    if not third_person:
+        out.add("S6", DEFINITIVE, SKILL_FILE, line,
+                f"description opens with '{word}'; open with a third-person verb such as 'Extracts' or 'Reviews'")
 
 
-def detect_task_based_skill(frontmatter: str, body: str) -> tuple[bool, list[str]]:
-    """
-    Detect whether a skill is task-based (candidate for context: fork).
+def _check_frontmatter_keys(skill: _Skill, out: _Collector) -> None:
+    meta = skill.meta
+    name = meta.get("name")
+    folder = _folder_name(skill.root)
+    if "name" in meta:
+        name_line = _key_line(skill, "name")
+        if not isinstance(name, str):
+            out.add("M9", DEFINITIVE, SKILL_FILE, name_line,
+                    f"name must be a string (YAML read it as {type(name).__name__}); quote it")
+        else:
+            for problem in name_errors(name):
+                out.add("M9", DEFINITIVE, SKILL_FILE, name_line, f"name '{name}' {problem}")
+            if name != folder:
+                out.add("M9", DEFINITIVE, SKILL_FILE, name_line,
+                        f"name '{name}' does not match the folder name '{folder}'")
+            reserved = [word for word in RESERVED_NAME_WORDS if word in name.lower()]
+            if reserved:
+                rule = "M9" if skill.portable else "m12"
+                out.add(rule, DEFINITIVE, SKILL_FILE, name_line,
+                        f"name contains the reserved word '{reserved[0]}', which blocks upload to claude.ai and the API")
+    elif skill.portable:
+        out.add("M9", DEFINITIVE, SKILL_FILE, 1, "name is missing; the portable target requires it")
 
-    Only truly autonomous task-based skills (Class A) should get fork. Callers MUST
-    also run detect_orchestrator_skill, detect_interactive_skill, and
-    detect_mode_style_skill and exclude fork if any returns True.
-    """
-    reasons = []
+    for problem in folder_name_errors(folder):
+        out.add("M9", DEFINITIVE, ".", 0, problem)
 
-    if 'agent:' in frontmatter:
-        reasons.append("'agent' field in frontmatter (implies forked execution)")
-    if 'allowed-tools:' in frontmatter:
-        reasons.append("'allowed-tools' field in frontmatter (implies autonomous tool use)")
+    known = PORTABLE_KEYS if skill.portable else CLAUDE_CODE_KEYS
+    for key in meta:
+        if str(key) not in known:
+            target = "the portable target" if skill.portable else "Claude Code"
+            out.add("M9" if skill.portable else "m12", DEFINITIVE, SKILL_FILE, _key_line(skill, str(key)),
+                    f"frontmatter key '{key}' is unknown to {target}; fix the spelling or remove it")
 
-    if '<instructions>' in body:
-        reasons.append("<instructions> tags found (multi-step workflow)")
-    if re.search(r'scripts/[\w./-]+\.py', body):
-        reasons.append("Python script references found (executable tasks)")
-    if re.search(r'scripts/[\w./-]+\.sh', body):
-        reasons.append("Shell script references found (executable tasks)")
+    if not skill.portable and meta.get("context") != "fork":
+        for key in FORK_ONLY_KEYS:
+            if key in meta:
+                out.add("m12", DEFINITIVE, SKILL_FILE, _key_line(skill, key),
+                        f"{key} is set without context: fork, so it has no effect; remove it")
 
-    step_count = len(re.findall(r'(?:^|\n)#{1,4}\s*Step\s+\d', body))
-    if step_count >= 3:
-        reasons.append(f"{step_count} numbered steps found (multi-step workflow)")
+    if skill.portable:
+        compatibility = meta.get("compatibility")
+        if isinstance(compatibility, str) and len(compatibility) > MAX_COMPATIBILITY_LENGTH:
+            out.add("M9", DEFINITIVE, SKILL_FILE, _key_line(skill, "compatibility"),
+                    f"compatibility is {len(compatibility)} characters (limit {MAX_COMPATIBILITY_LENGTH})")
+        metadata = meta.get("metadata")
+        if metadata is not None and not (
+            isinstance(metadata, dict)
+            and all(isinstance(k, str) and isinstance(v, str) for k, v in metadata.items())
+        ):
+            out.add("M9", DEFINITIVE, SKILL_FILE, _key_line(skill, "metadata"),
+                    "metadata must map strings to strings for the portable target")
 
-    if re.search(r'\|\s*\*\*.*?\*\*\s*\|.*?\|\s*\*\*.*?\*\*\s*\|', body):
-        mode_rows = len(re.findall(r'\|\s*\*\*\w+.*?\*\*', body))
-        if mode_rows >= 3:
-            reasons.append(f"Mode selection table found ({mode_rows} modes)")
 
-    return len(reasons) > 0, reasons
+def _check_leftovers(skill: _Skill, out: _Collector) -> None:
+    for index, line in enumerate(skill.lines):
+        if TEMPLATE_MARKER in line:
+            out.add("M9", DEFINITIVE, SKILL_FILE, index + 1,
+                    "template placeholder '[TODO' remains; replace it with real content")
+    for placeholder in INIT_PLACEHOLDER_FILES:
+        if (skill.root / placeholder).exists():
+            out.add("M9", DEFINITIVE, placeholder, 0, "init placeholder file remains; delete it or replace it")
+    body = _View(skill.body_lines, skill.body_first_line)
+    injected = sorted({
+        body.line_of(match.start())
+        for pattern in (INJECTION_INLINE_RE, INJECTION_FENCE_RE)
+        for match in pattern.finditer(body.text)
+    })
+    for line in injected:
+        out.add("M9", CHECK, SKILL_FILE, line,
+                "dynamic context injection syntax runs a command on every invocation; "
+                "confirm it is intended or move the demonstration into references/")
 
 
-def validate_skill(skill_path):
-    """
-    Validate a skill against review-skill requirements.
+def _check_argument_tokens(skill: _Skill, out: _Collector, fence_tags: list[str | None]) -> None:
+    examples = _example_mask(skill.body_lines)
+    for offset, line in enumerate(skill.body_lines):
+        if fence_tags[offset] is None and not examples[offset]:
+            continue
+        match = ARGUMENT_TOKEN_RE.search(line)
+        if match:
+            out.add("m12", CHECK, SKILL_FILE, skill.body_first_line + offset,
+                    f"'{match.group(0)}' inside an example or code block is substituted at invocation; "
+                    "escape it as \\$ or move the example into references/")
 
-    Returns:
-        (valid, message, warnings) - valid is bool, message is str, warnings is list of str
-    """
-    skill_path = Path(skill_path)
-    warnings = []
 
-    # Check SKILL.md exists
-    skill_md = skill_path / 'SKILL.md'
-    if not skill_md.exists():
-        return False, "SKILL.md not found", warnings
+def _reference_files(skill: _Skill) -> list[Path]:
+    return list(_iter_files(skill.root / "references", "*.md"))
 
-    # Read and validate frontmatter
-    content = skill_md.read_text(encoding="utf-8")
-    if not content.startswith('---'):
-        return False, "No YAML frontmatter found", warnings
 
-    # Extract frontmatter
-    match = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
-    if not match:
-        return False, "Invalid frontmatter format", warnings
+def _check_reference_tocs(skill: _Skill, out: _Collector, references: list[Path]) -> None:
+    for path in references:
+        rel = _rel(skill.root, path)
+        text, error = _read_text_or_error(path)
+        if text is None:
+            out.add("M5", CHECK, rel, 0, f"reference {error}")
+            continue
+        lines = text.splitlines()
+        if len(lines) > REFERENCE_TOC_MIN_LINES and not any(
+            TOC_HEADING_RE.match(line.strip()) for line in lines[:REFERENCE_TOC_WINDOW]
+        ):
+            out.add("m9", DEFINITIVE, rel, 1,
+                    f"{len(lines)} lines with no '## Contents' heading in the first {REFERENCE_TOC_WINDOW} lines")
 
-    frontmatter = match.group(1)
-    body = content[match.end():]
 
-    # Check for invalid indentation characters in frontmatter
-    invalid_indent = find_invalid_frontmatter_indentation(frontmatter)
-    if invalid_indent:
-        samples = ", ".join(
-            f"line {line_no} ({describe_whitespace(ch)})"
-            for line_no, ch in invalid_indent[:3]
-        )
-        more = "" if len(invalid_indent) <= 3 else f" (+{len(invalid_indent) - 3} more)"
-        return False, (
-            "Invalid whitespace in frontmatter indentation; use ASCII spaces only. "
-            f"Found: {samples}{more}"
-        ), warnings
-
-    # Check required fields
-    if 'name:' not in frontmatter:
-        return False, "Missing 'name' in frontmatter", warnings
-    if 'description:' not in frontmatter:
-        return False, "Missing 'description' in frontmatter", warnings
-
-    # Extract name for validation
-    name_match = re.search(r'name:\s*(.+)', frontmatter)
-    if name_match:
-        name = name_match.group(1).strip()
-        # Check naming convention (hyphen-case: lowercase with hyphens)
-        if not re.match(r'^[a-z0-9-]+$', name):
-            return False, f"Name '{name}' should be hyphen-case (lowercase letters, digits, and hyphens only)", warnings
-        if name.startswith('-') or name.endswith('-') or '--' in name:
-            return False, f"Name '{name}' cannot start/end with hyphen or contain consecutive hyphens", warnings
-        # Max 64 characters
-        if len(name) > 64:
-            return False, f"Name '{name}' exceeds 64 characters ({len(name)})", warnings
-        # No reserved words
-        reserved_words = ['anthropic', 'claude']
-        for word in reserved_words:
-            if word in name:
-                return False, f"Name '{name}' contains reserved word '{word}'", warnings
-
-    # === REVIEW-SKILL CHECKS ===
-
-    # Check context: fork against the four-class taxonomy
-    # (A autonomous / B orchestrator / C interactive / D mode-style reasoning).
-    # Review-skill raises M2 if fork is present on Class B, C, or D, OR absent on Class A.
-    has_context_fork = 'context: fork' in frontmatter
-    is_orchestrator, orch_reasons = detect_orchestrator_skill(frontmatter, body)
-    is_interactive, inter_reasons = detect_interactive_skill(body)
-    is_mode_style, mode_reasons = detect_mode_style_skill(frontmatter, body, skill_path)
-
-    if has_context_fork and is_orchestrator:
-        reasons_str = "; ".join(orch_reasons[:3])
-        return False, (
-            f"'context: fork' set on an orchestrator skill (Class B): {reasons_str}. "
-            f"A forked subagent cannot spawn further subagents, so fork breaks the dispatch chain. "
-            f"Remove 'context: fork' and 'agent' from frontmatter."
-        ), warnings
-
-    if has_context_fork and is_interactive:
-        reasons_str = "; ".join(inter_reasons[:3])
-        return False, (
-            f"'context: fork' set on an interactive skill (Class C): {reasons_str}. "
-            f"A forked subagent returns only a final summary, collapsing the user-visible pause. "
-            f"Remove 'context: fork' and 'agent' from frontmatter."
-        ), warnings
-
-    if has_context_fork and is_mode_style:
-        reasons_str = "; ".join(mode_reasons[:3])
-        return False, (
-            f"'context: fork' set on a mode-style reasoning skill (Class D): {reasons_str}. "
-            f"A fork spawns a fresh subagent context, losing the lead's thinking tokens and "
-            f"cross-turn persistence. Remove 'context: fork' and 'agent' from frontmatter."
-        ), warnings
-
-    if not has_context_fork and not is_orchestrator and not is_interactive and not is_mode_style:
-        is_task_based, task_reasons = detect_task_based_skill(frontmatter, body)
-        if is_task_based:
-            reasons_str = "; ".join(task_reasons[:3])
-            return False, f"Autonomous task-based skill (Class A) missing 'context: fork' ({reasons_str})", warnings
-
-    # Extract and validate description
-    desc_match = re.search(r'description:\s*["\']?(.+?)["\']?\s*$', frontmatter, re.MULTILINE)
-    if desc_match:
-        description = desc_match.group(1).strip()
-        # Check for angle brackets
-        if '<' in description or '>' in description:
-            return False, "Description cannot contain angle brackets (< or >)", warnings
-        # Max 1024 characters
-        if len(description) > 1024:
-            return False, f"Description exceeds 1024 characters ({len(description)})", warnings
-
-        # Check third-person voice (review-skill requirement)
-        # Bad: starts with imperative verb or second person
-        imperative_patterns = [
-            r'^(Extract|Process|Create|Build|Generate|Handle|Manage|Run|Execute|Use|Get|Set|Add|Remove|Delete|Update|Search|Find|Load|Save|Read|Write|Check|Validate|Format|Parse|Convert|Transform|Browse|Complete|Help|Assist)\s',
-            r'^(You can|You should|You may|I can|I will|This will)',
-            r'^(A |An |The |Complete |Full |Comprehensive |Simple |Easy |Quick )',
-        ]
-        for pattern in imperative_patterns:
-            if re.match(pattern, description, re.IGNORECASE):
-                return False, (
-                    "Description must use a third-person verb "
-                    "(e.g., 'Processes...', 'Extracts...', 'Reviews...'), not imperative, "
-                    "second-person, or noun-phrase form. Review-skill flags this as M8 (major)."
-                ), warnings
-
-        # Check trigger conditions (review-skill requirement)
-        trigger_patterns = ['use when', 'use this when', 'should be used when', 'invoke when', 'triggers when']
-        has_trigger = any(p in description.lower() for p in trigger_patterns)
-        if not has_trigger:
-            warnings.append("⚠️  Description should include trigger conditions (e.g., 'Use when...')")
-
-    # Check SKILL.md total line count (review-skill rubric: under 400 for Grade A, under 500 for Grade B)
-    total_lines = len(content.splitlines())
-    if total_lines > 500:
-        warnings.append(f"⚠️  SKILL.md is {total_lines} lines (must be under 500 for Grade B)")
-    elif total_lines > 400:
-        warnings.append(f"ℹ️  SKILL.md is {total_lines} lines (under 400 for Grade A, under 500 for Grade B)")
-
-    # Check <example> block count (review-skill deep-review criterion 2: 3-5 diverse examples)
-    example_count = len(re.findall(r'<example>', body))
-    if example_count < 3:
-        warnings.append(
-            f"⚠️  SKILL.md has {example_count} <example> block(s); review-skill expects 3-5 (m6 minor)"
-        )
-    elif example_count > 10:
-        warnings.append(
-            f"⚠️  SKILL.md has {example_count} <example> blocks; review-skill caps at 10 (m6 minor)"
-        )
-
-    # Check for loose .md files in root (only SKILL.md allowed)
-    loose_md = [
-        f.name for f in skill_path.iterdir()
-        if f.is_file() and f.suffix == '.md' and f.name != 'SKILL.md'
-    ]
-    if loose_md:
-        return False, f"Only SKILL.md allowed in root. Move to references/: {', '.join(loose_md)}", warnings
-
-    # Check for nested references (one level deep only)
-    refs_dir = skill_path / 'references'
-    if refs_dir.exists():
-        nested_dirs = [
-            str(d.relative_to(refs_dir))
-            for d in refs_dir.iterdir()
-            if d.is_dir()
-        ]
-        if nested_dirs:
-            return False, f"References must be one level deep. Nested directories found: {', '.join(nested_dirs)}", warnings
-
-    # Validate path references exist
-    paths_valid, missing_paths = validate_path_references(skill_path, content)
-    if not paths_valid:
-        return False, f"Missing referenced files: {', '.join(missing_paths)}", warnings
-
-    # Check weak verbs inside <instructions> blocks (review-skill M7 / m7).
-    # Skip matches inside quoted strings — those are citations of the bad pattern
-    # (e.g. teaching "don't use 'consider' or 'ensure'"), not imperative uses.
-    weak_verb_pattern = re.compile(
-        r'\b(?:consider|ensure|handle appropriately|handle properly|as needed|as appropriate|if applicable)\b',
-        re.IGNORECASE,
-    )
-    quoted_range_pattern = re.compile(r'"[^"\n]*"|\'[^\'\n]*\'|`[^`\n]*`')
-    instructions_blocks = re.findall(r'<instructions>(.*?)</instructions>', body, re.DOTALL)
-    weak_verb_hits = 0
-    for block in instructions_blocks:
-        quoted_ranges = [(m.start(), m.end()) for m in quoted_range_pattern.finditer(block)]
-        for wm in weak_verb_pattern.finditer(block):
-            if any(qs <= wm.start() < qe for qs, qe in quoted_ranges):
+def _check_reference_chains(skill: _Skill, out: _Collector) -> None:
+    linked = {
+        posixpath.normpath(token.rstrip("/"))
+        for _, sibling, token in extract_bundled_paths(skill.body_lines, skill.body_first_line)
+        if sibling is None and token.startswith("references/")
+    }
+    for rel in sorted(linked):
+        path = skill.root / rel
+        if path.suffix != ".md" or not path.is_file():
+            continue
+        text = _read_text(path)
+        if text is None:
+            continue
+        lines = text.splitlines()
+        targets: dict[str, int] = {}
+        for number, _, token in extract_bundled_paths(lines):
+            if token.startswith("references/"):
+                targets.setdefault(posixpath.normpath(token.rstrip("/")), number)
+        base = posixpath.dirname(rel)
+        for number, line in enumerate(lines, 1):
+            for match in MARKDOWN_LINK_RE.finditer(_mask(URL_RE, line)):
+                link = match.group(1).split("#", 1)[0]
+                if not link or link.startswith("/") or ":" in link:
+                    continue
+                # Resolve the link by its text, not on disk, so a references/ folder that is
+                # a symlink or junction to a folder outside the skill still maps back into it.
+                target = posixpath.normpath(posixpath.join(base, link))
+                if target.startswith("references/"):
+                    targets.setdefault(target, number)
+        for target, number in targets.items():
+            if target == rel or target in linked or not (skill.root / target).is_file():
                 continue
-            weak_verb_hits += 1
-    if weak_verb_hits >= 3:
-        warnings.append(
-            f"⚠️  {weak_verb_hits} weak verbs ('consider', 'ensure', 'handle appropriately') inside <instructions> "
-            f"— review-skill flags 3+ as M7 (major). Rewrite with strong verbs ('run', 'check', 'verify')."
-        )
-    elif weak_verb_hits > 0:
-        warnings.append(
-            f"ℹ️  {weak_verb_hits} weak verb(s) inside <instructions> — review-skill flags 3+ as M7. "
-            f"Prefer strong verbs ('run', 'check', 'verify')."
-        )
+            out.add("m10", CHECK, rel, number,
+                    f"links {target}, which SKILL.md does not link; link it from SKILL.md if it holds essential content")
 
-    # Check that multi-step workflows are wrapped in <instructions> (review-skill deep-review criterion 1 / m5)
-    step_count = len(re.findall(r'(?:^|\n)#{1,4}\s*Step\s+\d', body))
-    if step_count >= 3 and '<instructions>' not in body:
-        warnings.append(
-            f"⚠️  SKILL.md has {step_count} numbered steps but no <instructions> tag — "
-            f"review-skill flags this under deep-review criterion 1 (m5). Wrap the workflow in <instructions>...</instructions>."
-        )
 
-    # Check Python scripts for bare `except:` (review-skill M6)
-    scripts_dir = skill_path / 'scripts'
-    if scripts_dir.exists() and scripts_dir.is_dir():
-        bare_except_pattern = re.compile(r'^\s*except\s*:', re.MULTILINE)
-        offending_scripts = []
-        for script in scripts_dir.glob('*.py'):
-            try:
-                script_text = script.read_text(encoding='utf-8')
-            except OSError:
+def _check_paths_in_markdown(skill: _Skill, out: _Collector, references: list[Path]) -> None:
+    documents = [(SKILL_FILE, skill.lines)]
+    for path in references:
+        text = _read_text(path)
+        if text is not None:
+            documents.append((_rel(skill.root, path), text.splitlines()))
+    for rel, lines in documents:
+        tags = _fence_tags(lines)
+        for index, line in enumerate(lines):
+            if tags[index] in SHELL_FENCE_TAGS:
                 continue
-            if bare_except_pattern.search(script_text):
-                offending_scripts.append(script.name)
-        if offending_scripts:
-            return False, (
-                f"Bare 'except:' found in: {', '.join(offending_scripts)}. "
-                f"Review-skill M6: scripts must catch specific exceptions with recovery actions."
-            ), warnings
+            masked = _mask(URL_RE, line)
+            problem = None
+            if DRIVE_BACKSLASH_RE.search(masked) or BUNDLED_BACKSLASH_RE.search(masked):
+                problem = "backslash path; use forward slashes and paths relative to the skill directory"
+            else:
+                for match in USER_DIR_RE.finditer(masked):
+                    user = match.group("unix") or match.group("win")
+                    if user.lower() in PLACEHOLDER_USER_NAMES or user.startswith(PLACEHOLDER_NAME_STARTS):
+                        continue
+                    if REAL_NAME_RE.match(user):
+                        problem = (f"user-specific absolute path ('{match.group(0)}'); "
+                                   "use a placeholder such as /Users/username/ or a relative path")
+                        break
+            if problem:
+                out.add("m11", DEFINITIVE, rel, index + 1, problem)
 
+
+def _check_layout(skill: _Skill, out: _Collector, nofence: list[str]) -> None:
+    # A mention in inline code ("wrap it in `<instructions>`") is not a block.
+    if not any(INSTRUCTIONS_TAG in _mask_inline_code(line) for line in nofence):
+        out.add("S1", DEFINITIVE, SKILL_FILE, 0, "no <instructions> block; wrap the workflow in <instructions> tags")
+    examples = sum(1 for line in nofence if EXAMPLE_OPEN_RE.match(line))
+    if not MIN_EXAMPLES <= examples <= MAX_EXAMPLES:
+        out.add("S2", DEFINITIVE, SKILL_FILE, 0,
+                f"{examples} <example> blocks; keep {MIN_EXAMPLES}-{MAX_EXAMPLES} short ones in SKILL.md")
+
+    for entry in sorted(skill.root.iterdir()):
+        name = entry.name
+        if name.startswith(".") or name == SKILL_FILE or name.startswith(LICENSE_PREFIX):
+            continue
+        if entry.is_dir() and name in ALLOWED_ROOT_DIRS:
+            continue
+        out.add("S4", DEFINITIVE, name, 0,
+                "unexpected entry in the skill root; move it under scripts/, references/, assets/, evals/, or tests/")
+
+    stems = [path.stem for path in _iter_files(skill.root / "references", "*.md")]
+    if any("-" in stem for stem in stems) and any("_" in stem for stem in stems):
+        out.add("S7", DEFINITIVE, "references", 0,
+                "reference filenames mix '-' and '_'; pick one separator")
+
+
+def _load_json(path: Path):
+    """Parse a JSON file: (data, None), or (None, why it failed) with the OS or parser detail."""
+    try:
+        text = path.read_text(encoding="utf-8-sig")
+    except FileNotFoundError:
+        raise
+    except (OSError, UnicodeDecodeError) as exc:
+        return None, _read_error(exc)
+    try:
+        return json.loads(text), None
+    except json.JSONDecodeError as exc:
+        return None, f"is not valid JSON (line {exc.lineno} column {exc.colno}: {exc.msg})"
+    except (RecursionError, MemoryError) as exc:
+        return None, f"is nested too deeply to parse ({type(exc).__name__})"
+
+
+def _check_evals(skill: _Skill, out: _Collector) -> None:
+    evals_file = skill.root / "evals" / "evals.json"
+    try:
+        data, problem = _load_json(evals_file)
+    except FileNotFoundError:
+        data, problem = None, "is missing; write it before the skill (see the evals format in rules.md)"
+    if problem is None:
+        cases = data.get("evals") if isinstance(data, dict) else None
+        if not isinstance(cases, list) or len(cases) < MIN_EVAL_CASES:
+            count = len(cases) if isinstance(cases, list) else 0
+            problem = f"has {count} cases in 'evals'; write at least {MIN_EVAL_CASES}"
+    if problem:
+        out.add("S5", DEFINITIVE, "evals/evals.json", 0, f"evals/evals.json {problem}")
+
+    queries_file = skill.root / "evals" / "trigger_queries.json"
+    try:
+        queries, problem = _load_json(queries_file)
+    except FileNotFoundError:
+        queries, problem = None, "is missing; list about 10 queries, half of them near-misses"
+    if problem is None:
+        valid = isinstance(queries, list) and queries and all(
+            isinstance(q, dict) and isinstance(q.get("query"), str) and isinstance(q.get("should_trigger"), bool)
+            for q in queries
+        )
+        if not valid:
+            problem = "must be a non-empty list of {\"query\": str, \"should_trigger\": bool} objects"
+    if problem:
+        out.add("S5", DEFINITIVE, "evals/trigger_queries.json", 0, f"evals/trigger_queries.json {problem}")
+
+
+# --- Public API ---------------------------------------------------------------
+
+def collect_findings(skill_path, portable: bool = False) -> list[Finding]:
+    """Run every check on one skill directory and return the sorted findings.
+
+    Raises ValidatorEnvironmentError when PyYAML is missing or SKILL.md cannot be read.
+    """
+    if yaml is None:
+        raise ValidatorEnvironmentError(PYYAML_HINT)
+    root = Path(skill_path)
+    out = _Collector()
+    if not root.is_dir():
+        out.add("F", DEFINITIVE, ".", 0, f"skill directory not found: {root}")
+        return out.sorted()
+    try:
+        entries = {entry.name for entry in root.iterdir()}
+    except OSError as exc:
+        raise ValidatorEnvironmentError(f"[env] cannot list {root}: {exc.strerror or exc}") from exc
+    if SKILL_FILE not in entries:
+        other = next((name for name in entries if name.lower() == SKILL_FILE.lower()), None)
+        hint = f" (found {other}; the file name is case-sensitive)" if other else ""
+        out.add("F", DEFINITIVE, SKILL_FILE, 0, f"SKILL.md not found{hint}")
+        return out.sorted()
+
+    skill = _parse(root, _read_skill_md(root / SKILL_FILE), out, portable)
+    if skill is None:
+        return out.sorted()
+
+    description_usable = _check_f_triggers(skill, out)
+    fence_tags = _fence_tags(skill.body_lines)
+    nofence = ["" if tag is not None else line for line, tag in zip(skill.body_lines, fence_tags)]
+    references = _reference_files(skill)
+
+    _check_size(skill, out)
+    _check_fork(skill, out, nofence)
+    _check_bundled_paths(skill, out)
+    _check_scripts(skill, out)
+    _check_weak_verbs_and_emphasis(skill, out, nofence)
+    if description_usable:
+        _check_description(skill, out)
+    _check_frontmatter_keys(skill, out)
+    _check_leftovers(skill, out)
+    _check_argument_tokens(skill, out, fence_tags)
+    _check_reference_tocs(skill, out, references)
+    _check_reference_chains(skill, out)
+    _check_paths_in_markdown(skill, out, references)
+    _check_layout(skill, out, nofence)
+    _check_evals(skill, out)
+    return out.sorted()
+
+
+def exit_code_for(findings: list[Finding]) -> int:
+    definitive = [f for f in findings if f.confidence == DEFINITIVE]
+    if any(f.severity == MAJOR for f in definitive):
+        return EXIT_MAJOR
+    if any(f.severity == MINOR for f in definitive):
+        return EXIT_MINOR
+    return EXIT_OK
+
+
+def summary_line(findings: list[Finding]) -> str:
+    definitive = [f for f in findings if f.confidence == DEFINITIVE]
+    counts = {severity: sum(1 for f in definitive if f.severity == severity) for severity in (MAJOR, MINOR, STYLE)}
+    checks = sum(1 for f in findings if f.confidence == CHECK)
+    return f"RESULT major={counts[MAJOR]} minor={counts[MINOR]} style={counts[STYLE]} checks={checks}"
+
+
+def internal_error_message(exc: BaseException) -> str:
+    """The one-line report for a crash, so callers never mistake it for a finding."""
+    return _one_line(f"[env] internal error: {type(exc).__name__}: {exc}")
+
+
+def validate_skill(skill_path, portable: bool = False) -> tuple[bool, str, list[str]]:
+    """Compatibility shim for package_skill.py: (valid, message, warnings).
+
+    valid is False when any definitive Major (including F) is found, and also
+    when the validator cannot run; warnings holds every other finding, formatted.
+    """
+    try:
+        findings = collect_findings(skill_path, portable)
+    except ValidatorEnvironmentError as exc:
+        return False, str(exc), []
+    except Exception as exc:  # an internal error must block packaging, not crash it
+        return False, internal_error_message(exc), []
+    blocking = [f for f in findings if f.severity == MAJOR and f.confidence == DEFINITIVE]
+    warnings = [f.format() for f in findings if f not in blocking]
+    if blocking:
+        return False, "\n".join(f.format() for f in blocking), warnings
     if warnings:
-        return True, "Skill is valid with warnings", warnings
-    return True, "Skill is valid!", warnings
+        return True, f"Skill is valid with {len(warnings)} non-blocking finding(s)", warnings
+    return True, "Skill is valid", warnings
+
+
+def _configure_output() -> None:
+    """Replace unencodable characters instead of crashing on cp1252 consoles and pipes."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="replace")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="scripts/quick_validate.py",
+        description="Validate a skill against review-skill's rules.md and print one line per finding.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "Output: [<ID>] <major|minor|style> <definitive|check> <file>:<line> <message>\n"
+            "        RESULT major=<n> minor=<n> style=<n> checks=<n>\n\n"
+            "Exit codes:\n"
+            "  0  no definitive Major or Minor\n"
+            "  1  at least one definitive Major (F triggers count as Major)\n"
+            "  2  usage error\n"
+            "  3  environment error (PyYAML missing: python -m pip install pyyaml; unreadable SKILL.md;\n"
+            "     an internal error, printed as '[env] internal error: ...')\n"
+            "  4  definitive Minor only\n"
+            "Check lines and Style findings never change the exit code."
+        ),
+    )
+    parser.add_argument("skill_dir", help="path to the skill directory (the folder holding SKILL.md)")
+    parser.add_argument(
+        "--portable", action="store_true",
+        help="grade for claude.ai, the Claude API, and other Agent Skills clients instead of Claude Code",
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    _configure_output()
+    parser = build_parser()
+    args = parser.parse_args(argv)  # usage errors exit 2 through SystemExit, which is not caught below
+    if not Path(args.skill_dir).is_dir():
+        parser.error(f"not a directory: {args.skill_dir}")
+    try:
+        findings = collect_findings(args.skill_dir, portable=args.portable)
+        for finding in findings:
+            print(finding.format())
+        print(summary_line(findings))
+        return exit_code_for(findings)
+    except ValidatorEnvironmentError as exc:
+        print(str(exc), file=sys.stderr)
+        return EXIT_ENV
+    except Exception as exc:  # a crash must exit 3, never 1, which means "definitive Major"
+        print(internal_error_message(exc), file=sys.stderr)
+        return EXIT_ENV
+
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python quick_validate.py <skill_directory>")
-        sys.exit(1)
-
-    valid, message, warnings = validate_skill(sys.argv[1])
-    print(message)
-    for warning in warnings:
-        print(f"  {warning}")
-
-    if not valid:
-        sys.exit(1)
-    elif warnings:
-        sys.exit(2)  # Valid but with warnings
-    else:
-        sys.exit(0)
+    sys.exit(main())

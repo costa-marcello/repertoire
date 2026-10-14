@@ -4,3 +4,4 @@ __pycache__/
 node_modules/
 *.pyc
 CLAUDE.md
+.security-scan-passed

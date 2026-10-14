@@ -1,129 +1,96 @@
 # PR Template for Skill Contributions
 
-Use this template when creating PRs for Claude Code skill repositories.
+The title and body format for Auto-PR. Write the title (one line) and the body to two files in the temporary folder that holds the clone. Show both to the user with the staged summary (`git diff --cached --stat`), and use them with `git commit -F` and `gh pr create --body-file` only after the user says yes. `mode-auto-pr.md` has the commands.
 
-## PR Title Format
+## Contents
 
-```
-refactor: Align skill with Claude Code best practices
+1. [Title](#title)
+2. [Body](#body)
+3. [Filling it in](#filling-it-in)
+
+## Title
+
+Use a conventional-commit prefix and name the outcome:
+
+```text
+refactor: align <skill-name> with Anthropic's skill guidance
 ```
 
-Or for specific improvements:
-```
-feat: Add marketplace support for plugin installation
-docs: Add bilingual documentation (English/Chinese)
-fix: Improve error handling in scripts
+For a narrower PR:
+
+```text
+docs: add trigger conditions to the <skill-name> description
+fix: report script errors instead of swallowing them in <skill-name>
 ```
 
-## PR Body Template
+## Body
 
 ```markdown
 ## Summary
 
-This PR improves the [skill-name] skill by aligning it with [Claude Code Skill Best Practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices).
+This PR improves the <skill-name> skill against [Anthropic's skill authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices). Review grade before: <letter>. After: <letter>. Based on upstream commit <short-hash> of <ref>.
 
-### What This PR Does
+### What this PR does
 
-- [Improvement 1]
-- [Improvement 2]
-- [Improvement 3]
+- <change 1, with its rule ID>
+- <change 2, with its rule ID>
 
-### What This PR Does NOT Change
+### What this PR does not change
 
-- [Preserved item 1]
-- [Preserved item 2]
+- No files are deleted, renamed, or moved.
+- <preserved item: the workflow, the language, the scripts' behavior, the author's structure>
 
-## Detailed Changes
+## Changes
 
-### 1. [Change Category]
+### 1. <change title> (<rule ID>)
 
-**Before:**
-[Description of current state]
+**Before:** <current state, with file:line>
 
-**After:**
-[Description of improvement]
+**After:** <the new state>
 
-**Rationale:**
-[Why this change helps users]
+**Why:** <how this helps users or triggering, citing the guidance>
 
-### 2. [Change Category]
+### 2. <change title> (<rule ID>)
 
 ...
 
-## Why These Changes?
+## Deferred suggestions
 
-According to Claude Code best practices:
+These would need deletes, renames, moves, or Style changes, which this PR avoids. Each is ready to apply:
 
-> "[Quote from documentation]"
+- <rule ID>: <the exact change>
 
-This PR addresses:
-- [Issue 1 and how it's fixed]
-- [Issue 2 and how it's fixed]
+<If a deferred Major fix leaves a Major finding open, say so and give the grade after the deferred fixes.>
 
-## Files Changed
+## Files changed
 
-| File | Change Type | Description |
-|------|-------------|-------------|
-| SKILL.md | Modified | Improved description and workflow |
-| README.md | Modified | Added installation instructions |
-| README.en.md | Added | English documentation |
-| .claude-plugin/marketplace.json | Added | Plugin marketplace support |
+| File | Change | Description |
+|------|--------|-------------|
+| SKILL.md | Modified | <summary> |
+| <new reference file> | Added | <summary> |
 
-## Test Plan
+## Test plan
 
-- [ ] Test 1
-- [ ] Test 2
-- [ ] Test 3
+- [ ] Invoke the skill with <a prompt from the trigger review> and confirm it triggers.
+- [ ] Run <the skill's main workflow> on <an input> and compare the result with the previous version.
+- [ ] <check that each moved section is still linked from SKILL.md>
 
 ## References
 
-- [Claude Code Skill Best Practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices)
-- [Skills Overview](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
+- [Skill authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices)
+- [Agent Skills overview](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
+- [Claude Code skills](https://code.claude.com/docs/en/skills)
 
 ---
 
 Generated with [Claude Code](https://claude.com/claude-code)
 ```
 
-## Key Sections Explained
+## Filling it in
 
-### Summary
-- Brief overview (2-3 sentences)
-- Link to best practices
-
-### What This PR Does NOT Change
-Always include this section to show respect for the original work.
-
-### Rationale
-- Explain WHY each change helps
-- Quote official documentation
-- Don't be judgmental
-
-### Test Plan
-- Provide actionable verification steps
-- Help maintainers review quickly
-
-## Tone Guidelines
-
-### Do
-- Be helpful and constructive
-- Explain benefits to users
-- Acknowledge good aspects of original
-
-### Don't
-- Be critical or judgmental
-- Imply the original is "wrong"
-- Use words like "fix", "correct", "proper" negatively
-
-### Examples
-
-```
-BAD:  "Fixed the incorrect description format"
-GOOD: "Improved description for better skill discovery"
-
-BAD:  "The skill had several issues..."
-GOOD: "This PR adds improvements for..."
-
-BAD:  "Corrected the non-standard structure"
-GOOD: "Added marketplace support for easier installation"
-```
+- **Summary:** two or three sentences, the before and after grade, a link to the guidance, and the upstream commit the branch started from, shortened to 7 characters (the hash printed in step 3 of the commands in `mode-auto-pr.md`).
+- **What this PR does not change:** always present. Name what was kept on purpose, so the author can see the review respected their design.
+- **Changes:** one entry per rule ID, in the order Major, then Minor. Quote the guidance in a sentence or less where it explains the change.
+- **Deferred suggestions:** every fix the Auto-PR limits ruled out, with the exact change. Write "None." when there are none.
+- **Test plan:** steps a maintainer can run in a few minutes, using prompts from the trigger review.
+- **Tone:** follow the tone table in `mode-auto-pr.md`. Describe benefits, not mistakes.

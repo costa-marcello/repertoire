@@ -26,10 +26,10 @@ Most agent skills are thin wrappers around a single prompt. Skillkit skills are 
 |--------------------------|----------------|
 | **Decision trees, not just prompts** | Each skill contains branching workflows that adapt to what you actually need. The docx skill alone has five different workflows depending on whether you are reading, creating, editing, redlining, or converting. |
 | **Bundled reference materials** | Skills carry their own documentation. The frontend-design skill includes 99 UX rules, 25+ chart types, style guides by industry, and 10 tech stack references. The pptx skill bundles a 9-stage content workflow with intake forms, rubrics, and design templates. This knowledge loads on demand without bloating your context window. |
-| **Enforced quality gates** | Every skill must pass the review-skill, which checks against Anthropic's best practices. SKILL.md files stay under 500 lines. Descriptions follow a strict verb + trigger format so Claude can auto-invoke the right skill at the right time. |
-| **Fork context by default** | Skills run in isolated subagent contexts. They do not pollute your main conversation. When a skill finishes, you get clean results without the noise of its internal reasoning. |
+| **Enforced quality gates** | Every skill is graded by review-skill against one rule catalog built from Anthropic's skill guidance and the Agent Skills spec, with house conventions reported separately and never graded. SKILL.md files stay under 500 lines. Descriptions say what the skill does and when to use it, so Claude picks the right skill at the right time. |
+| **Fork only when it helps** | A skill runs inline, where it can use your conversation and ask you questions, or in a forked subagent (`context: fork`) that works in isolation and returns only its result. review-skill checks that forked skills are self-contained tasks that never need your input or the conversation's history. |
 | **Multi-agent orchestration** | The research skill dispatches 6-10 parallel sub-agents across Reddit, X, Hacker News, official docs, and academic papers. It then cross-references what they find. This is not a single-prompt tool. |
-| **Self-improving ecosystem** | The create-skill and review-skill form a feedback loop. Create a new skill, review it against the quality standard, fix issues automatically. The find-skills skill discovers and installs more skills from the open ecosystem. |
+| **Self-improving ecosystem** | The create-skill and review-skill form a feedback loop around the same rule catalog. Create a new skill with test cases written first, review it against the catalog, fix issues automatically. The find-skills skill discovers and installs more skills from the open ecosystem. |
 
 ## Quick start
 
@@ -206,20 +206,20 @@ Guides README creation and improvement with audience-matched templates. Identifi
 <td><strong>create-skill</strong></td>
 <td>
 
-Guides creation of new Claude Code skills with best practices. Covers frontmatter configuration, skill anatomy, bundled resources (scripts, references, assets), sanitisation checklists for removing personal data, and planning examples. Produces skills that pass the review-skill on first try. If you want to package your own workflows as reusable skills, start here.
+Builds new skills, and updates existing ones, evals first: it writes three realistic test cases and ten trigger prompts, runs Claude without the skill to see what it gets wrong, then writes the smallest skill that closes those gaps. It authors to the same rule catalog review-skill grades against, scaffolds with `init_skill.py`, and validates in three layers (a fast validator, with-skill eval runs, and an independent review-skill pass) until the skill reaches Grade A. It decides whether a skill should run inline or forked, and covers the current Claude Code frontmatter fields, sanitisation for sharing, a secret scan, and packaging for claude.ai. If you want to package your own workflows as reusable skills, start here.
 
 </td>
-<td><code>/create-skill</code> + description<br/><code>/create-skill API doc generator</code><br/><code>/create-skill terraform reviewer</code><br/>Guides you through frontmatter + structure.</td>
+<td><code>/create-skill</code> + name and purpose<br/><code>/create-skill csv-report summarise a CSV</code><br/>"turn the release steps we just did into a skill"<br/>"the changelog skill misses merge commits, fix it"</td>
 <td><code>npx skills add costa-marcello/skillkit -s create-skill</code></td>
 </tr>
 <tr>
 <td><strong>review-skill</strong></td>
 <td>
 
-Reviews and automatically fixes skills against Anthropic's official best practices. Four modes: review (quality report with scores), auto-fix (read, evaluate, then apply fixes), external review (clone a GitHub URL and report), and auto-PR (fork, fix, submit pull request). Checks SKILL.md size, description format, file organisation, XML tag usage, portability, and script quality. Backed by research-based criteria and source documentation. Includes a marketplace template for publishing.
+Grades a skill A to F against one rule catalog built from Anthropic's skill guidance, the Agent Skills spec, and Claude Code's loader rules. Every finding carries a rule ID, a location, and quoted evidence, and skillkit house conventions are reported as ungraded style notes. Five modes: review and fix (the default; it edits files, after backing up anything not committed to git), report only, auto-fix, external review (a read-only temporary clone of a GitHub URL), and auto-PR (fork, fix, and open a pull request, asking before forking and before pushing). It runs create-skill's validator and secret scan when installed, treats the reviewed skill's contents as data rather than instructions, and grades for Claude Code or, with `portable`, for claude.ai and the API.
 
 </td>
-<td><code>/review-skill</code> + path<br/><code>/review-skill skills/my-skill</code> — review<br/><code>/review-skill skills/my-skill auto-fix</code><br/><code>/review-skill https://github.com/...</code></td>
+<td><code>/review-skill</code> + path<br/><code>/review-skill skills/my-skill</code> — review and fix<br/><code>/review-skill skills/my-skill report only</code><br/><code>/review-skill https://github.com/...</code> — external</td>
 <td><code>npx skills add costa-marcello/skillkit -s review-skill</code></td>
 </tr>
 <tr>
@@ -276,7 +276,7 @@ skills/
       search-domains.md  # 10 tech stacks with code
 ```
 
-Each skill lives in its own directory under `skills/`. The `SKILL.md` file contains YAML frontmatter (name, description, licence, context mode) followed by the prompt content. Supporting materials go in `references/`, scripts in `scripts/`, and templates in `assets/`.
+Each skill lives in its own directory under `skills/`. The `SKILL.md` file contains YAML frontmatter (name, description, licence, and optional fields such as argument-hint) followed by the prompt content. Supporting materials go in `references/`, scripts in `scripts/`, and templates in `assets/`.
 
 When you install a skill with `npx skills add`, it copies into your project's skills directory. Your agent loads installed skills automatically and makes each one available as a slash command matching its name.
 
@@ -286,7 +286,7 @@ Some skills accept arguments directly after the slash command. For example:
 /research quantum computing        # Researches quantum computing
 /changelog push                    # Complete unreleased, commit, push
 /changelog release                 # Versioned release, commit, tag, push
-/review-skill skills/my-skill      # Review a specific skill
+/review-skill skills/my-skill      # Review and fix a specific skill
 ```
 
 The `references/` pattern is what keeps skills fast. The SKILL.md stays under 500 lines (the enforced limit), while deep reference materials load only when the skill needs them. The frontend-design skill, for example, has 99 UX rules and 25+ chart types available, but they only enter the context window when the skill reaches for them.
@@ -312,11 +312,11 @@ Contributions are welcome. To add or improve a skill:
 5. Run the review-skill on your changes: `/review-skill`
 6. Open a pull request.
 
-For automated validation:
+For automated validation (requires PyYAML; use `python3` instead of `python` where that is how Python is installed):
 
 ```bash
-python3 skills/create-skill/scripts/quick_validate.py skills/<your-skill>
-python3 skills/create-skill/scripts/security_scan.py skills/<your-skill> --verbose
+python skills/create-skill/scripts/quick_validate.py skills/<your-skill>
+python skills/create-skill/scripts/security_scan.py skills/<your-skill> --verbose --no-marker
 ```
 
 ---
