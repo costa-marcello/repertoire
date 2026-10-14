@@ -18,7 +18,7 @@ All notable changes to this project will be documented in this file.
 - **BREAKING**: Removed the docx, pdf, pptx, and xlsx skills; use Anthropic's built-in versions, which come with Claude Code and Cowork
 - **BREAKING**: Removed the context intelligence hooks (`context-intelligence-hooks/`, the Qdrant and Voyage hooks)
 - **BREAKING**: Removed review-skill's External Review and Auto-PR modes; review-skill now reviews and fixes skills in your own repository
-- **BREAKING**: Renamed the project from skillkit to Repertoire; install skills with `npx skills add costa-marcello/repertoire -s <skill>` (GitHub redirects the old repository URL)
+- **BREAKING**: Renamed the project from skillkit to Repertoire (GitHub redirects the old repository URL); single skills install with `npx skills add costa-marcello/repertoire -s <skill>`
 - Redefined the default review target `claude-code` as Claude Code and Cowork; `portable` now covers only single-skill uploads to claude.ai and the API, and `package_skill.py` validates against it
 - Rewrote the README around the plugin: install steps for Claude Code and Cowork, optional SearXNG search, and local development through the link script
 - create-skill writes new skills into `skills/` in a plugin repository and into the connected folder in Cowork, adds a Cowork check to validation, and asks review-skill for a regression run after updating an existing skill

@@ -58,7 +58,7 @@ In the Claude desktop app, open **Customize > Plugins > Add marketplace**, enter
 
 ### claude.ai chat and the API
 
-These accept single-skill zip uploads with a smaller set of frontmatter fields. Scan the skill with `python skills/create-skill/scripts/security_scan.py skills/<skill>` (it needs [gitleaks](https://github.com/gitleaks/gitleaks)), then build the zip with `python skills/create-skill/scripts/package_skill.py skills/<skill>`. The packager checks the upload rules first and tells you what blocks an upload.
+These accept single-skill zip uploads with a smaller set of frontmatter fields. Scan the skill with `python skills/create-skill/scripts/security_scan.py skills/<skill>` (it needs [gitleaks](https://github.com/gitleaks/gitleaks)), then build the zip with `python skills/create-skill/scripts/package_skill.py skills/<skill>`. The packager checks the upload rules first and tells you what blocks an upload. Skills that use Claude Code-only fields, such as `argument-hint`, can't be zipped this way; use them through the plugin in Claude Code or Cowork.
 
 ### Web search through SearXNG (optional)
 
@@ -238,7 +238,7 @@ The `references/` pattern is what keeps skills fast. The SKILL.md stays under 50
 
 - **Claude Code** or **Cowork**
 - **Python 3** for the skills that bundle scripts (research, create-skill, and review-skill, which runs create-skill's validator); create-skill's validator also needs PyYAML (`python -m pip install pyyaml`)
-- **Node.js 18+** only for `npx skills add` and the optional SearXNG server
+- **Node.js 18+** only for `npx skills add`, and **Node.js 22+** for the optional SearXNG server (`mcp-searxng`)
 - Optionally, your own **SearXNG** instance (with Docker or a native install) for the research skill
 
 ---

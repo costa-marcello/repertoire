@@ -18,7 +18,7 @@ The plugin has no skills, hooks or scripts of its own.
 ## What you need
 
 - A running SearXNG instance with the JSON output format enabled (`json` listed under `search.formats` in its `settings.yml`). Without it, every search fails. The research skill's `references/searxng-setup.md` has the Docker steps.
-- Node.js on the machine that runs the server, because the server starts through `npx`.
+- Node.js 22 or later on the machine that runs the server, because the server starts through `npx` and `mcp-searxng` 2.5.1 requires Node.js 22.
 
 ## Install
 
