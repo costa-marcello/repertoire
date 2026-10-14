@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """Package a validated, security-scanned skill into <skill-name>.zip.
 
-Packaging requires quick_validate.py to find no definitive Major and a
+The zip is a single-skill upload for claude.ai and the Claude API, never for
+Cowork, which installs the plugin (as Claude Code does). So packaging validates
+against the portable target (quick_validate.py --portable), which accepts only
+six frontmatter fields.
+
+Packaging requires quick_validate.py --portable to find no definitive Major and a
 .security-scan-passed marker whose content hash matches the skill. The zip holds
 the same files the hash covers: the top-level evals/, caches (__pycache__/,
 node_modules/, .venv/, venv/, *.pyc), .git/, the marker, .env files and folders
@@ -12,7 +17,9 @@ SKILL.md references a bundled file that the zip would leave out.
 Usage:
     python scripts/package_skill.py <skill-dir> [output-dir]
 
-Exit codes: 0 packaged, 1 refused or failed, 2 usage error.
+Exit codes: 0 packaged, 1 refused or failed (including a missing or broken
+sibling script), 2 usage error. Refusals and errors go to stderr; progress
+goes to stdout.
 """
 
 from __future__ import annotations
@@ -28,27 +35,42 @@ import tempfile  # noqa: E402
 import zipfile  # noqa: E402
 from pathlib import Path  # noqa: E402
 
+EXIT_PACKAGED = 0
+EXIT_FAILED = 1
+
 _SCRIPTS_DIR = str(Path(__file__).resolve().parent)
 if _SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, _SCRIPTS_DIR)
 
-from quick_validate import extract_bundled_paths, validate_skill  # noqa: E402
-from security_scan import (  # noqa: E402
-    ENV_PREFIX,
-    MARKER_NAME,
-    calculate_skill_hash,
-    exclusion_reason,
-    iter_skill_files,
-    skill_links,
-)
-
-EXIT_PACKAGED = 0
-EXIT_FAILED = 1
+try:
+    from quick_validate import extract_bundled_paths, validate_skill  # noqa: E402
+    from security_scan import (  # noqa: E402
+        ENV_PREFIX,
+        MARKER_NAME,
+        calculate_skill_hash,
+        exclusion_reason,
+        iter_skill_files,
+        skill_links,
+    )
+except (ImportError, SyntaxError) as _exc:  # a traceback would hide the cause and exit 1 without a fix
+    print(f"[ERROR] cannot import a sibling script from {_SCRIPTS_DIR} ({_exc}); reinstall create-skill",
+          file=sys.stderr)
+    sys.exit(EXIT_FAILED)
+except SystemExit:  # security_scan.py exits 4 at import when quick_validate.py is broken; it printed why
+    print("[ERROR] security_scan.py could not load; reinstall create-skill", file=sys.stderr)
+    sys.exit(EXIT_FAILED)
 
 MARKER_HASH_RE = re.compile(r"Content hash:\s*([a-f0-9]{64})")  # 64 hex digits: a SHA-256 digest
 PARTIAL_SUFFIX = ".zip.partial"  # the zip is built under this name and renamed only when complete
 ENV_ERROR_TAG = "[env]"  # quick_validate starts environment errors (PyYAML missing, unreadable file) with this
 DEFAULT_FILE_MODE = 0o666  # what open() creates before the umask; mkstemp would leave the zip owner-only (0600)
+UPLOAD_NOTE = "This zip is for uploads to claude.ai and the Claude API, not for Cowork, which installs the plugin."
+
+
+def _refuse(*lines: str) -> None:
+    """Print a refusal ([FAIL] line, details, and the fix) to stderr, keeping stdout for progress."""
+    for line in lines:
+        print(line, file=sys.stderr)
 
 
 def validate_security_marker(skill_path: Path) -> tuple[bool, str]:
@@ -177,17 +199,16 @@ def package_skill(skill_path, output_dir=None) -> Path | None:
               "pass an output folder outside it, for example its parent", file=sys.stderr)
         return None
 
-    print("Step 1: validating the skill")
-    valid, message, warnings = validate_skill(skill_path)
+    print(UPLOAD_NOTE)
+    print("Step 1: validating the skill for the portable target")
+    valid, message, warnings = validate_skill(skill_path, portable=True)
     if not valid:
         if message.lstrip().startswith(ENV_ERROR_TAG):
-            print("[FAIL] quick_validate could not run:")
-            print(message)
-            print("Fix the problem above, then run this script again.")
+            _refuse("[FAIL] quick_validate could not run:", message,
+                    "Fix the problem above, then run this script again.")
         else:
-            print("[FAIL] quick_validate found definitive Major findings:")
-            print(message)
-            print("Fix them, then run: python scripts/quick_validate.py " + str(skill_path))
+            _refuse("[FAIL] quick_validate found definitive Major findings for the portable target:", message,
+                    f"Fix them, then run: python scripts/quick_validate.py {skill_path} --portable")
         return None
     print(f"[OK] {message}")
     for warning in warnings:
@@ -196,8 +217,7 @@ def package_skill(skill_path, output_dir=None) -> Path | None:
     print("Step 2: checking the security marker")
     marker_ok, marker_message = validate_security_marker(skill_path)
     if not marker_ok:
-        print(f"[FAIL] {marker_message}")
-        print(f"Run: python scripts/security_scan.py {skill_path}")
+        _refuse(f"[FAIL] {marker_message}", f"Run: python scripts/security_scan.py {skill_path}")
         return None
     print(f"[OK] {marker_message}")
 
@@ -208,11 +228,9 @@ def package_skill(skill_path, output_dir=None) -> Path | None:
         print(f"[ERROR] cannot read the skill files ({exc}); check the folder permissions", file=sys.stderr)
         return None
     if problems:
-        print("[FAIL] the zip would not match the skill:")
-        for problem in problems:
-            print(f"  {problem}")
-        print("Replace each link with the real files, and move or rename each left-out file "
-              "(or drop its reference); then re-run the security scan and this script.")
+        _refuse("[FAIL] the zip would not match the skill:", *(f"  {problem}" for problem in problems),
+                "Replace each link with the real files, and move or rename each left-out file "
+                "(or drop its reference); then re-run the security scan and this script.")
         return None
     for note in notes:
         print(f"[WARN] {note}; each user creates it, so it stays out of the zip")
@@ -246,12 +264,15 @@ def build_parser() -> argparse.ArgumentParser:
         description="Package a validated, security-scanned skill into <skill-name>.zip.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
+            "The zip is for uploads to claude.ai and the Claude API, never for Cowork, which installs\n"
+            "the plugin. Packaging therefore validates against the portable target (six frontmatter fields).\n"
             "Run python scripts/security_scan.py <skill-dir> first; packaging needs its marker.\n"
             "Excluded from the zip: the top-level evals/, __pycache__/, node_modules/, .venv/, venv/,\n"
             ".git/, *.pyc, *.zip, .env files and folders (except .env.example), .DS_Store, Thumbs.db,\n"
             "and the security marker. Packaging refuses symlinks and junctions, and SKILL.md\n"
             "references to bundled files that the zip would leave out.\n\n"
-            "Exit codes: 0 packaged, 1 refused or failed, 2 usage error."
+            "Exit codes: 0 packaged, 1 refused or failed (including a missing or broken sibling\n"
+            "script), 2 usage error. Refusals and errors go to stderr; progress goes to stdout."
         ),
     )
     parser.add_argument("skill_dir", help="path to the skill directory")

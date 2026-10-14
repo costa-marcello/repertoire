@@ -1,13 +1,15 @@
-"""WebSearch module for research skill.
+"""Web result helpers for research skill.
 
-NOTE: WebSearch uses Claude's built-in WebSearch tool, which runs INSIDE Claude Code.
-Unlike Reddit/X which use external APIs, WebSearch results are obtained by Claude
-directly and passed to this module for normalization and scoring.
+This module makes no network calls. In the research skill, web coverage
+comes from the community and official subagents, which search with SearXNG
+when it is reachable and with the built-in WebSearch and WebFetch tools
+otherwise (see SKILL.md). research.py does not feed web results through
+this module; it is a library for callers that already hold web results
+(title, url, snippet) and want them normalized, date-checked and scored:
 
-The typical flow is:
-1. Claude invokes WebSearch tool with the topic
-2. Claude passes results to parse_websearch_results()
-3. Results are normalized into WebSearchItem objects
+1. parse_websearch_results() drops Reddit/X URLs and out-of-window dates
+2. normalize_websearch_items() turns the dicts into WebSearchItem objects
+3. dedupe_websearch() removes duplicate URLs
 """
 
 import re
@@ -15,7 +17,12 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
-from . import schema
+from . import dates, schema
+
+
+def _plausible_year(year: str) -> bool:
+    """A URL or text year from 2000 to next year (rules out false matches like /1234/)."""
+    return 2000 <= int(year) <= datetime.now().year + 1
 
 
 # Month name mappings for date parsing
@@ -53,21 +60,21 @@ def extract_date_from_url(url: str) -> Optional[str]:
     match = re.search(r'/(\d{4})/(\d{2})/(\d{2})/', url)
     if match:
         year, month, day = match.groups()
-        if 2020 <= int(year) <= 2030 and 1 <= int(month) <= 12 and 1 <= int(day) <= 31:
+        if _plausible_year(year) and 1 <= int(month) <= 12 and 1 <= int(day) <= 31:
             return f"{year}-{month}-{day}"
 
     # Pattern 2: /YYYY-MM-DD/ or /YYYY-MM-DD-
     match = re.search(r'/(\d{4})-(\d{2})-(\d{2})[-/]', url)
     if match:
         year, month, day = match.groups()
-        if 2020 <= int(year) <= 2030 and 1 <= int(month) <= 12 and 1 <= int(day) <= 31:
+        if _plausible_year(year) and 1 <= int(month) <= 12 and 1 <= int(day) <= 31:
             return f"{year}-{month}-{day}"
 
     # Pattern 3: /YYYYMMDD/ (compact)
     match = re.search(r'/(\d{4})(\d{2})(\d{2})/', url)
     if match:
         year, month, day = match.groups()
-        if 2020 <= int(year) <= 2030 and 1 <= int(month) <= 12 and 1 <= int(day) <= 31:
+        if _plausible_year(year) and 1 <= int(month) <= 12 and 1 <= int(day) <= 31:
             return f"{year}-{month}-{day}"
 
     return None
@@ -103,7 +110,7 @@ def extract_date_from_snippet(text: str) -> Optional[str]:
     if match:
         month_str, day, year = match.groups()
         month = MONTH_MAP.get(month_str[:3])
-        if month and 2020 <= int(year) <= 2030 and 1 <= int(day) <= 31:
+        if month and _plausible_year(year) and 1 <= int(day) <= 31:
             return f"{year}-{month:02d}-{int(day):02d}"
 
     # Pattern 2: DD Month YYYY (e.g., "24 January 2026")
@@ -117,14 +124,14 @@ def extract_date_from_snippet(text: str) -> Optional[str]:
     if match:
         day, month_str, year = match.groups()
         month = MONTH_MAP.get(month_str[:3])
-        if month and 2020 <= int(year) <= 2030 and 1 <= int(day) <= 31:
+        if month and _plausible_year(year) and 1 <= int(day) <= 31:
             return f"{year}-{month:02d}-{int(day):02d}"
 
     # Pattern 3: YYYY-MM-DD (ISO format)
     match = re.search(r'\b(\d{4})-(\d{2})-(\d{2})\b', text)
     if match:
         year, month, day = match.groups()
-        if 2020 <= int(year) <= 2030 and 1 <= int(month) <= 12 and 1 <= int(day) <= 31:
+        if _plausible_year(year) and 1 <= int(month) <= 12 and 1 <= int(day) <= 31:
             return f"{year}-{month}-{day}"
 
     # Pattern 4: Relative dates ("3 days ago", "yesterday", etc.)
@@ -141,7 +148,7 @@ def extract_date_from_snippet(text: str) -> Optional[str]:
     match = re.search(r'\b(\d+)\s*days?\s*ago\b', text_lower)
     if match:
         days = int(match.group(1))
-        if days <= 60:  # Reasonable range
+        if days <= dates.LOOKBACK_DAYS:  # Inside the lookback window
             date = today - timedelta(days=days)
             return date.strftime("%Y-%m-%d")
 
@@ -257,9 +264,9 @@ def parse_websearch_results(
     from_date: str = "",
     to_date: str = "",
 ) -> List[Dict[str, Any]]:
-    """Parse WebSearch results into normalized format.
+    """Parse web search results into normalized format.
 
-    This function expects results from Claude's WebSearch tool.
+    Accepts results from any web search backend (SearXNG or WebSearch).
     Each result should have: title, url, snippet, and optionally date/relevance.
 
     Uses "Date Detective" approach:

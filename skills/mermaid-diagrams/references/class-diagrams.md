@@ -1,12 +1,10 @@
 # Class Diagrams
 
-Class diagrams model object-oriented designs and domain models. They show entities (classes), their attributes/methods, and relationships.
-
 ## Contents
 
 - [Basic Syntax](#basic-syntax)
 - [Defining Classes with Members](#defining-classes-with-members)
-- [Relationships](#relationships) (Association, Composition, Aggregation, Inheritance, Dependency, Realization)
+- [Relationships](#relationships) (Association and Link, Composition, Aggregation, Inheritance, Dependency, Realization)
 - [Multiplicity](#multiplicity)
 - [Relationship Labels](#relationship-labels)
 - [Class Stereotypes](#class-stereotypes)
@@ -60,12 +58,13 @@ classDiagram
 
 <example name="Association">
 
-### Association (`--`)
-Loose relationship where entities use each other but exist independently.
+### Association (`-->`) and Link (`--`)
+Loose relationship where entities use each other but exist independently. `-->` points from the class that holds the reference; `--` is a plain solid link with no direction.
 
 ```mermaid
 classDiagram
-    Title -- Genre
+    Customer --> Order : places
+    Title -- Genre : categorized as
 ```
 
 </example>
@@ -77,8 +76,8 @@ Strong ownership - child cannot exist without parent. When parent is deleted, ch
 
 ```mermaid
 classDiagram
-    Order *-- LineItem
-    House *-- Room
+    Order *-- LineItem : contains
+    House *-- Room : has
 ```
 
 </example>
@@ -90,8 +89,8 @@ Weaker ownership - child can exist independently. Represents "has-a" relationshi
 
 ```mermaid
 classDiagram
-    Department o-- Employee
-    Playlist o-- Song
+    Department o-- Employee : employs
+    Playlist o-- Song : lists
 ```
 
 </example>
@@ -120,12 +119,12 @@ classDiagram
 
 <example name="Dependency">
 
-### Dependency (`<..`)
-One class depends on another, often as a parameter or local variable.
+### Dependency (`..>`)
+One class depends on another, often as a parameter or local variable. The arrow points at the class being depended on.
 
 ```mermaid
 classDiagram
-    OrderProcessor <.. PaymentGateway
+    OrderProcessor ..> PaymentGateway : uses
 ```
 
 </example>
@@ -234,6 +233,8 @@ classDiagram
 
 ## Generic Classes
 
+Put the type parameter on the class definition (`class List~T~`) and in member types (`List~Order~`). A relationship line that names the class drops the `~T~` part. Generics with a comma (`Map~K, V~`) are not supported.
+
 ```mermaid
 classDiagram
     class List~T~ {
@@ -241,7 +242,7 @@ classDiagram
         +get(index: int) T
     }
 
-    List~String~ <-- StringProcessor
+    StringProcessor --> List : uses
 ```
 
 </example>
@@ -318,7 +319,7 @@ classDiagram
         CANCELLED
     }
 
-    Order --> OrderStatus
+    Order --> OrderStatus : has status
 ```
 
 </example>
@@ -374,7 +375,7 @@ classDiagram
         +removeLineItem(item)
     }
 
-    Order *-- LineItem
+    Order *-- LineItem : contains
 ```
 
 </example>
@@ -382,11 +383,11 @@ classDiagram
 ## Tips for Effective Class Diagrams
 
 1. **Draft 3-5 core entities first** - Add attributes and methods in a second pass after relationships are clear.
-2. **Omit getters/setters** - Only show methods that represent domain behaviour (e.g., `placeOrder()`, not `getName()`).
-3. **Pick the right relationship arrow** - Composition (`*--`) when the child dies with the parent, aggregation (`o--`) when it survives, association (`--`) for loose links.
-4. **Add multiplicity to every relationship** - `"1" --> "0..*"` removes ambiguity about cardinality.
+2. **Omit getters/setters** - Only show methods that represent domain behavior (e.g., `placeOrder()`, not `getName()`).
+3. **Pick the right relationship arrow** - Composition (`*--`) when the child dies with the parent, aggregation (`o--`) when it survives, association (`-->`) or link (`--`) for loose links.
+4. **Add multiplicity where cardinality matters** - `"1" --> "0..*"` removes ambiguity on associations, compositions, and aggregations. Inheritance and realization lines take none.
 5. **Place related classes near each other** - Visual proximity signals cohesion.
-6. **Add `Note` annotations for business invariants** - e.g., "An order cannot have zero line items".
+6. **Add notes for business invariants** - e.g., `note for Order "Needs at least one line item"`.
 
 ## Common Patterns
 
@@ -406,7 +407,7 @@ classDiagram
         +findByEmail(email: String) User
     }
 
-    IRepository~User~ <|.. UserRepository
+    IRepository <|.. UserRepository
 ```
 
 </example>
@@ -450,7 +451,7 @@ classDiagram
 
     PaymentStrategy <|.. CreditCardPayment
     PaymentStrategy <|.. PayPalPayment
-    PaymentProcessor --> PaymentStrategy
+    PaymentProcessor --> PaymentStrategy : delegates to
 ```
 
 </example>

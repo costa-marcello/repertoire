@@ -4,10 +4,50 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Added plugin distribution: the repository is now a plugin marketplace whose `repertoire` plugin carries every skill to both Claude Code (`/plugin marketplace add costa-marcello/repertoire`, then `/plugin install repertoire@repertoire`) and Cowork (Customize > Plugins > Add marketplace), with the full Claude Code frontmatter kept in both
+- Added the optional `repertoire-searxng` plugin, which connects the research skill to your own SearXNG instance through the `mcp-searxng` MCP server (desktop Cowork and Claude Code)
+- Added rule M11 "Breaks in Cowork": dynamic context injection (moved from M9, now a definitive Major) and paths that reach a skill's own files through `~/.claude/skills/` are flagged by the validator, and reviews also check for steps that need a display, local services without a fallback, `claude -p`, and secrets kept only in a home-folder dotfile
+- Added rule M12 "Fails its own evals" and review-skill's `regression` mode, which re-runs a skill's eval cases in isolated subagents (when you ask, after Auto-Fix in your own repository, or from create-skill's update flow) and reports any case that fails twice
+- Added `scripts/link_user_skills.py`, which links a local checkout into Claude Code as a plugin through a directory junction, so edits apply without reinstalling and without admin rights
+- Added eval cases and trigger queries to every skill, and plugin tests (`python -B -m unittest discover -s tests/plugin`)
+- Added SearXNG-first search to the research skill: it finds either the Claude Code `searxng` server or the plugin's, checks that the instance answers, falls back to the built-in web search, and names the backend it used in the report
+
 ### Changed
-- **BREAKING**: Renamed the project from skillkit to Repertoire; install skills with `npx skills add costa-marcello/repertoire -s <skill>` (GitHub redirects the old repository URL)
-- Refocused the README on Claude Code and Cowork: install steps for both, and a table of where each skill runs, including which skills need their `argument-hint` line removed before uploading to Cowork or claude.ai
+- **BREAKING**: Plugin installs run skills as `/repertoire:<skill>`, for example `/repertoire:changelog`; `npx skills add costa-marcello/repertoire -s <skill>` still installs a single skill under its bare name
+- **BREAKING**: Removed the docx, pdf, pptx, and xlsx skills; use Anthropic's versions, which are built in to Cowork and come to Claude Code with a claude.ai sign-in or the `document-skills` plugin
+- **BREAKING**: Removed the context intelligence hooks (`context-intelligence-hooks/`, the Qdrant and Voyage hooks)
+- **BREAKING**: Removed review-skill's External Review and Auto-PR modes; review-skill now reviews and fixes skills in your own repository
+- **BREAKING**: Renamed the project from skillkit to Repertoire (GitHub redirects the old repository URL); single skills install with `npx skills add costa-marcello/repertoire -s <skill>`
+- Redefined the default review target `claude-code` as Claude Code and Cowork; `portable` now covers only single-skill uploads to claude.ai and the API, and `package_skill.py` validates against it
+- Rewrote the README around the plugin: install steps for Claude Code and Cowork, optional SearXNG search, and local development through the link script
+- create-skill writes new skills into `skills/` in a plugin repository and into the connected folder in Cowork, adds a Cowork check to validation, and asks review-skill for a regression run after updating an existing skill
+- review-skill adds a Cowork lens to every review and finds create-skill's validator inside the plugin first
+- research reaches its script through `${CLAUDE_SKILL_DIR}`, runs `python` with `python3` as the fallback, dispatches subagents with the Agent tool, reads API keys from environment variables (`~/.config/research/.env` works only in Claude Code), lists every network destination, and uses one 60-day lookback window; its reference files now use hyphenated names, so reinstall to clear the old ones
+- changelog fails fast when git has no credentials, as in a Cowork session, keeps the commit and tag local, and prints the commands to finish the release; it now waits in the same turn (`background: false`), bumps the minor version for breaking changes while the major version is 0, follows the last tag's `v` style, accepts a repository folder as a second argument, pushes with `origin <branch>`, and stops on a detached HEAD or a branch that is not on origin
+- mermaid-diagrams renders diagrams to SVG or PNG files with the headless mermaid-cli, or returns the Mermaid code, instead of relying on a browser
+- frontend-design checks its work without a browser (build, lint, type-check, source checks, and Playwright screenshots when the project already has it)
+- claudia-md works on CLAUDE.md files in a Cowork connected folder, without git or the home folder, and lists every file it writes
+- find-skills recommends plugin and marketplace installs in Cowork, where session installs vanish, and names Repertoire's skills `repertoire:<name>` first
+- readme-md says where it wrote the README
+- Reviewed every skill with review-skill (Opus 5.5, up to three rounds each) and fixed what it found: contradictions between SKILL.md and references, unsourced or stale facts, missing gotchas sections, and evals that no longer matched the skill
+- readme-md reads the project before asking, drafts from its template, verifies every command and link, and only edits a README during a review when asked
+- frontend-design moves its long examples into references, replaces the search-domains reference with notes for 10 stacks, and bundles `scripts/contrast.py` for WCAG contrast checks
+- find-skills checks that Anthropic's document skills are installed before suggesting them, installs with `npx skills add -a claude-code` (Node.js 22.20+), discloses the skills CLI's telemetry, and reads a third-party SKILL.md before installing it
+- research's subagents treat fetched pages as data, may search any site the script did not cover, and can refresh results on a follow-up
 - Renamed the house-style source in the rule catalog from "skillkit" to "Repertoire"
+
+### Fixed
+- Fixed the research script crashing with `UnicodeEncodeError` on Windows when its output was captured, a test that deleted the real model cache, and the `### WEBSEARCH REQUIRED ###` marker contradicting SKILL.md
+- Fixed changelog deleting hand-written `[Unreleased]` entries instead of moving them into the new version
+- Fixed examples in frontend-design, mermaid-diagrams, and find-skills whose `$5`, `$100`, or `$ARGUMENTS` text Claude Code replaced at invocation
+- Fixed claudia-md's list of rule files (`CLAUDE.local.md`, `.claude/CLAUDE.md`)
+- Fixed claudia-md teaching `@rules/` and `@../CLAUDE.md` imports that resolve to the wrong place; it now teaches `.claude/rules/` with `paths:` frontmatter
+- Fixed changelog finding no commits for a first release in a repository without tags
+- Fixed the research script mangling subreddit names that start with "r" and treating unreadable API replies as successful searches
+- Fixed mermaid-diagrams examples that broke Mermaid syntax or the skill's own rules (swapped quadrant labels, a reversed dependency arrow, unquoted brackets, low-contrast text, removed `mmdc` flags)
+- Fixed frontend-design examples with click-swallowing overlays, empty alt text on a product image, and an endless pulse animation
+- Fixed package_skill.py crashing with a traceback, or exiting with an undocumented code 4, when a sibling script is missing or broken; it now exits 1 with a reinstall hint, and package_skill.py and security_scan.py print refusals and errors to stderr
 
 ## [0.9.0] - 2026-10-14
 

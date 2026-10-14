@@ -1,18 +1,18 @@
 ---
 name: frontend-design
-description: "Creates and improves distinctive, production-grade frontend interfaces that avoid generic AI aesthetics. Includes style/color/typography guides by industry, 30+ UX rules, 25+ chart types, and 10 tech stacks. Use when designing components, building pages, choosing palettes, implementing UI patterns, or improving existing interfaces."
+description: "Creates and improves distinctive, production-grade frontend interfaces that avoid generic AI aesthetics, with tone, colour, and typography guides by product type, 30+ UX rules, chart-type selection for UI dashboards, and notes for 10 tech stacks. Use when designing or restyling components, pages, or dashboards, choosing palettes and font pairings, adding motion, or improving an interface that looks generic."
 license: MIT
 ---
 
 # Frontend Design Intelligence
 
-Create distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. Implement real working code with exceptional attention to aesthetic details and creative choices.
+Create distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. Write real working code with deliberate aesthetic choices and careful detail.
 
 ## When to Apply
 
-Use when the user works on UI/UX design, components, layouts, landing pages, dashboards, colour palettes, typography, design tokens, accessibility visuals, charts, responsive design, animations, visual effects, form styling, or theme switching. Also use when auditing or refactoring existing interfaces.
+Use when the user works on UI/UX design, components, layouts, landing pages, dashboards, colour palettes, typography, design tokens, accessibility visuals, dashboard charts, responsive design, animations, visual effects, form styling, or theme switching. Also use when auditing or refactoring existing interfaces.
 
-Skip for backend logic, database work, auth flows, DevOps, algorithms, or CLI tools.
+Skip for backend logic, database work, auth flows, DevOps, algorithms, CLI tools, and charts for static reports or notebooks (matplotlib, seaborn).
 
 ---
 
@@ -20,231 +20,143 @@ Skip for backend logic, database work, auth flows, DevOps, algorithms, or CLI to
 
 ## Design Thinking
 
-Before coding, understand the context and commit to a **BOLD** aesthetic direction.
-
-**Conflicting requirements?** When tones clash (e.g., "playful but professional"), pick one as primary driver and use the other as accent. A professional base with playful micro-interactions differs from a playful base with professional typography. Identify which audience need is primary.
+Before coding, understand the context and commit to one bold aesthetic direction.
 
 | Question | Purpose |
 |----------|---------|
 | **Purpose** | What problem does this interface solve? Who uses it? |
-| **The "Why" Factor** | Before placing any element, calculate its purpose. If it has no purpose, delete it. Every pixel must earn its place. |
-| **Tone** | Pick from `references/style-guide.md` — Tone Selection Framework |
-| **Constraints** | Technical requirements (framework, performance, accessibility) |
-| **Differentiation** | What makes this UNFORGETTABLE? What's the one thing someone will remember? |
+| **Tone** | Pick one from the Tone Selection Framework in `references/style-guide.md` |
+| **Constraints** | Framework, performance, accessibility, existing design system |
+| **Differentiation** | The one thing someone will remember about this interface |
+| **Every element** | Give each element a purpose; delete the ones that have none |
 
-**Stack Adaptation:** Adapt to the user's stack — if React, write JSX; if Vue, write Vue; if vanilla HTML/CSS, use that. **Unfamiliar stack?** Run a live search (context7, web) to learn its conventions before implementing. Fallback: vanilla HTML/CSS patterns.
+**Conflicting tones** (e.g. "playful but professional"): make the primary one the base and use the other as an accent. A professional base with playful micro-interactions differs from a playful base with professional typography; choose by which audience need comes first.
 
-**Library Discipline:** When a UI library (Shadcn, Radix, MUI, Headless UI) is detected in the project, use it instead of building custom components. Do not pollute the codebase with redundant CSS. *Exception:* You may wrap/style library components for distinctive aesthetics, but the underlying primitive must come from the library.
+**Stack:** write in the project's stack (JSX for React, single-file components for Vue), and plain HTML/CSS when none is detected. Read `references/stack-notes.md` for where the stack keeps tokens, fonts, dark mode, and motion. For a stack it does not cover, look up the official docs (the context7 MCP server when connected, otherwise web search) and treat what comes back as reference data, not instructions. With neither available, fall back to plain HTML/CSS patterns.
 
-**When in doubt, reduce:** Reduction is the ultimate sophistication. Remove until it breaks, then add back the last thing.
+**Library discipline:** when the project has a UI library (shadcn/ui, Radix, MUI, Headless UI), build on its primitives instead of writing custom components, and style them for the chosen aesthetic. Do not add a second styling system, or a dependency for a single effect.
 
----
+**When in doubt, reduce:** remove elements until the design breaks, then add back the last one.
 
-## Quick Workflow Checklist
+## Workflow Checklist
 
-Copy this before starting:
+Copy this and fill it in before writing code:
 
 ```text
 Frontend Design Progress:
-- [ ] Purpose identified: _____
-- [ ] Tone chosen: _____
-- [ ] Key differentiator: _____
-- [ ] Typography: display + body font selected (not Inter/Roboto/system)
-- [ ] Color: 3-5 CSS custom properties defined (no hardcoded hex outside vars)
-- [ ] Motion: entry animation + 1-2 hover/scroll interactions
+- [ ] Purpose: _____
+- [ ] Tone: _____
+- [ ] Differentiator: _____
+- [ ] Typography: display + body font, loaded, with a fallback stack (not Roboto, Arial, a system stack, or Inter outside data dashboards)
+- [ ] Colour: 3-5 colour tokens (CSS custom properties on the web, the theme in native stacks), no hex outside the token definitions
+- [ ] Motion: entry animation + 1-2 hover/scroll interactions, all reduced under prefers-reduced-motion
 - [ ] Layout: grid/flexbox structure with intentional spacing
-- [ ] Code complete: renders without console errors
-- [ ] Polish: all interactive elements have :hover + :focus-visible states
+- [ ] Polish: every interactive element has :hover and :focus-visible states (pressed and focused styles in native stacks)
+- [ ] Code complete: Pre-Delivery Verification passes
 ```
 
-Then build working front-end code that is:
-- **Production-ready**: robust, secure, built to ship
-- **Fully functional**: no stubs, no broken states, no "todo later" gaps
-- **Visually standout**: bold, memorable, instantly recognisable
-- **Design-led**: one clear aesthetic, consistent patterns, no visual drift
-- **Detail-perfect**: spacing, typography, motion, states, responsiveness polished
+Then build working code that is production-ready (no stubs, broken states, or "todo later" gaps), committed to one aesthetic with no visual drift, and polished in spacing, type, motion, states, and responsiveness.
 
 ## Pre-Delivery Verification
 
-Before delivering, verify every item in the workflow checklist above is checked. Then run through `references/checklist.md` (visual quality, interaction, light/dark mode, layout, accessibility, performance). Fix any failures before presenting the final code.
+Verify from code and files, not by opening a browser, because Cowork and other headless sessions have no display. Fix each failure and re-run its check until it passes:
 
----
+1. Run the project's own checks when they exist (`npm run build`, `npm run lint`, `npx tsc --noEmit`).
+2. Check contrast with the bundled script, which needs only Python 3 and no network: `python "${CLAUDE_SKILL_DIR}/scripts/contrast.py" '#1a1a1a' '#f5f0e8' [FG BG ...]` (use `python3` where `python` is missing). Pass every text/background hex pair, in each theme the design ships; give translucent text its CSS alpha after a slash (`f5f0e8/0.7`). Quote each colour or drop the `#`, because shells treat an unquoted `#` as a comment. Body text needs 4.5:1; add `--min 3` for large text (24px, or 18.66px bold), focus rings, and input borders. The script exits 1 when a pair fails.
+3. Walk `references/checklist.md` against the source: breakpoints, `:focus-visible` rules, reduced motion, alt text, layout shift.
+4. Only when the project already has Playwright, render screenshots to PNG files and read them, for example `npx playwright screenshot --viewport-size=375,812 --color-scheme=dark <url> mobile-dark.png`. In Cowork, save them in the outputs folder. Do not install a browser just for this check.
+5. Deliver a standalone page as a file (in Cowork, in the outputs folder) and give its path. Say a page was viewed only when a screenshot was actually taken.
 
-## Frontend Aesthetics Guidelines
+## Gotchas
+
+- **The font that never loads.** Without a `<link>`, `@font-face`, or `next/font` import, the browser silently falls back to a system font and the design turns generic. The `font-family` name must match the loaded family exactly ("Source Sans 3", not "Source Sans Pro"). End every font stack with a fallback (`"Fraunces", Georgia, serif`), because offline previews and Cowork may not reach Google Fonts.
+- **Endless animation.** Gate entry and looping animations with `@media (prefers-reduced-motion: no-preference)`, or stop them under `reduce`; a loop with no off switch can make motion-sensitive users ill.
+- **Scroll reveals that never reveal.** Content that starts at `opacity: 0` stays hidden when JavaScript fails, or when a headless screenshot fires before the observer does. Apply the hidden state from JavaScript (a class on `<html>`), so the page reads without it.
+- **Overlay pseudo-elements.** A `::before` or `::after` with `position: absolute; inset: 0` needs `position: relative` on its parent, or it covers the nearest positioned ancestor, and `pointer-events: none`, or it swallows clicks.
+- **Hover on touch screens.** Scope decorative hover effects to `@media (hover: hover)`, and never hide essential content behind hover.
+- **Text on images and gradients.** Measure contrast against the lightest area the text can sit on, and add a scrim when it fails.
+- **Framework default palettes.** Tailwind's `blue-500`, `indigo-500`, and `purple-500` (v3 hex values #3B82F6, #6366F1, #A855F7; v4 defines them in oklch) as the brand colour read as a template. Shift the hue, depth, or saturation.
+- **Product images are content.** Use `alt=""` only for decorative images; a product photo needs a descriptive alt.
+- **Depth in dark mode.** Shadows vanish on dark surfaces; show elevation with lighter surfaces or borders instead.
+
+## Aesthetics
 
 ### Typography
 
-Choose fonts that are beautiful, unique, and interesting. **Avoid defaulting to generic fonts like Arial and Inter** — they signal template-level work. Opt for distinctive choices that elevate aesthetics. Pair a distinctive display font with a refined body font. Exception: Inter is acceptable for data-focused dashboards where neutral typography aids readability (see `references/style-guide.md`).
+Choose distinctive fonts: a characterful display face paired with a refined body face. Arial, Roboto, Inter, and system stacks signal template work. The one exception: Inter with tabular figures suits data-dense dashboards, where neutral type aids reading.
 
-**Default if uncertain:** Serif display (Playfair Display, Fraunces) + humanist sans body (Source Sans 3, Work Sans).
+**Default if uncertain:** serif display (Playfair Display, Fraunces) + humanist sans body (Source Sans 3, Work Sans). Pairings by tone: `references/style-guide.md`.
 
-See `references/style-guide.md` for full Typography Pairing Guide.
+### Colour and theme
 
-### Color & Theme
-
-Commit to a cohesive aesthetic. Use CSS variables for consistency. **Dominant colors with sharp accents outperform timid, evenly-distributed palettes.**
-
-See `references/style-guide.md` for Color Palette by Industry.
+Commit to a cohesive palette held in CSS custom properties. A dominant colour with one sharp accent outperforms a timid, evenly spread palette. Starting hues by industry, and how to push them past the default: `references/style-guide.md`.
 
 ### Motion
 
-Use animations for effects and micro-interactions. Prioritise CSS-only solutions for HTML. Use Motion library for React when available.
+Default to CSS transitions and keyframes. In React, use Motion only when it is already installed and the effect needs exit animations, gestures, layout animations, or coordinated timelines; in Vue and Svelte, use their built-in transitions first.
 
-**Focus on high-impact moments:** One well-orchestrated page load with staggered reveals (`animation-delay`) creates more delight than scattered micro-interactions. Use scroll-triggering and hover states that surprise.
+Spend motion on high-impact moments: one orchestrated page load with staggered reveals (`animation-delay`) delights more than scattered micro-interactions. Prefer `transform` and `opacity`, and never animate layout properties (`width`, `height`, `margin`, `top`), because they recalculate layout on every frame. Durations: `references/ui-rules.md` (Priority 6). Priorities, triggers, reduced motion, and the library ladder: `references/animation-patterns.md`.
 
-**Animate compositor properties** (`transform`, `opacity`, `filter`). Never animate layout properties (`margin`, `height`, `width`).
+### Spatial composition
 
-See `references/animation-patterns.md` for priority hierarchy, performance rules, trigger patterns, and tech stack selection.
+Use unexpected layouts: asymmetry, overlap, diagonal flow, grid-breaking elements, and generous negative space or controlled density. For data-dense interfaces (dashboards, tables), clarity beats surprise. Interactions should guide without demanding attention; add friction only on purpose, such as a confirmation before a destructive action.
 
-### Spatial Composition
+### Backgrounds and visual details
 
-Unexpected layouts. Asymmetry. Overlap. Diagonal flow. Grid-breaking elements. Generous negative space OR controlled density.
-
-For data-dense interfaces (dashboards, tables), prioritize clarity over surprise. **Perfect spacing is invisible** — users feel it without noticing.
-
-### "Invisible" UX
-
-The best interactions feel effortless:
-- Micro-interactions that guide without demanding attention
-- Smooth transitions that never interrupt flow
-- Feedback that confirms without congratulating
-
-Friction should be zero unless intentionally designed (e.g., confirmation dialogs for destructive actions).
-
-### Backgrounds & Visual Details
-
-Create atmosphere and depth rather than defaulting to solid colors. Add contextual effects and textures:
-- Gradient meshes, noise textures, geometric patterns
-- Layered transparencies, dramatic shadows
-- Decorative borders, custom cursors, grain overlays
+Create atmosphere and depth instead of flat solid colours: gradient meshes, noise and grain overlays, geometric patterns, layered transparency, dramatic shadows, decorative borders, custom cursors.
 
 ### Accessibility
 
 | Rule | Do | Don't |
-|------|----|----- |
-| Color contrast | 4.5:1 minimum for text | Light gray on white |
-| Focus states | Visible `:focus-visible` on all interactive | Remove outline with `outline-none` |
-| Semantic HTML | Use `<article>`, `<section>`, `<nav>`, `<main>` | `<div>` soup everywhere |
-| ARIA | Use only when semantic HTML is insufficient | ARIA as first choice |
+|------|----|-------|
+| Colour contrast | 4.5:1 for body text, 3:1 for large text, focus rings, and input borders | Light grey on white |
+| Focus states | Visible `:focus-visible` on every interactive element | `outline-none` with no replacement |
+| Semantic HTML | `<main>`, `<nav>`, `<section>`, `<article>`, `<button>` | `<div>` soup, clickable `<div>`s |
+| ARIA | Only where semantic HTML is not enough | ARIA as the first choice |
+| Motion | Respect `prefers-reduced-motion` | An endless animation with no off switch |
 
----
+## What to Avoid
 
-## What to NEVER Do
-
-**NEVER use generic AI-generated aesthetics:**
-
-| Anti-Pattern | Why It Fails |
+| Anti-pattern | Why it fails |
 |--------------|--------------|
-| Overused fonts (Inter, Roboto, Arial, system) | Instantly recognizable as template |
+| Overused fonts (Inter outside data dashboards, Roboto, Arial, system stacks) | Instantly recognisable as a template |
 | Purple gradients on white backgrounds | Cliché, seen everywhere |
 | Predictable layouts and component patterns | Template-like, not designed |
-| Cookie-cutter design lacking context | No character, forgettable |
-| Converging on common choices across generations | Every output looks the same — the opposite of design |
+| Design that ignores the context | No character, forgettable |
+| The same choices on every request | Every output looks alike, the opposite of design |
 
-**If it looks like a template, it is wrong.** Templates are starting points to escape from, not destinations.
-
-**Match implementation complexity to aesthetic vision:**
-- Maximalist designs need elaborate code with extensive animations
-- Minimalist designs need restraint, precision, careful spacing
-
-**No two designs should look the same.** Vary between light and dark themes, different fonts, different aesthetics. Interpret creatively and make unexpected choices that feel genuinely designed for the context.
+If it looks like a template, it is wrong: a template is a starting point to escape from. Match code complexity to the vision: maximalist designs need elaborate code and rich animation, minimalist designs need restraint and precise spacing. Vary themes, fonts, and aesthetics from one design to the next.
 
 </instructions>
 
----
-
 ## Examples
 
-<example name="Luxury Watch Pricing Card">
+Each example shows the filled-in checklist and the key implementation moves. The full code, including a before/after rewrite of the first one, is in `references/worked-examples.md`; read it to calibrate the bar for the code itself.
+
+<example>
 
 **Request:** "Build a pricing card component for a luxury watch e-commerce site"
 
 **Checklist:**
 ```text
-- [x] Purpose: Convert browsers to buyers for $5k+ watches
+- [x] Purpose: Convert browsers to buyers for watches priced above 5,000 USD
 - [x] Tone: Editorial/magazine with art deco accents
-- [x] Differentiator: Cinematic hover reveal with gold foil texture
+- [x] Differentiator: Cinematic hover reveal with a gold foil border
 - [x] Typography: Playfair Display (display) + Cormorant Garamond (body)
-- [x] Color: Deep charcoal (#1a1a1a), warm gold (#c9a962), cream (#f5f0e8)
-- [x] Motion: Slow 0.8s ease-out transitions, parallax depth on hover
-- [x] Layout: Asymmetric with product image bleeding edge
+- [x] Colour: Deep charcoal (#1a1a1a), warm gold (#c9a962), cream (#f5f0e8)
+- [x] Motion: 300ms ease-out border reveal and parallax depth on hover, both off under reduced motion
+- [x] Layout: Asymmetric, with the product image bleeding off the edge
 ```
 
-**Before (generic):**
-```jsx
-// BAD: system fonts, no theming, basic structure
-<div className="bg-white rounded-lg shadow-md p-6">
-  <img src={watch.image} alt={watch.name} className="w-full rounded" />
-  <h3 className="text-xl font-semibold mt-4">{watch.name}</h3>
-  <p className="text-gray-600">{watch.description}</p>
-  <span className="text-2xl font-bold">${watch.price}</span>
-  <button className="bg-blue-500 text-white px-4 py-2 rounded">Add to Cart</button>
-</div>
-```
-
-**After (distinctive):**
-```jsx
-// GOOD: editorial luxury — CSS custom properties, distinctive typography, intentional motion
-<article className="pricing-card" style={{
-  '--gold': '#c9a962',
-  '--charcoal': '#1a1a1a',
-  '--cream': '#f5f0e8',
-}}>
-  <div className="card-image">
-    <img src={watch.image} alt="" />
-    <div className="gold-border-accent" aria-hidden="true" />
-  </div>
-  <header className="card-content">
-    <h3 className="font-playfair tracking-tight text-cream">{watch.name}</h3>
-    <p className="font-cormorant text-cream/70">{watch.description}</p>
-  </header>
-  <footer className="card-footer">
-    <span className="price font-playfair">
-      <span className="currency">$</span>
-      {watch.price.toLocaleString()}
-    </span>
-    <button className="cta-button">View Timepiece</button>
-  </footer>
-</article>
-```
-
-```css
-.pricing-card {
-  background: var(--charcoal);
-  position: relative;
-  overflow: hidden;
-}
-
-.pricing-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: url('/noise.svg');
-  opacity: 0.03;
-  pointer-events: none;
-}
-
-.gold-border-accent {
-  position: absolute;
-  inset: 0;
-  border: 1px solid var(--gold);
-  opacity: 0;
-  transition: opacity 0.8s ease-out;
-}
-
-.pricing-card:hover .gold-border-accent {
-  opacity: 1;
-}
-
-.cta-button:focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 3px;
-}
-```
+**Key implementation:**
+- A semantic `<article>` with `<header>` and `<footer>` replaces a generic `div` card; the watch photo keeps a descriptive alt.
+- The colour tokens are custom properties on the card; cream text at 70% on charcoal measures 8.04:1.
+- A grain overlay (`::before`, `pointer-events: none`) and a gold border that fades in over 300ms carry the luxury feel.
+- The CTA has a gold `:focus-visible` outline offset from the button.
 
 </example>
 
-<example name="Developer CLI File Upload">
+<example>
 
 **Request:** "Create a file upload component for a developer CLI tool dashboard"
 
@@ -252,145 +164,78 @@ Create atmosphere and depth rather than defaulting to solid colors. Add contextu
 ```text
 - [x] Purpose: Drag-drop config files, show validation status
 - [x] Tone: Industrial/utilitarian with brutalist accents
-- [x] Differentiator: Terminal-style feedback with typing animation
+- [x] Differentiator: Terminal-style feedback with a typing animation
 - [x] Typography: JetBrains Mono (monospace throughout)
-- [x] Color: Near-black (#0d0d0d), electric green (#00ff88), amber warnings (#ffaa00)
-- [x] Motion: Glitch effect on error, smooth progress bar
-- [x] Layout: Centered card with generous padding, sharp corners
+- [x] Colour: Near-black (#0d0d0d), electric green (#00ff88), amber warnings (#ffaa00)
+- [x] Motion: Glitch effect on error, smooth progress bar, both off under reduced motion
+- [x] Layout: Centred card with generous padding and sharp corners
 ```
 
 **Key implementation:**
-- Monospace everything — even labels feel like code
-- Drop zone has dashed border with ASCII-art corners
-- File validation shows as terminal output with typing effect
-- Error states use red scanlines overlay
-
-```css
-.upload-zone {
-  font-family: 'JetBrains Mono', monospace;
-  background: var(--near-black);
-  border: 2px dashed var(--electric-green);
-}
-
-.upload-zone.error::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(255, 0, 0, 0.03) 2px,
-    rgba(255, 0, 0, 0.03) 4px
-  );
-  pointer-events: none;
-}
-```
+- Monospace everywhere, so even labels read like code.
+- The drop zone has a dashed electric-green border with ASCII-art corners.
+- Validation prints as terminal output with a typing effect.
+- Errors add a red scanline overlay through a `::after` on the positioned drop zone.
 
 </example>
 
-<example name="Meditation App Testimonials">
+<example>
 
 **Request:** "Design a testimonial carousel for a meditation app landing page"
 
 **Checklist:**
 ```text
 - [x] Purpose: Build trust, show transformation stories
-- [x] Tone: Organic/natural with soft/pastel warmth
+- [x] Tone: Organic/natural with soft pastel warmth
 - [x] Differentiator: Breathing animation synced to testimonial transitions
 - [x] Typography: Fraunces (display) + Source Serif 4 (body)
-- [x] Color: Warm sand (#e8e0d5), sage green (#9caa8e), soft clay (#c4a882)
-- [x] Motion: 4-second breathing pulse, gentle parallax on quotes
-- [x] Layout: Full-width with organic blob shapes framing content
+- [x] Colour: Warm sand (#e8e0d5), deep moss text (#2f3a2c), sage (#9caa8e) and soft clay (#c4a882) for decoration only
+- [x] Motion: 8-second breathing cycle (4s in, 4s out), paused under reduced motion
+- [x] Layout: Full width, with organic blob shapes framing the content
 ```
 
 **Key implementation:**
-- Background gradient shifts slowly like a sunset
-- Testimonial cards have organic border-radius (varied corners)
-- Avatar photos have hand-drawn circle borders (SVG filter)
-- Transitions match breathing rhythm (4s inhale, 4s exhale)
-
-```css
-.testimonial-card {
-  animation: breathe 8s ease-in-out infinite;
-}
-
-@keyframes breathe {
-  0%, 100% { transform: scale(1); opacity: 0.95; }
-  50% { transform: scale(1.02); opacity: 1; }
-}
-
-.avatar-frame {
-  border-radius: 60% 40% 50% 50% / 50% 60% 40% 50%;
-  /* Organic, hand-drawn feel */
-}
-```
+- The background gradient shifts slowly, like a sunset.
+- Cards and avatars use organic, uneven `border-radius` values.
+- Transitions follow the breathing rhythm, and the carousel has pause and previous/next buttons.
+- Sage and clay stay decorative, because they fall below 3:1 on sand; all text uses deep moss (9.11:1).
 
 </example>
 
-<example name="SaaS Analytics Dashboard">
+<example>
 
 **Request:** "Build a KPI dashboard for a fintech analytics platform"
 
 **Checklist:**
 ```text
 - [x] Purpose: Display real-time financial metrics for portfolio managers
-- [x] Tone: Minimal/professional with precise data hierarchy
-- [x] Differentiator: Sparkline-integrated stat cards with subtle pulse on live updates
-- [x] Typography: Inter (body, exception: data-focused dashboard) + Tabular Nums for figures
-- [x] Color: Deep navy (#0f172a), emerald accent (#10b981), neutral slate (#94a3b8)
-- [x] Motion: 200ms fade for data updates, smooth chart transitions
-- [x] Layout: Sidebar + responsive grid with consistent 24px gap
+- [x] Tone: Minimal/professional with a precise data hierarchy
+- [x] Differentiator: Stat cards with inline sparklines and a pulse when a value changes
+- [x] Typography: Inter with tabular figures (the data-dashboard exception)
+- [x] Colour: Ink (#0b1622), surface (#11202f), frost text (#e6edf3), steel muted text (#8fa3b8), mint signal (#3ee6a8)
+- [x] Motion: 200ms fade for data updates, one pulse per change, none under reduced motion
+- [x] Layout: Sidebar + responsive grid with a consistent 24px gap
 ```
 
 **Key implementation:**
-- Stat cards use CSS `font-variant-numeric: tabular-nums` so numbers do not shift width on update
-- Sparklines rendered inline within cards (no separate chart library needed for micro-trends)
-- Live-update pulse uses a brief `box-shadow` animation on the card border, not layout-shifting scale
-- Dark mode default with a light mode toggle that swaps CSS custom properties
-
-```css
-.stat-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1.5rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.stat-card[data-live]::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  box-shadow: 0 0 0 2px var(--emerald);
-  opacity: 0;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 0; }
-  50% { opacity: 0.4; }
-}
-```
+- `font-variant-numeric: tabular-nums`, so numbers keep their width when they update.
+- Sparklines are inline SVG inside the cards, with no chart library for micro-trends.
+- The update pulse is a one-shot `box-shadow` animation on a `::after` overlay, never a layout-shifting scale.
+- Dark mode is the default, and a toggle swaps the custom properties for light values.
 
 </example>
 
----
-
 ## Reference Files
 
-For quick lookups and detailed guidelines:
-
-| Reference | Content |
-|-----------|---------|
-| `references/style-guide.md` | Styles, colors, typography, layouts by product type |
-| `references/ui-rules.md` | 30+ UX guidelines (Do/Don't/Why tables) |
-| `references/checklist.md` | Pre-delivery verification checklist |
-| `references/animation-patterns.md` | Animation priorities, performance rules, triggers, tech stack ladder |
-| `references/chart-types.md` | 25+ chart types with selection guidelines |
-| `references/search-domains.md` | Technology stacks with code snippets |
-
----
+| File | Read when |
+|------|-----------|
+| `references/style-guide.md` | Choosing the tone, palette, font pairing, or layout pattern for a product type |
+| `references/stack-notes.md` | Before writing code, for the stack's tokens, fonts, dark mode, motion, and traps |
+| `references/ui-rules.md` | Building forms, navigation, touch targets, loading states, or light/dark contrast, and when auditing an existing interface |
+| `references/animation-patterns.md` | Adding motion: priorities, performance, triggers, reduced motion, the library ladder |
+| `references/chart-types.md` | Choosing and theming a chart for a dashboard |
+| `references/checklist.md` | Pre-Delivery Verification, step 3 |
+| `references/worked-examples.md` | Calibrating code quality against the full code of the examples above |
+| `scripts/contrast.py` | Run it in Pre-Delivery Verification, step 2 |
 
 Every interface must look intentionally designed for its specific context. Commit fully to the chosen aesthetic and deliver code that ships without further polish.

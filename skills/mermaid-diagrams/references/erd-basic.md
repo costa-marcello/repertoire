@@ -6,10 +6,7 @@
 2. [Defining Entities](#defining-entities)
 3. [Entity Attributes](#entity-attributes)
 4. [Relationships](#relationships)
-5. [Data Types](#data-types)
-6. [Comprehensive Example: E-Commerce Database](#comprehensive-example-e-commerce-database)
-
-ERDs model database schemas, showing tables (entities), their columns (attributes), and relationships between tables. Essential for database design and documentation.
+5. [Comprehensive Example: E-Commerce Database](#comprehensive-example-e-commerce-database)
 
 <example name="Basic Syntax">
 
@@ -52,12 +49,11 @@ erDiagram
     }
 ```
 
-**Attribute format:** `type name constraints`
+**Attribute format:** `type name [keys] ["comment"]`
 
-**Common constraints:**
-- `PK` - Primary Key
-- `FK` - Foreign Key
-- `UK` - Unique Key
+- **Type:** free text that starts with a letter, so copy it from the user's schema (`varchar(255)` is valid).
+- **Keys:** `PK`, `FK`, and `UK`. Combine them with a comma: `PK, FK`.
+- **Comment:** a quoted string at the end of the line, such as `"NOT NULL"`. It cannot contain a double quote.
 
 </example>
 
@@ -65,15 +61,17 @@ erDiagram
 
 ### Relationship Symbols
 
-**Cardinality indicators:**
+**Cardinality** (written on each end; the right end mirrors the left):
 - `||` - Exactly one
-- `|o` - Zero or one
+- `|o` / `o|` - Zero or one
 - `}|` / `|{` - One or many
-- `}o` - Zero or many
+- `}o` / `o{` - Zero or many
 
 **Relationship line:**
-- `--` - Non-identifying relationship
-- `..` - Identifying relationship (rare in practice)
+- `--` (solid) - The default for every relationship, as in all the examples here.
+- `..` (dashed) - Use it only when the user wants identifying and non-identifying relationships told apart. Then `..` marks a non-identifying one (the child has its own key) and `--` an identifying one (the child's key includes the parent's key).
+
+**Label:** every relationship needs one after the colon. Quote a label of more than one word: `: "belongs to"`.
 
 <example name="Common Relationships">
 
@@ -87,8 +85,10 @@ erDiagram
     %% One-to-Many
     CUSTOMER ||--o{ ORDER : places
 
-    %% Many-to-Many (with junction table)
-    STUDENT }o--o{ COURSE : enrolls
+    %% Many-to-Many, drawn directly
+    READER }o--o{ MAGAZINE : "subscribes to"
+
+    %% Many-to-Many through a junction table (use this when the link has columns)
     STUDENT ||--o{ ENROLLMENT : has
     COURSE ||--o{ ENROLLMENT : includes
 
@@ -110,18 +110,6 @@ erDiagram
 ```
 
 </example>
-
-## Data Types
-
-Use standard database types:
-- `int`, `bigint`, `smallint`
-- `varchar`, `text`, `char`
-- `decimal`, `float`, `double`
-- `boolean`, `bool`
-- `date`, `datetime`, `timestamp`
-- `json`, `jsonb`
-- `uuid`
-- `blob`, `bytea`
 
 <example name="E-Commerce Database">
 

@@ -1,0 +1,12 @@
+{
+  "name": "@shopfront/billing",
+  "version": "0.3.0",
+  "description": "Stripe subscriptions and one-time payments for shopfront",
+  "main": "index.ts",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "stripe": "^17.0.0"
+  }
+}

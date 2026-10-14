@@ -8,16 +8,19 @@
 4. [Template: Project Root (Minimal)](#template-project-root-minimal)
 5. [Template: Project Root (Comprehensive)](#template-project-root-comprehensive)
 6. [Template: Rule File (.claude/rules/*.md)](#template-rule-file-clauderulesmd)
-7. [Edge Cases](#edge-cases)
-8. [Template: Package/Module (Monorepo)](#template-packagemodule-monorepo)
-9. [Template: Monorepo Root](#template-monorepo-root)
-10. [Template: Triage Assessment](#template-triage-assessment)
-11. [Template: Refactoring Complete](#template-refactoring-complete)
-12. [Update Principles](#update-principles)
+7. [Template: Hand-Crafted Subdirectory CLAUDE.md](#template-hand-crafted-subdirectory-claudemd)
+8. [Template: Generated Subdirectory (Minimal)](#template-generated-subdirectory-minimal)
+9. [Template: Package/Module (Monorepo)](#template-packagemodule-monorepo)
+10. [Template: Monorepo Root](#template-monorepo-root)
+11. [Template: Triage Assessment](#template-triage-assessment)
+12. [Template: Refactoring Complete](#template-refactoring-complete)
+13. [Update Principles](#update-principles)
 
-Research-backed templates for CLAUDE.md structure. These are **examples**, not mandates — adapt to your project's needs.
+Templates for CLAUDE.md structure. These are **examples**, not mandates — adapt to your project's needs.
 
-**Key principle:** Include reasoning ("why") with rules. Anthropic's own prompts are ~23k tokens — optimize for relevance, not arbitrary line limits.
+**Key principle:** Include reasoning ("why") with rules, and keep each CLAUDE.md under about 200 lines, the target in the Claude Code docs: every line loads in every session, and longer files reduce adherence.
+
+**Which root template:** default to [Project Root (Minimal)](#template-project-root-minimal); Update mode uses it for every new CLAUDE.md. Use [Project Root (Comprehensive)](#template-project-root-comprehensive) when the scan finds environment variables, a test setup, or code-style config worth recording. Use [Root CLAUDE.md (Research-Backed)](#template-root-claudemd-research-backed) when the user supplies hard rules and principles, or when Refactor rebuilds a root that already has them.
 
 ---
 
@@ -168,6 +171,8 @@ Document development workflow patterns.
 
 ## Template: Root CLAUDE.md (Research-Backed)
 
+**Use when:** the user supplies hard rules and principles, or Refactor rebuilds a root that already has them.
+
 ```markdown
 # Project Name
 
@@ -201,13 +206,6 @@ These rules have no exceptions. Placed early for visibility.
 
 {Compact summary of frequently-needed info — patterns, conventions, etc.}
 
-## Rules (Detailed)
-
-@rules/coding.md
-@rules/testing.md
-@rules/workflow.md
-@rules/safety.md
-
 ## Rule Conflicts
 
 When rules conflict, use this priority:
@@ -217,21 +215,22 @@ When rules conflict, use this priority:
 
 ## Critical Reminders
 
-Research shows end-position improves recall. Repeat most critical rules:
-
 - **Check for secrets before every commit**
 - **Never force-push to main**
 ```
 
 **Template notes:**
-- Critical rules at BOTH start (visibility) AND end (recall)
+- Critical rules at BOTH start (visibility) AND end (recall: models attend least to the middle of a long context, the "Lost in the Middle" finding by Liu et al., 2023)
 - All rules include "why" column for generalization
 - Priority hierarchy is explicit
-- No arbitrary line limit — adapt length to content value
+- Under 200 lines; move topic detail into `.claude/rules/` files
+- No imports of rule files: Claude Code loads `.claude/rules/` on its own, and an import resolves relative to the importing file, so `@rules/coding.md` in the root would point to `./rules/`, not `.claude/rules/`
 
 ---
 
 ## Template: Project Root (Minimal)
+
+**Use when:** creating a new CLAUDE.md (the default, and what Update mode writes when none exists).
 
 ```markdown
 # <Project Name>
@@ -250,14 +249,26 @@ Research shows end-position improves recall. Repeat most critical rules:
 <structure>
 ```
 
+## Key Files
+
+- `<path>` - <purpose>
+
+## Hard Rules
+
+<!-- Add project-specific rules here, each with its reason -->
+
 ## Gotchas
 
-- <gotcha>
+<!-- Add project-specific gotchas here -->
 ```
+
+Claude Code strips block-level HTML comments before loading a CLAUDE.md, so the placeholders cost no context.
 
 ---
 
 ## Template: Project Root (Comprehensive)
+
+**Use when:** the scan finds environment variables, a test setup, or code-style config worth recording. Keep the Hard Rules and Gotchas placeholders from the Minimal template.
 
 ```markdown
 # <Project Name>
@@ -302,6 +313,11 @@ Research shows end-position improves recall. Repeat most critical rules:
 ## Template: Rule File (.claude/rules/*.md)
 
 ```markdown
+---
+paths:
+  - "{glob, for example src/api/**/*.ts}"
+---
+
 # {Topic} Guidelines
 
 ## Overview
@@ -344,18 +360,17 @@ Brief context: when these guidelines apply and why they exist.
 ```
 
 **Rule file notes:**
+- `paths:` frontmatter is optional. With it, the rule loads only when Claude reads or edits a matching file; without it, the rule loads every session, like CLAUDE.md. Leave it out for rules that apply everywhere (safety, workflow)
 - Self-contained — works without needing root context
 - Includes reasoning for every rule
 - Examples show both good and bad patterns with explanations
 
 ---
 
-## Template: Subfolder CLAUDE.md
+## Template: Hand-Crafted Subdirectory CLAUDE.md
 
 ```markdown
 # {Directory} Guidelines
-
-@../CLAUDE.md
 
 ## Context
 
@@ -387,22 +402,20 @@ This directory contains {description}. Key priorities:
 ```
 ```
 
-**Subfolder file notes:**
-1. **Always reference parent:** Start with `@../CLAUDE.md` to inherit global rules
+**Subdirectory file notes:**
+1. **No parent import:** Claude Code already loads every CLAUDE.md from the working directory up, and loads this file when Claude touches a file in the directory. `@../CLAUDE.md` would load the parent a second time, and in a nested directory such as `src/api/` it points to `src/CLAUDE.md`, not the root
 2. **Keep focused:** Only include directory-specific guidance
 3. **Don't duplicate:** If rule is in root CLAUDE.md, don't repeat it
-4. **Target ~30 lines:** Subfolder files supplement, not replace, root rules
+4. **Target ~30 lines:** Subdirectory files supplement, not replace, root rules
 
 ---
 
 ## Template: Generated Subdirectory (Minimal)
 
-For auto-generated files. Target 150-300 tokens.
+For auto-generated files. Budget: about 100 tokens for a minimal file (score 4-5), 150-300 for a full one (score 6+), never over 500.
 
 ```markdown
 # {Directory Name}
-
-@../CLAUDE.md
 
 ## Context
 {One sentence: what this directory contains and its role}
@@ -424,13 +437,11 @@ For auto-generated files. Target 150-300 tokens.
 3. **2-5 Key Files:** Entry points and configs only, not exhaustive
 4. **Patterns with reasoning:** Brief "why" for each pattern (research-backed)
 5. **Gotchas:** Include only if discovered during analysis — omit if none
-6. **Target 150-300 tokens:** Lean toward brevity
+6. **Budget:** about 100 tokens (minimal) or 150-300 (full), never over 500; lean toward brevity
 
 **Example (good):**
 ```markdown
 # Payments Service
-
-@../CLAUDE.md
 
 ## Context
 Stripe integration for subscriptions and one-time payments.
@@ -450,8 +461,6 @@ Stripe integration for subscriptions and one-time payments.
 **Example (too verbose — avoid):**
 ```markdown
 # Payments Service
-
-@../CLAUDE.md
 
 ## Context
 This directory contains the payments service which handles all payment-related functionality including Stripe integration, subscription management, and one-time payment processing.
@@ -531,7 +540,7 @@ For packages within a monorepo or distinct modules.
 
 ## Template: Triage Assessment
 
-Use this for Phase 0 evaluation:
+Use this for the Refactor triage (Phase 6 in SKILL.md). The signals and points are the ones in the SKILL.md triage table, so the highest possible score is 6:
 
 ```markdown
 ## Triage Assessment
@@ -543,14 +552,15 @@ Use this for Phase 0 evaluation:
 
 | Signal | Score | Notes |
 |--------|-------|-------|
-| Uses `.claude/rules/` structure | +2 / 0 | {yes/no} |
-| Clear hierarchy (headers, tables) | +1 / 0 | {yes/no} |
-| Contains reasoning ("why") | +1 / 0 | {yes/no} |
+| Already uses `.claude/rules/` structure | +2 / 0 | {yes/no} |
+| Has clear hierarchy (headers, tables) | +1 / 0 | {yes/no} |
+| Contains reasoning ("why" explanations) | +1 / 0 | {yes/no} |
 | Rules are actionable and specific | +1 / 0 | {yes/no} |
-| Appropriate length for content | +1 / 0 / -1 | {<200 / 200-300 / >300} |
-| Well-structured (not wall-of-text) | +1 / 0 / -2 | {yes/no/wall} |
-| No contradictions | 0 / -2 | {none found / list them} |
-| Consistent specificity | 0 / -1 | {all specific / mixed vague+specific} |
+| Under 200 lines with dense content | +1 / 0 | {yes/no} |
+| Over 300 lines | -1 / 0 | {yes/no} |
+| Wall-of-text without structure | -2 / 0 | {yes/no} |
+| Contains contradictions | -2 / 0 | {none found / list them} |
+| Mix of vague and specific rules | -1 / 0 | {all specific / mixed} |
 
 **Total Score:** {X}
 
@@ -572,7 +582,7 @@ Use this for Phase 0 evaluation:
 - {What needs work}
 
 ### Next Steps
-{If Skip: offer minor tweaks. Otherwise: proceed to Phase 1}
+{If Skip: offer minor tweaks. Otherwise: propose the keep-vs-extract plan}
 ```
 
 ---
@@ -590,7 +600,7 @@ Use this for final confirmation:
 |--------|--------|-------|
 | Root CLAUDE.md lines | {X} | {Y} |
 | Rule files | {X} | {Y} |
-| Subfolder files | {X} | {Y} |
+| Subdirectory files | {X} | {Y} |
 
 ### Preserved (in root)
 - {High-value content kept in root}
@@ -598,11 +608,11 @@ Use this for final confirmation:
 - {Hard rules with reasoning}
 
 ### Extracted to .claude/rules/
-- {Topic 1} → `rules/{file}.md`
-- {Topic 2} → `rules/{file}.md`
+- {Topic 1} → `.claude/rules/{file}.md` (paths: {glob, or "loads every session"})
+- {Topic 2} → `.claude/rules/{file}.md` (paths: {glob, or "loads every session"})
 
 ### NOT Deleted (intentionally kept)
-These were kept despite seeming "obvious" because research shows repetition improves compliance:
+These were kept despite seeming "obvious", because a one-line safety reminder costs little and guards against an expensive mistake:
 - {Safety reminder 1}
 - {Safety reminder 2}
 
@@ -616,7 +626,7 @@ These were kept despite seeming "obvious" because research shows repetition impr
 - [ ] Safety rules NOT deleted
 - [ ] Critical rules at BOTH start AND end
 - [ ] Priority hierarchy explicit
-- [ ] All @references resolve
+- [ ] Every `@` import resolves from the file that contains it, and nothing imports a `.claude/rules/` file or a parent CLAUDE.md
 - [ ] No meaning lost
 
 **Does this look correct?**

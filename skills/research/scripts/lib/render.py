@@ -9,9 +9,55 @@ from . import schema
 OUTPUT_DIR = Path.home() / ".local" / "share" / "research" / "out"
 
 
+WEB_SEARCH_MARKER = "### WEBSEARCH REQUIRED ###"
+
+
 def ensure_output_dir():
     """Ensure output directory exists."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def covered_sites(report: schema.Report) -> List[str]:
+    """Sites this run covered with engagement data (a source that errored is not covered)."""
+    sites = []
+    if report.mode in ("both", "all", "reddit-only", "reddit-web") and not report.reddit_error:
+        sites.append("reddit.com")
+    if report.mode in ("both", "all", "x-only", "x-web") and not report.x_error:
+        sites.extend(["x.com", "twitter.com"])
+    return sites
+
+
+def covered_line(report: schema.Report) -> str:
+    """One line naming the covered sites, or 'none'."""
+    return f"**Script covered:** {', '.join(covered_sites(report)) or 'none'}"
+
+
+def web_search_block(report: schema.Report, topic: str, from_date: str, to_date: str) -> str:
+    """Notice printed when the run needs web coverage (web-only or --include-web).
+
+    The marker line stays stable for anything that searches for it. The
+    research skill does not run a separate search for it: its community and
+    official subagents cover the web with the backend SKILL.md chose.
+    """
+    rule = "=" * 60
+    sites = ", ".join(covered_sites(report)) or "none"
+    lines = [
+        rule,
+        WEB_SEARCH_MARKER,
+        rule,
+        f"Topic: {topic}",
+        f"Date range: {from_date} to {to_date}",
+        f"Script covered: {sites}",
+        "",
+        "Web coverage comes from the research skill's community and official",
+        "subagents (SKILL.md, Phase 2): SearXNG when it is reachable, otherwise",
+        "WebSearch and WebFetch. Do not run a separate search for this block.",
+        "Subagents skip only the sites listed under 'Script covered'.",
+        "Rank web results below comparable Reddit/X items, which carry",
+        "engagement metrics.",
+        rule,
+    ]
+    return "\n".join(lines)
 
 
 def _assess_data_freshness(report: schema.Report) -> dict:
@@ -61,24 +107,19 @@ def render_compact(report: schema.Report, limit: int = 15, missing_keys: str = "
 
     # Web-only mode banner (when no API keys)
     if report.mode == "web-only":
-        lines.append("**🌐 WEB SEARCH MODE** - Claude will search blogs, docs & news")
+        lines.append("**🌐 WEB-ONLY MODE** - no Reddit or X data; the research subagents cover the web")
         lines.append("")
         lines.append("---")
         lines.append("**⚡ Want better results?** Add API keys to unlock Reddit & X data:")
         lines.append("- `OPENAI_API_KEY` → Reddit threads with real upvotes & comments")
         lines.append("- `XAI_API_KEY` → X posts with real likes & reposts")
-        lines.append("- Edit `~/.config/research/.env` to add keys")
+        lines.append("- Set them as environment variables (in Claude Code, `~/.config/research/.env` also works; Cowork has no such file)")
         lines.append("---")
-        lines.append("")
-
-    # Cache indicator
-    if report.from_cache:
-        age_str = f"{report.cache_age_hours:.1f}h old" if report.cache_age_hours else "cached"
-        lines.append(f"**⚡ CACHED RESULTS** ({age_str}) - use `--refresh` for fresh data")
         lines.append("")
 
     lines.append(f"**Date Range:** {report.range_from} to {report.range_to}")
     lines.append(f"**Mode:** {report.mode}")
+    lines.append(covered_line(report))
     if report.openai_model_used:
         lines.append(f"**OpenAI Model:** {report.openai_model_used}")
     if report.xai_model_used:
@@ -353,28 +394,28 @@ def write_outputs(
     ensure_output_dir()
 
     # report.json
-    with open(OUTPUT_DIR / "report.json", 'w') as f:
+    with open(OUTPUT_DIR / "report.json", 'w', encoding='utf-8') as f:
         json.dump(report.to_dict(), f, indent=2)
 
     # report.md
-    with open(OUTPUT_DIR / "report.md", 'w') as f:
+    with open(OUTPUT_DIR / "report.md", 'w', encoding='utf-8') as f:
         f.write(render_full_report(report))
 
     # research.context.md
-    with open(OUTPUT_DIR / "research.context.md", 'w') as f:
+    with open(OUTPUT_DIR / "research.context.md", 'w', encoding='utf-8') as f:
         f.write(render_context_snippet(report))
 
     # Raw responses
     if raw_openai:
-        with open(OUTPUT_DIR / "raw_openai.json", 'w') as f:
+        with open(OUTPUT_DIR / "raw_openai.json", 'w', encoding='utf-8') as f:
             json.dump(raw_openai, f, indent=2)
 
     if raw_xai:
-        with open(OUTPUT_DIR / "raw_xai.json", 'w') as f:
+        with open(OUTPUT_DIR / "raw_xai.json", 'w', encoding='utf-8') as f:
             json.dump(raw_xai, f, indent=2)
 
     if raw_reddit_enriched:
-        with open(OUTPUT_DIR / "raw_reddit_threads_enriched.json", 'w') as f:
+        with open(OUTPUT_DIR / "raw_reddit_threads_enriched.json", 'w', encoding='utf-8') as f:
             json.dump(raw_reddit_enriched, f, indent=2)
 
 

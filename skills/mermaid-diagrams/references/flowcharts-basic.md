@@ -7,8 +7,6 @@
 3. [Connections](#connections)
 4. [Subgraphs](#subgraphs)
 
-Flowcharts visualize processes, algorithms, decision trees, and user journeys. They show step-by-step progression through a system or workflow.
-
 <example name="Basic Syntax">
 
 ## Basic Syntax
@@ -53,7 +51,7 @@ flowchart LR
 ### Rounded Rectangle
 ```mermaid
 flowchart LR
-    C(Start or End)
+    C(Rounded step)
 ```
 
 </example>

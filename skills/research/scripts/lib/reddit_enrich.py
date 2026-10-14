@@ -45,7 +45,9 @@ def fetch_thread_data(url: str, mock_data: Optional[Dict] = None) -> Optional[Di
     try:
         data = http.get_reddit_json(path)
         return data
-    except http.HTTPError:
+    except http.HTTPError as e:
+        # research.py prints one summary line for all threads left without metrics
+        http.log(f"Reddit thread fetch failed for {path}: {e}")
         return None
 
 

@@ -121,7 +121,11 @@ def parse_x_response(response: Dict[str, Any]) -> List[Dict[str, Any]]:
         response: Raw API response
 
     Returns:
-        List of item dicts
+        List of item dicts (empty when the reply's items list is empty)
+
+    Raises:
+        http.BadResponseError: the reply is an error, has no output text, or
+            has no readable JSON items list.
     """
     items = []
 
@@ -132,7 +136,7 @@ def parse_x_response(response: Dict[str, Any]) -> List[Dict[str, Any]]:
         _log_error(f"xAI API error: {err_msg}")
         if http.DEBUG:
             _log_error(f"Full error response: {json.dumps(response, indent=2)[:1000]}")
-        return items
+        raise http.BadResponseError(f"xAI API error: {err_msg}")
 
     # Try to find the output text
     output_text = ""
@@ -164,16 +168,18 @@ def parse_x_response(response: Dict[str, Any]) -> List[Dict[str, Any]]:
                 break
 
     if not output_text:
-        return items
+        raise http.BadResponseError(
+            f"no output text in the xAI response (keys: {list(response.keys())})"
+        )
 
     # Extract JSON from the response
     json_match = re.search(r'\{[\s\S]*"items"[\s\S]*\}', output_text)
-    if json_match:
-        try:
-            data = json.loads(json_match.group())
-            items = data.get("items", [])
-        except json.JSONDecodeError:
-            pass
+    if not json_match:
+        raise http.BadResponseError("no JSON items list in the xAI response")
+    try:
+        items = json.loads(json_match.group()).get("items", [])
+    except (json.JSONDecodeError, AttributeError) as e:
+        raise http.BadResponseError(f"unreadable JSON in the xAI response: {e}") from e
 
     # Validate and clean items
     clean_items = []

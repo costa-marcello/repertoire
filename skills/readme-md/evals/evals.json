@@ -1,0 +1,81 @@
+{
+  "skill_name": "readme-md",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "write a README for the open-source CLI in tabjson/. it's going on npm next week.",
+      "expected_output": "A new tabjson/README.md built on the open-source template: a one-sentence description of what the tool solves, a quick start with npm install -g tabjson and a real command, usage examples that use only the flags in src/cli.js, the Node.js 18 requirement, and Contributing and MIT License sections. The reply says where the file was written and asks whether anything else should be highlighted.",
+      "files": [
+        "evals/files/tabjson/package.json",
+        "evals/files/tabjson/src/cli.js"
+      ],
+      "expectations": [
+        "Treats the project as open source and follows the OSS template's sections, including Installation, Usage, Contributing, and License",
+        "The install command is npm install -g tabjson (or npx tabjson), matching the name and bin in package.json",
+        "Usage examples use only flags that src/cli.js accepts (--delimiter, --pretty, --out) and invent none",
+        "States the Node.js 18 or later requirement and the MIT license from package.json",
+        "Leaves no template leftovers: no [placeholder] text, no 'Use this template' note, and no link to a CONTRIBUTING.md or LICENSE file, since the project has neither",
+        "Writes tabjson/README.md and says where the file went",
+        "Asks 'Anything else to highlight or include that I might have missed?' or an equivalent question after drafting"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "review the README in datakit/ against the code and tell me what's stale. don't edit it yet.",
+      "expected_output": "A review that lists the stale parts of datakit/README.md with evidence from the code: process() is now transform(), Python 3.10 or later is required (not 3.8), JSON and Parquet are supported (not just CSV), and the datakit convert CLI is undocumented. It proposes specific edits and leaves the README unchanged.",
+      "files": [
+        "evals/files/datakit/README.md",
+        "evals/files/datakit/pyproject.toml",
+        "evals/files/datakit/src/datakit/__init__.py",
+        "evals/files/datakit/src/datakit/core.py",
+        "evals/files/datakit/src/datakit/cli.py"
+      ],
+      "expectations": [
+        "Flags that the README's process() no longer exists and the API is transform()",
+        "Flags the Python requirement: pyproject.toml requires 3.10 or later, while the README says 3.8",
+        "Flags that the description mentions only CSV although the project handles CSV, JSON, and Parquet",
+        "Flags the undocumented datakit convert command from [project.scripts] and cli.py",
+        "Proposes specific replacement text or edits for each stale section",
+        "Leaves datakit/README.md unchanged"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "add a README to my nvim-config folder so future me remembers how it's set up",
+      "expected_output": "A new nvim-config/README.md that follows the config-folder template: What's Here (init.lua, lua/keymaps.lua, lua/plugins/), key choices with reasons (lazy.nvim, Mason for language servers), how to extend it, and Gotchas such as running :Lazy sync after pulling and the space leader. It has no OSS sections, says where the file went, and asks whether anything else should be included.",
+      "files": [
+        "evals/files/nvim-config/init.lua",
+        "evals/files/nvim-config/lua/keymaps.lua",
+        "evals/files/nvim-config/lua/plugins/lsp.lua"
+      ],
+      "expectations": [
+        "Treats the project as a config folder and follows the config template's sections (what's here, why, how to extend, gotchas)",
+        "Lists the real files: init.lua, lua/keymaps.lua, and lua/plugins/lsp.lua, each with its purpose",
+        "Gives reasons for key choices taken from the files, such as lazy.nvim as the plugin manager and Mason for language servers",
+        "Includes gotchas from the files: run :Lazy sync after pulling changes, and the leader key is space",
+        "Leaves out OSS sections such as Contributing, License, and badges",
+        "Writes nvim-config/README.md, says where it went, and asks whether anything else should be included"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "write a README for datakit/, it's on PyPI",
+      "expected_output": "datakit/README.md already exists, so the reply treats the request as an update: it edits the existing file in place, keeps what is still accurate (the datakit title, pip install datakit), and fixes the stale parts from the code: transform() instead of process(), Python 3.10 or later, CSV, JSON, and Parquet support, and a CLI section for datakit convert with only its real options. The reply says where the file is and asks whether anything else should be highlighted.",
+      "files": [
+        "evals/files/datakit/README.md",
+        "evals/files/datakit/pyproject.toml",
+        "evals/files/datakit/src/datakit/__init__.py",
+        "evals/files/datakit/src/datakit/core.py",
+        "evals/files/datakit/src/datakit/cli.py"
+      ],
+      "expectations": [
+        "Notices that datakit/README.md exists and updates it in place instead of replacing it with an unrelated new file",
+        "Keeps the accurate parts: the datakit title and the pip install datakit command",
+        "Replaces process() with transform() and states the Python 3.10 or later requirement from pyproject.toml",
+        "Describes CSV, JSON, and Parquet support",
+        "Documents datakit convert with only its real options (a source file, --to with csv, json, or parquet, and --out) and invents none",
+        "Says where the README is and asks whether anything else should be highlighted or included"
+      ]
+    }
+  ]
+}

@@ -83,6 +83,7 @@ GITLEAKS_LEAKS_EXIT_CODE = 2  # passed as --exit-code so "leaks found" differs f
 MAX_SIMPLE_FINDINGS = 5  # the packaging gate lists a few secrets; --verbose lists them all
 MAX_VERBOSE_PER_PATTERN = 10  # keeps verbose output readable when one pattern repeats across many files
 MATCH_PREVIEW_CHARS = 80  # enough to recognise a match without dumping a long line
+# A gitleaks rule ID that contains one of these words is CRITICAL (exit 2); any other is HIGH (exit 1).
 CRITICAL_RULE_WORDS = ("api", "key", "token", "password", "secret", "credential")
 TEXT_SNIFF_BYTES = 8000  # git's binary test: a NUL byte in the first 8000 bytes means binary
 HASH_LENGTH_BYTES = 8  # every hashed field is prefixed with its length as an 8-byte big-endian integer
@@ -207,8 +208,10 @@ class _Palette:
         self.reset = "\033[0m" if enabled else ""
 
 
-def _palette() -> _Palette:
-    return _Palette(hasattr(sys.stdout, "isatty") and sys.stdout.isatty())
+def _palette(stream=None) -> _Palette:
+    """Colours only when the stream the text goes to (stdout by default) is a terminal."""
+    stream = sys.stdout if stream is None else stream
+    return _Palette(hasattr(stream, "isatty") and stream.isatty())
 
 
 def _inside(path: Path, directory: Path) -> bool:
@@ -615,11 +618,13 @@ def report_patterns(issues: list[PatternIssue]) -> None:
 
 
 def print_gitleaks_installation() -> None:
-    colours = _palette()
-    print(f"{colours.yellow}[ERROR] gitleaks is not installed; secrets were not scanned.{colours.reset}")
-    print("Install it, then run this script again:")
+    """The error and its install hints go to stderr; stdout keeps the leads and the RESULT line."""
+    colours = _palette(sys.stderr)
+    print(f"{colours.yellow}[ERROR] gitleaks is not installed; secrets were not scanned.{colours.reset}",
+          file=sys.stderr)
+    print("Install it, then run this script again:", file=sys.stderr)
     for hint in INSTALL_HINTS:
-        print(hint)
+        print(hint, file=sys.stderr)
 
 
 def result_line(secrets: int, leads: int) -> str:

@@ -152,7 +152,7 @@ Before finalizing an update, verify:
 
 - [ ] Each addition is project-specific
 - [ ] No generic advice or obvious info
-- [ ] Commands are tested and work
+- [ ] Each command exists in `package.json` scripts, the Makefile, or `pyproject.toml` (check by reading; run nothing unless the user asks)
 - [ ] File paths are accurate
 - [ ] Would a new Claude session find this helpful?
 - [ ] Is this the most concise way to express the info?

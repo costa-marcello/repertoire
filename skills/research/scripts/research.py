@@ -3,14 +3,21 @@
 research - Research a topic on Reddit + X.
 
 Usage:
-    python3 research.py <topic> [options]
+    python research.py <topic> [options]
+    (use python3 where the python command is missing)
+
+Requires Python 3.9 or later; standard library only.
+
+Network: api.openai.com (Reddit discovery, model list), api.x.ai (X search),
+www.reddit.com (public thread JSON for engagement metrics). Only the sources
+whose API key is set are called; with no keys the script makes no requests.
 
 Options:
     --mock              Use fixtures instead of real API calls
     --emit=MODE         Output mode: compact|json|md|context|path (default: compact)
     --sources=MODE      Source selection: auto|reddit|x|both (default: auto)
-    --quick             Faster research with fewer sources (8-12 each)
-    --deep              Comprehensive research with more sources (50-70 Reddit, 40-60 X)
+    --quick             Faster research with fewer sources (15-25 Reddit, 8-12 X)
+    --deep              Comprehensive research with more sources (70-100 Reddit, 40-60 X)
     --debug             Enable verbose debug logging
 """
 
@@ -22,9 +29,16 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
-# Add lib to path
-SCRIPT_DIR = Path(__file__).parent.resolve()
+# Add lib to path. The script finds its own files from its own location,
+# so it works from a plugin cache, a junction, or any install folder.
+SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR))
+
+# Captured output on Windows defaults to a legacy code page that cannot
+# encode the emoji and box characters below; force UTF-8 instead.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
 
 from lib import (
     dates,
@@ -48,7 +62,7 @@ def load_fixture(name: str) -> dict:
     """Load a fixture file."""
     fixture_path = SCRIPT_DIR / "fixtures" / name
     if fixture_path.exists():
-        with open(fixture_path) as f:
+        with open(fixture_path, encoding="utf-8") as f:
             return json.load(f)
     return {}
 
@@ -89,8 +103,14 @@ def _search_reddit(
             raw_openai = {"error": str(e)}
             reddit_error = f"{type(e).__name__}: {e}"
 
-    # Parse response
-    reddit_items = openai_reddit.parse_reddit_response(raw_openai or {})
+    # Parse response. A reply with no readable items list is an error, so
+    # reddit.com is not reported as covered and the subagents search it.
+    reddit_items = []
+    if not reddit_error:
+        try:
+            reddit_items = openai_reddit.parse_reddit_response(raw_openai or {})
+        except http.BadResponseError as e:
+            reddit_error = f"Bad response: {e}"
 
     # Quick retry with simpler query if few results
     if len(reddit_items) < 5 and not mock and not reddit_error:
@@ -152,8 +172,14 @@ def _search_x(
             raw_xai = {"error": str(e)}
             x_error = f"{type(e).__name__}: {e}"
 
-    # Parse response
-    x_items = xai_x.parse_x_response(raw_xai or {})
+    # Parse response. A reply with no readable items list is an error, so
+    # x.com is not reported as covered.
+    x_items = []
+    if not x_error:
+        try:
+            x_items = xai_x.parse_x_response(raw_xai or {})
+        except http.BadResponseError as e:
+            x_error = f"Bad response: {e}"
 
     return x_items, raw_xai, x_error
 
@@ -174,8 +200,9 @@ def run_research(
     Returns:
         Tuple of (reddit_items, x_items, web_needed, raw_openai, raw_xai, raw_reddit_enriched, reddit_error, x_error)
 
-    Note: web_needed is True when WebSearch should be performed by Claude.
-    The script outputs a marker and Claude handles WebSearch in its session.
+    Note: web_needed is True in web-only mode and with --include-web. The
+    script then prints the WEBSEARCH REQUIRED block (see output_result); in
+    the research skill, the Phase 2 subagents provide that web coverage.
     """
     reddit_items = []
     x_items = []
@@ -185,7 +212,7 @@ def run_research(
     reddit_error = None
     x_error = None
 
-    # Check if WebSearch is needed (always needed in web-only mode)
+    # Check if web coverage is needed (always needed in web-only mode)
     web_needed = sources in ("all", "web", "reddit-web", "x-web")
 
     # Web-only mode: no API calls needed, Claude handles everything
@@ -271,6 +298,14 @@ def run_research(
         if progress:
             progress.end_reddit_enrich()
 
+        # Say why metrics are missing instead of leaving it silent
+        missing = sum(1 for item in reddit_items if not item.get("engagement"))
+        if missing and progress:
+            progress.show_error(
+                f"No engagement metrics for {missing} of {len(reddit_items)} Reddit threads: "
+                "reddit.com did not return the thread data (rerun with --debug for details)"
+            )
+
     return reddit_items, x_items, web_needed, raw_openai, raw_xai, raw_reddit_enriched, reddit_error, x_error
 
 
@@ -295,12 +330,12 @@ def main():
     parser.add_argument(
         "--quick",
         action="store_true",
-        help="Faster research with fewer sources (8-12 each)",
+        help="Faster research with fewer sources (15-25 Reddit, 8-12 X)",
     )
     parser.add_argument(
         "--deep",
         action="store_true",
-        help="Comprehensive research with more sources (50-70 Reddit, 40-60 X)",
+        help="Comprehensive research with more sources (70-100 Reddit, 40-60 X)",
     )
     parser.add_argument(
         "--debug",
@@ -335,7 +370,7 @@ def main():
 
     if not args.topic:
         print("Error: Please provide a topic to research.", file=sys.stderr)
-        print("Usage: python3 research.py <topic> [options]", file=sys.stderr)
+        print("Usage: python research.py <topic> [options]", file=sys.stderr)
         sys.exit(1)
 
     # Load config
@@ -354,15 +389,15 @@ def main():
         # Validate requested sources against available
         sources, error = env.validate_sources(args.sources, available, args.include_web)
         if error:
-            # If it's a warning about WebSearch fallback, print but continue
-            if "WebSearch fallback" in error:
+            # The web-only note is a warning: print it and continue
+            if error.startswith(env.WEB_ONLY_NOTE):
                 print(f"Note: {error}", file=sys.stderr)
             else:
                 print(f"Error: {error}", file=sys.stderr)
                 sys.exit(1)
 
-    # Get date range
-    from_date, to_date = dates.get_date_range(60)
+    # Get date range (the lookback window stated in SKILL.md)
+    from_date, to_date = dates.get_date_range(dates.LOOKBACK_DAYS)
 
     # Check what keys are missing for promo messaging
     missing_keys = env.get_missing_keys(config)
@@ -465,8 +500,11 @@ def main():
     # Generate context snippet
     report.context_snippet_md = render.render_context_snippet(report)
 
-    # Write outputs
-    render.write_outputs(report, raw_openai, raw_xai, raw_reddit_enriched)
+    # Write outputs. The report still goes to stdout if the folder can't be written.
+    try:
+        render.write_outputs(report, raw_openai, raw_xai, raw_reddit_enriched)
+    except OSError as e:
+        progress.show_error(f"Could not write the report files to {render.OUTPUT_DIR}: {e}")
 
     # Show completion
     if sources == "web":
@@ -499,22 +537,10 @@ def output_result(
     elif emit_mode == "path":
         print(render.get_context_path())
 
-    # Output WebSearch instructions if needed
+    # Web coverage notice. The research skill's SKILL.md ("Phase 1") reads
+    # this block; keep the two in step.
     if web_needed:
-        print("\n" + "="*60)
-        print("### WEBSEARCH REQUIRED ###")
-        print("="*60)
-        print(f"Topic: {topic}")
-        print(f"Date range: {from_date} to {to_date}")
-        print("")
-        print("Claude: Use your WebSearch tool to find 8-15 relevant web pages.")
-        print("EXCLUDE: reddit.com, x.com, twitter.com (already covered above)")
-        print("INCLUDE: blogs, docs, news, tutorials from the research window")
-        print("")
-        print("After searching, synthesize WebSearch results WITH the Reddit/X")
-        print("results above. WebSearch items should rank LOWER than comparable")
-        print("Reddit/X items (they lack engagement metrics).")
-        print("="*60)
+        print("\n" + render.web_search_block(report, topic, from_date, to_date))
 
 
 if __name__ == "__main__":

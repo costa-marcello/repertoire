@@ -1,9 +1,8 @@
 [
-  {"query": "grade my skill at ~/.claude/skills/pdf-tables", "should_trigger": true},
   {"query": "is this SKILL.md ready to publish? it's in ./skills/release-notes", "should_trigger": true},
-  {"query": "review the skill at https://github.com/acme/agent-skills/tree/main/skills/csv-report and tell me what's wrong with it", "should_trigger": true},
+  {"query": "we're shipping skills/pdf-tables in our plugin next week, will it still work for the team in Cowork or does something in it only run on my laptop?", "should_trigger": true},
   {"query": "audit my changelog skill against Anthropic's skill best practices and fix whatever fails", "should_trigger": true},
-  {"query": "I'd like to contribute improvements to someone else's Claude skill on GitHub, can you review it and open a PR?", "should_trigger": true},
+  {"query": "I tweaked the instructions in skills/csv-report, rerun its eval cases and tell me if anything regressed", "should_trigger": true},
   {"query": "just grade the deploy skill in .claude/skills/deploy, don't change anything", "should_trigger": true},
   {"query": "review the code changes in PR #42 before I merge them", "should_trigger": false},
   {"query": "create a new skill that formats SQL queries", "should_trigger": false},

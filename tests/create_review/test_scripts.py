@@ -140,6 +140,9 @@ class InitSkill(TempDirCase):
             skill = self.tmp / name
             fill_template(skill)
             self.assertEqual([], [f.format() for f in qv.collect_findings(skill)], name)
+            # No M11 on either target; only context: fork falls outside the six portable keys.
+            portable = [(f.rule_id, f.line) for f in qv.collect_findings(skill, portable=True)]
+            self.assertEqual([("M9", 4)] if fork else [], portable, name)
             result = run_script("quick_validate.py", str(skill))
             self.assertEqual(0, result.returncode, result.stdout)
             self.assertEqual("RESULT major=0 minor=0 style=0 checks=0", result.stdout.strip())
@@ -511,6 +514,17 @@ class SecurityScan(TempDirCase):
         self.assertFalse((skill / security_scan.MARKER_NAME).exists())
         self.assertEqual("RESULT secrets=0 leads=0", last_line(output))
 
+    def test_missing_gitleaks_error_goes_to_stderr(self):
+        skill = make_skill(self.tmp)
+        empty_path = self.tmp / "empty-bin"
+        empty_path.mkdir()
+        result = run_script("security_scan.py", str(skill), "--no-marker", env_extra={"PATH": str(empty_path)})
+        self.assertEqual(3, result.returncode, result.stdout + result.stderr)
+        self.assertIn("[ERROR] gitleaks is not installed", result.stderr)
+        self.assertIn("winget install gitleaks", result.stderr)
+        self.assertNotIn("gitleaks is not installed", result.stdout)
+        self.assertEqual("RESULT secrets=0 leads=0", last_line(result.stdout))
+
     def test_refused_gitleaks_is_named_and_never_run(self):
         skill = make_skill(self.tmp)
         planted = str(skill / GITLEAKS_NAME)
@@ -598,6 +612,9 @@ class PackageSkill(TempDirCase):
         out = self.tmp / "dist"
         code, output = self.package(skill)
         self.assertEqual(0, code, output)
+        self.assertIn(package_skill.UPLOAD_NOTE + "\n", output)
+        self.assertIn("claude.ai", package_skill.UPLOAD_NOTE)
+        self.assertIn("Cowork", package_skill.UPLOAD_NOTE)
         with zipfile.ZipFile(out / f"{CLEAN_NAME}.zip") as archive:
             names = set(archive.namelist())
         self.assertEqual({f"{CLEAN_NAME}/SKILL.md", f"{CLEAN_NAME}/scripts/run.py",
@@ -648,6 +665,28 @@ class PackageSkill(TempDirCase):
         self.assertEqual(1, code)
         self.assertIn("[M9]", output)
         self.assertIn("definitive Major", output)
+
+    def test_validates_against_the_portable_target(self):
+        # argument-hint is fine for Claude Code and Cowork (the plugin), but a claude.ai upload rejects it.
+        skill = self.make_packageable()
+        text = (skill / "SKILL.md").read_text(encoding="utf-8")
+        text = text.replace(f"name: {CLEAN_NAME}\n", f"name: {CLEAN_NAME}\nargument-hint: <file>\n", 1)
+        (skill / "SKILL.md").write_text(text, encoding="utf-8")
+        security_scan.create_security_marker(skill)
+        self.assertTrue(qv.validate_skill(skill)[0])
+        code, output = self.package(skill)
+        self.assertEqual(1, code, output)
+        self.assertIn(package_skill.UPLOAD_NOTE, output)
+        self.assertIn("[M9] major definitive SKILL.md:3 frontmatter key 'argument-hint' is unknown to the portable target",
+                      output)
+        self.assertIn(f"python scripts/quick_validate.py {skill.resolve()} --portable", output)
+        self.assertFalse((self.tmp / "dist").exists())
+
+    def test_m11_blocks_packaging(self):
+        skill = self.make_packageable(body=CLEAN_BODY.replace("4. Verify:", "4. Today is !`date`.\n5. Verify:"))
+        code, output = self.package(skill)
+        self.assertEqual(1, code, output)
+        self.assertIn("[M11] major definitive SKILL.md:", output)
 
     def test_environment_error_is_not_reported_as_a_major(self):
         skill = self.make_packageable()
@@ -713,6 +752,48 @@ class PackageSkill(TempDirCase):
             code, output = quietly(package_skill.main, [str(skill), str(out)])
         self.assertEqual(1, code)
         self.assertEqual([], list(out.iterdir()))
+
+    def test_refusals_go_to_stderr_and_progress_to_stdout(self):
+        skill = make_skill(self.tmp / "src")  # no security marker yet
+        result = run_script("package_skill.py", str(skill), str(self.tmp / "dist"))
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("Step 2: checking the security marker", result.stdout)
+        self.assertNotIn("[FAIL]", result.stdout)
+        self.assertIn("[FAIL] no security marker", result.stderr)
+        self.assertIn("security_scan.py", result.stderr)
+
+    def copy_scripts(self, *names: str) -> Path:
+        """A scripts folder holding only the named copies, to simulate a broken install."""
+        folder = self.tmp / "lone-scripts"
+        folder.mkdir()
+        for name in names:
+            shutil.copy2(_helpers.SCRIPTS / name, folder / name)
+        return folder
+
+    def run_copied_packager(self, folder: Path) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            [sys.executable, "-B", str(folder / "package_skill.py"), str(self.tmp), str(self.tmp / "dist")],
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+            timeout=_helpers.SUBPROCESS_TIMEOUT_SECONDS,
+        )
+
+    def test_missing_sibling_script_exits_1_without_a_traceback(self):
+        result = self.run_copied_packager(self.copy_scripts("package_skill.py"))
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertNotIn("Traceback", result.stdout + result.stderr)
+        self.assertIn("[ERROR] cannot import a sibling script", result.stderr)
+
+    def test_security_scan_that_cannot_load_exits_1_not_4(self):
+        folder = self.copy_scripts("package_skill.py", "security_scan.py")
+        # A quick_validate.py without PLACEHOLDER_USER_NAMES: security_scan.py exits 4 while importing it.
+        write_file(folder / "quick_validate.py",
+                   "def extract_bundled_paths(*args, **kwargs):\n    return []\n\n\n"
+                   "def validate_skill(*args, **kwargs):\n    return True, '', []\n")
+        result = self.run_copied_packager(folder)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertNotIn("Traceback", result.stdout + result.stderr)
+        self.assertIn("cannot import quick_validate.py", result.stderr)
+        self.assertIn("security_scan.py could not load", result.stderr)
 
 
 class Cp1252Output(TempDirCase):

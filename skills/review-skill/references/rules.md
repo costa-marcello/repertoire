@@ -23,7 +23,9 @@ The single source of truth for grading skills. `create-skill/references/authorin
 - **Definitive** checks are decided mechanically, by `quick_validate.py` or by the procedure stated in the rule.
 - **Heuristic** checks need judgment. A heuristic finding counts only after the reviewer confirms it and quotes the evidence (`file:line` plus the offending text). A validator `check` line is a lead, not a finding.
 
-**Target:** grade against `claude-code` unless the user asks for `portable` (claude.ai, the Claude API, or other Agent Skills clients). The report states the target.
+**Platform target:** grade against `claude-code` unless the user asks for `portable`. The report's "Graded for" row states it.
+- **`claude-code` (default): Claude Code and Cowork.** The skill ships in a plugin (or a Claude Code skills folder), may use every Claude Code frontmatter field, and must also run in Cowork, which runs the Claude Code engine. M11 covers what breaks there.
+- **`portable`: single-skill uploads to claude.ai and the Claude API, and other Agent Skills clients.** These uploads accept only six frontmatter fields (see [Frontmatter fields](#frontmatter-fields)). Cowork rejects a standalone upload that has any other field, which is why Cowork gets skills through the plugin rather than through `portable`.
 
 **Counting:** each rule ID counts once per skill, however many locations it has. List every location under the finding.
 
@@ -59,8 +61,10 @@ IDs m5-m8 are retired and are never reused.
 | M6 | Scripts that swallow errors or wait for input | Major | Anthropic, Spec | mixed |
 | M7 | Core instructions are unactionable | Major | Anthropic | heuristic |
 | M8 | Description lacks what or when, or uses first or second person | Major | Anthropic | mixed |
-| M9 | Skill will not load or loads wrong | Major | Spec, Claude Code | mixed |
+| M9 | Skill will not load or loads wrong | Major | Spec, Claude Code | definitive |
 | M10 | Secrets, undisclosed network use, or harmful instructions | Major | Anthropic | mixed |
+| M11 | Breaks in Cowork | Major | Claude Code | mixed |
+| M12 | Fails its own evals | Major | Anthropic | heuristic |
 | m1 | Explains what Claude already knows | Minor | Anthropic | heuristic |
 | m2 | Three or more options with no default | Minor | Anthropic | heuristic |
 | m3 | Time-sensitive content | Minor | Anthropic | heuristic |
@@ -99,7 +103,7 @@ A forked skill runs as a fresh subagent. It gets the skill body as its prompt, b
   - it has no explicit task (guidelines only, so the subagent returns nothing useful);
   - it is a reasoning mode applied to the ongoing conversation;
   - its `agent` type lacks tools the body needs (for example `agent: Explore` with steps that write files).
-- **Advisory, not a finding:** fork combined with Agent dispatch works within the nesting limit (`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`, default 3). Note this; do not count it.
+- **Advisory, not a finding:** fork combined with Agent dispatch works within the nesting limit (`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`, default 3; verify against the Claude Code docs). Note this; do not count it.
 - **Fix:** remove `context: fork`, `agent`, and `background`.
 - **Decision test:** fork only when the skill does all of the following:
   - it performs an explicit task with a returnable result;
@@ -138,7 +142,7 @@ A forked skill runs as a fresh subagent. It gets the skill body as its prompt, b
 
 ### M8 Description lacks what or when, or uses first or second person
 - **What:** the description says what the skill does (a capability). This part is heuristic.
-- **When, definitive:** a trigger clause: "Use when/whenever/for/if...", "Use this skill when/whenever/for/if...", "Use it when...", "Triggers on/when...", "Invoke (this skill) when...", "Activates when...", or "when the user/users...". In Claude Code a `when_to_use` field also satisfies it; for the portable target only `description` counts.
+- **When, definitive:** a trigger clause: "Use when/whenever/for/if...", "Use this skill when/whenever/for/if...", "Use it when...", "Triggers on/when...", "Invoke (this skill) when...", "Activates when...", or "when the user/users...". In Claude Code a `when_to_use` field also satisfies it; for the portable platform target only `description` counts.
 - **Person, definitive:** first or second person outside quotes is M8: "I", "I'm", "we", "our", "Let me", "you", "your", "you're". An imperative "Use this skill when..." is acceptable. A preference for a third-person verb opening is Style (S6).
 - **Fix:** write one sentence on the capability and one on the triggers, with the key use case first.
 - **Pass/fail:** "Extracts tables from PDFs. Use when the user mentions PDF tables or reports." passes. "Helps with documents" fails: there is no trigger, and the capability is vague.
@@ -149,9 +153,8 @@ A forked skill runs as a fresh subagent. It gets the skill body as its prompt, b
   - `description` is over 1024 characters or contains `<` or `>`.
   - The folder is named `synced` (any case) or starts with `anthropic-skills`.
   - Template leftovers remain: `[TODO` in SKILL.md, or the init placeholders `scripts/example.py`, `references/api_reference.md`, or `assets/example_asset.txt`.
-- **Detect, heuristic:** SKILL.md contains dynamic context injection (a `!` at the start of a line or after whitespace, followed by a backtick command; or a fenced block opened with three backticks and `!`) that is not meant to run on every invocation. A failing command aborts the invocation.
-- **Portable target, definitive:** additionally, `name` is missing, a frontmatter key falls outside the portable set (see [Frontmatter fields](#frontmatter-fields)), or `name` contains `anthropic` or `claude`.
-- **Fix:** rename to match the spec and the folder, shorten the description, remove the leftovers, and move syntax demonstrations into `references/`.
+- **Portable platform target, definitive:** additionally, `name` is missing, a frontmatter key falls outside the portable set (see [Frontmatter fields](#frontmatter-fields)), or `name` contains `anthropic` or `claude`.
+- **Fix:** rename to match the spec and the folder, shorten the description, and remove the leftovers.
 
 ### M10 Secrets, undisclosed network use, or harmful instructions
 - **Detect, definitive:** `security_scan.py` (gitleaks) reports a secret.
@@ -161,6 +164,25 @@ A forked skill runs as a fresh subagent. It gets the skill body as its prompt, b
   - instructions tell the model to reveal its hidden reasoning, which newer models refuse.
 - **Fix:** move secrets to environment variables, disclose network use and its purpose in SKILL.md, and delete the harmful instructions.
 - **Pass/fail:** "Fetches the release list from the GitHub API (network)" stated in SKILL.md passes. A script that silently POSTs file contents to an unlisted host fails.
+
+### M11 Breaks in Cowork
+Cowork runs the Claude Code engine with the plugin's skills, inside a desktop VM or a cloud container. It has no display, never reads `~/.claude/skills`, and does not run dynamic context injection. M11 applies to both platform targets, because claude.ai and the API share these limits.
+- **Detect, definitive:**
+  - SKILL.md contains dynamic context injection: a `!` at the start of a line or after whitespace, followed by a backtick command, or a fenced block opened with three backticks and `!`. Code fences count. Desktop Cowork replaces the command with a placeholder, and in Claude Code a failing command aborts the invocation.
+  - SKILL.md, a Markdown file under `references/`, or a bundled script reaches the skill's own files through an install location: `~/.claude/skills/<own-name>/`, `$HOME/...`, `%USERPROFILE%/...`, the same under `.agents/skills/`, or a project-relative `.claude/skills/<own-name>/` or `.agents/skills/<own-name>/`. Plugin installs live elsewhere, and Cowork never reads these folders. `<example>` blocks are skipped. For the skill's own name this overrides the `~/.claude/skills/` exemption in m11; paths to other skills stay under m11.
+- **Detect, heuristic:** confirm any of these:
+  - a step needs a display or a browser (a GUI window, `webbrowser.open`, a headed browser, a preview the user must look at) and offers no file output or headless path;
+  - a step depends on a local stdio MCP server or a `localhost` service and states no fallback. These run only in desktop Cowork, never in cloud sessions;
+  - a step shells out to `claude -p`;
+  - secrets are read only from a home-directory dotfile (such as `~/.config/<tool>/.env`), with no environment variable route.
+- **Fix:** reach bundled files through `${CLAUDE_SKILL_DIR}` in Markdown and through the script's own location (`Path(__file__).resolve().parent`) in scripts; turn injection into an explicit step ("Run `git status`"); write results to files (the outputs folder in Cowork) instead of opening them; state the fallback for each local service; read secrets from environment variables.
+- **Pass/fail:** "Run `python ${CLAUDE_SKILL_DIR}/scripts/report.py`" passes. "Run `python ~/.claude/skills/report/scripts/report.py`" in the `report` skill fails: plugin installs and Cowork keep the skill elsewhere.
+
+### M12 Fails its own evals
+- **When it runs:** only in a **regression** run, never in a plain review. A regression run starts when the user says `regression`, after the fix loop (Auto-Fix) changes a skill inside the user's own repository, or when create-skill's update flow asks for one. It runs only on skills in the user's own repository, and in Review Only it asks before running, because running evals executes the skill. It never runs inside an eval subagent or inside create-skill's Layer 3 review gate.
+- **Detect, heuristic:** run each case in `evals/evals.json` in a fresh subagent that has the skill, under the isolation rules in `mode-regression.md`: an inputs folder holding copies of the case's `files`, a separate output folder, no outward actions (no push, post, send, or publish), and "do not use the Skill tool". Grade every expectation against the outputs. Re-run a failing case once; only a case that fails twice counts. Quote the failed expectation and the evidence.
+- **Fix:** change the skill until the case passes. When the expectation itself is wrong, fix the eval and say why in the report.
+- **Pass/fail:** every case passes, or fails once and passes on the re-run: no finding. A case that fails both runs is M12.
 
 ## Minor rules
 
@@ -191,7 +213,7 @@ A forked skill runs as a fresh subagent. It gets the skill body as its prompt, b
 ### m11 Non-portable paths in Markdown
 - **Detect:** SKILL.md or a reference uses backslash-separated paths (a drive letter followed by a backslash, or a bundled folder such as `scripts` followed by a backslash), or user-specific absolute paths such as `/Users/<real-name>/`, `/home/<real-name>/`, or a drive-letter `Users` folder with a real name. These are exempt:
   - generic placeholders (`username`, `user`, `<user>`, `you`, `your-name`, `name`, `me`, `example`, `shared`, `public`, and names starting with `<`, `{`, `$`, or `%`);
-  - home-relative locations such as `~/.claude/skills/`;
+  - home-relative locations such as `~/.claude/skills/` (except a path to the skill's own files, which is M11);
   - fenced code blocks tagged `powershell`, `ps1`, `pwsh`, `cmd`, or `bat`.
 - **Fix:** use forward slashes and paths relative to the skill directory.
 
@@ -218,7 +240,7 @@ A forked skill runs as a fresh subagent. It gets the skill body as its prompt, b
 
 ## Style rules
 
-Style findings are listed under "Style notes (not graded)". Auto-Fix applies them only when the user asks; Auto-PR never applies them.
+Style findings are listed under "Style notes (not graded)". Auto-Fix applies them only when the user asks.
 
 - **S1 Workflows or examples not wrapped in XML tags:** SKILL.md has no `<instructions>` block around its workflow (definitive), or has worked examples outside `<example>` tags (heuristic; the validator checks only the first part).
 - **S2 Fewer than 3 or more than 5 example blocks:** count the lines in SKILL.md that open with `<example>`, outside code fences.
@@ -230,7 +252,7 @@ Style findings are listed under "Style notes (not graded)". Auto-Fix applies the
 
 ## Frontmatter fields
 
-**Claude Code** accepts exactly these 20 keys (anything else is m12):
+**Claude Code** accepts exactly these 20 keys (anything else is m12; verify the list against the Claude Code skills docs when it changes):
 
 | Key | Key | Key | Key |
 |-----|-----|-----|-----|
@@ -240,7 +262,9 @@ Style findings are listed under "Style notes (not graded)". Auto-Fix applies the
 | `agent` | `background` | `hooks` | `paths` |
 | `shell` | `metadata` | `license` | `compatibility` |
 
-**Portable** targets accept only `name`, `description`, `license`, `compatibility` (at most 500 characters), `metadata` (string-to-string map), and `allowed-tools`. Anything else is M9 for portable.
+Plugin skills keep all 20 keys in both Claude Code and Cowork.
+
+The **portable** platform target accepts only `name`, `description`, `license`, `compatibility` (at most 500 characters), `metadata` (string-to-string map), and `allowed-tools`. Anything else is M9 for portable. A standalone skill upload to claude.ai, which is also how Cowork would load a loose skill, accepts only these six.
 
 `allowed-tools` pre-approves the listed tools for the invoking turn. It does not restrict which tools exist; `disallowed-tools` removes tools.
 
@@ -277,7 +301,7 @@ The counts are numbers of definitive finding lines; `checks` counts heuristic le
 | Script | Usage |
 |--------|-------|
 | `init_skill.py` | `<name> --path <dir> [--fork] [--resources scripts,references,assets]` |
-| `package_skill.py` | `<skill-dir> [output-dir]`; refuses when a definitive Major remains, when the output folder is inside the skill, when `.security-scan-passed` is missing or no longer matches the content, when the skill contains a symlink or junction, or when SKILL.md references a bundled file the zip leaves out (a reference to a local `.env` file or virtualenv is only a warning). The zip leaves out the top-level `evals/`, `.git/`, `__pycache__/`, `node_modules/`, `.venv/`, `venv/`, `.env` files and folders except `.env.example`, `*.pyc`, `*.zip`, OS junk files, and the marker. |
+| `package_skill.py` | `<skill-dir> [output-dir]`; builds a single-skill zip for claude.ai and the API, never for Cowork (Cowork installs the plugin), so it validates against the portable platform target. It refuses when a definitive Major remains, when the output folder is inside the skill, when `.security-scan-passed` is missing or no longer matches the content, when the skill contains a symlink or junction, or when SKILL.md references a bundled file the zip leaves out (a reference to a local `.env` file or virtualenv is only a warning). The zip leaves out the top-level `evals/`, `.git/`, `__pycache__/`, `node_modules/`, `.venv/`, `venv/`, `.env` files and folders except `.env.example`, `*.pyc`, `*.zip`, OS junk files, and the marker. Exit codes: 0 packaged, 1 refused or failed (including a missing or broken sibling script), 2 usage error; refusals and errors go to stderr. |
 | `security_scan.py` | `<skill-dir> [--verbose] [--no-marker]`; exit 0 clean, 1 high-severity secrets, 2 critical secrets, 3 gitleaks not installed, 4 scan or usage error. Pattern leads from `--verbose` never change the exit code. A clean scan writes `.security-scan-passed` unless `--no-marker` is given. |
 
 **security_scan.py findings map to rules:**

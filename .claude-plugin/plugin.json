@@ -1,0 +1,21 @@
+{
+  "name": "repertoire",
+  "description": "Skills for Claude Code and Cowork: create and review skills against one rule catalog, research a topic with parallel subagents, write changelogs, READMEs and CLAUDE.md files, draw Mermaid diagrams, design frontends, and find more skills.",
+  "author": {
+    "name": "Costa Marcello"
+  },
+  "homepage": "https://github.com/costa-marcello/repertoire",
+  "repository": "https://github.com/costa-marcello/repertoire",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "cowork",
+    "skill-authoring",
+    "skill-review",
+    "research",
+    "changelog",
+    "readme",
+    "mermaid",
+    "frontend-design"
+  ]
+}

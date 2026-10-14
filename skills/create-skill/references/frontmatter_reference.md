@@ -1,6 +1,6 @@
 # Frontmatter Reference
 
-The YAML block between the `---` markers at the top of SKILL.md. This file covers every field Claude Code reads, the portable subset, invocation control, substitutions, and dynamic context injection. The fork decision test is in `authoring_rules.md`.
+The YAML block between the `---` markers at the top of SKILL.md. This file covers every field Claude Code reads (in Cowork too, through the plugin), the portable subset, invocation control, substitutions, and dynamic context injection. The fork decision test is in `authoring_rules.md`.
 
 ## Contents
 
@@ -30,6 +30,8 @@ Quote the description. An unquoted value that contains a colon followed by a spa
 
 Claude Code reads exactly these 20 fields. It ignores any other field silently, and review-skill reports one as m12, because it is usually a typo.
 
+These fields are the default `claude-code` target, which means Claude Code and Cowork. A plugin skill keeps all 20 in both, because Cowork runs the Claude Code engine and installs skills through the plugin. Never strip a field to make a skill fit Cowork; only a single-skill upload to claude.ai or the API needs the [portable subset](#portable-subset). Whether Cowork acts on `argument-hint`, `when_to_use`, `context: fork`, and argument substitution is not confirmed, so a skill should still work when they are ignored.
+
 | Field | Default | Semantics |
 |-------|---------|-----------|
 | `name` | Directory name | 1-64 characters of `a-z`, `0-9`, and single hyphens, equal to the directory name. No `anthropic` or `claude`, which blocks upload to claude.ai and the API. |
@@ -55,7 +57,7 @@ Claude Code reads exactly these 20 fields. It ignores any other field silently, 
 
 ## Portable subset
 
-claude.ai, the Claude API, and other Agent Skills clients follow the Agent Skills spec. For the portable target, use only these fields:
+Single-skill uploads to claude.ai and the Claude API, and other Agent Skills clients, follow the Agent Skills spec. Cowork is not one of them: it gets skills through the plugin, with every Claude Code field. For the portable target, use only these fields:
 
 - `name` (required)
 - `description` (required)
@@ -64,7 +66,7 @@ claude.ai, the Claude API, and other Agent Skills clients follow the Agent Skill
 - `metadata` (string-to-string map)
 - `allowed-tools` (experimental, space-separated)
 
-For the portable target, review-skill treats these as M9: any other field, a missing `name`, and a `name` that contains `anthropic` or `claude`. Check with `quick_validate.py <skill-dir> --portable`. Anthropic's skill-creator validator and `skills-ref validate` also reject every field outside this set, so they flag Claude Code fields such as `context` and `disable-model-invocation`.
+For the portable target, review-skill treats these as M9: any other field, a missing `name`, and a `name` that contains `anthropic` or `claude`. Check with `quick_validate.py <skill-dir> --portable`. `package_skill.py` always validates against this subset, because its zip is only for claude.ai and the API; a skill that uses `argument-hint` or another Claude Code field ships through the plugin instead. Anthropic's skill-creator validator and `skills-ref validate` also reject every field outside this set, so they flag Claude Code fields such as `context` and `disable-model-invocation`.
 
 ## Invocation control
 
@@ -88,7 +90,7 @@ There is no separate subagent column. Subagents do not inherit the skills invoke
 - **No questions, no Workflow.** It cannot ask the user anything, because ordinary subagents lose AskUserQuestion, and it has no Workflow tool. It can dispatch subagents with the Agent tool within the nesting limit (`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`, default 3).
 - **Explicit tasks only.** A guideline-only skill returns nothing useful when forked.
 
-Decide with the fork decision test in `authoring_rules.md` ("Deciding on context: fork"). The default is inline, which is always valid.
+Decide with the fork decision test in `authoring_rules.md` ("Deciding on context: fork"). The default is inline, which is always valid. Whether Cowork honours `context: fork` is not confirmed, so a forked skill must also give the right result when it runs inline.
 
 ## String substitutions
 
@@ -102,7 +104,7 @@ On invocation, Claude Code substitutes these tokens everywhere in SKILL.md, incl
 | `$name` | A named argument declared in `arguments`; empty when its position has no argument |
 | `${CLAUDE_SESSION_ID}` | The current session ID |
 | `${CLAUDE_EFFORT}` | The current effort level |
-| `${CLAUDE_SKILL_DIR}` | The directory that contains SKILL.md |
+| `${CLAUDE_SKILL_DIR}` | The directory that contains SKILL.md, wherever it is installed (also substituted in Cowork) |
 | `${CLAUDE_PROJECT_DIR}` | The project root |
 | `${CLAUDE_PLUGIN_ROOT}`, `${CLAUDE_PLUGIN_DATA}` | The plugin directory and its data directory (plugin skills only) |
 
@@ -114,10 +116,11 @@ Rules:
 
 ## Referencing bundled scripts
 
-- **Claude Code:** write `${CLAUDE_SKILL_DIR}/scripts/extract.py`. It resolves to the skill's directory, whatever the working directory is.
+- **Claude Code and Cowork:** write `${CLAUDE_SKILL_DIR}/scripts/extract.py`. It resolves to the skill's directory, whatever the working directory is, through a plugin cache or a linked checkout alike.
 - **Portable target:** write paths relative to the skill directory (`scripts/extract.py`), and Claude resolves them against the skill's location.
-- **Plugin skills:** `${CLAUDE_PLUGIN_ROOT}` points at the plugin root, for files shared by several skills in the plugin.
-- **Paths:** use forward slashes, and never an assumed install location such as a fixed home-directory path, because the skill may be installed per project, per user, or in a plugin.
+- **Inside scripts:** find bundled files from the script's own location, `Path(__file__).resolve().parent`.
+- **Plugin skills:** `${CLAUDE_PLUGIN_ROOT}` points at the plugin root, for files shared by several skills in the plugin, and `${CLAUDE_SKILL_DIR}/../<other-skill>/` reaches a sibling skill.
+- **Paths:** use forward slashes, and never reach the skill's own files through an install location such as `~/.claude/skills/<skill-name>/` or a project's `.claude/skills/<skill-name>/`. Plugin installs live elsewhere and Cowork never reads those folders, so review-skill reports it as M11 "Breaks in Cowork".
 - **Python:** write commands with `python`; use `python3` only where `python` is not on the path (on Windows `python3` is often the Microsoft Store stub).
 
 ## Dynamic context injection
@@ -129,10 +132,9 @@ Claude Code can run a shell command while loading SKILL.md, and put the command'
 
 The `shell` field picks bash or PowerShell.
 
-- **Every invocation.** The command runs every time the skill is invoked, before Claude reads anything. A failing command aborts the invocation.
-- **When to use it.** Only for context that every run needs and that is cheap and safe to compute, such as the current branch name.
-- **Never as a demonstration in SKILL.md.** The demonstration would run on every invocation. Describe the syntax in words, as this section does, or keep a demonstration in a reference file, which Claude Code does not preprocess.
-- **Review.** review-skill reports unintended injection as M9.
+- **Keep it out of skills.** Desktop Cowork replaces the command with a placeholder, and in Claude Code the command runs on every invocation, before Claude reads anything, and a failing command aborts the invocation. A skill must work in both, so write the command as a step instead: "Run `git branch --show-current`".
+- **Not even as a demonstration in SKILL.md.** Code fences count, so a demonstration would run too. Describe the syntax in words, as this section does, or keep a demonstration in a reference file, which Claude Code does not preprocess.
+- **Review.** review-skill reports any injection in SKILL.md, code fences included, as M11 "Breaks in Cowork" (definitive).
 
 ## Examples
 

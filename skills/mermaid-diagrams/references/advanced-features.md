@@ -10,18 +10,20 @@
 6. [Comments and Documentation](#comments-and-documentation)
 7. [Directional Hints](#directional-hints)
 8. [Responsive Sizing](#responsive-sizing)
-9. [SVG Export Options](#svg-export-options)
-10. [Performance Considerations](#performance-considerations)
+9. [mermaid-cli Options](#mermaid-cli-options)
+10. [Large Diagrams](#large-diagrams)
 11. [Integration Examples](#integration-examples)
 12. [Best Practices for Advanced Features](#best-practices-for-advanced-features)
 
-Configuration, layout options, and integration patterns for creating professional diagrams.
+Configuration, layout options, and integration patterns. Layout engines, looks, and their options change between Mermaid releases, and each platform pins its own version: verify against the Mermaid docs (mermaid.js.org) before relying on anything here, and render with `mmdc` to confirm.
 
-<example name="Layout: Dagre Default">
+<example name="Layout: Dagre">
 
 ## Layout Options
 
-### Dagre Layout (Default)
+### Dagre Layout
+
+The classic layout engine:
 
 ```mermaid
 ---
@@ -34,11 +36,11 @@ flowchart TD
 
 </example>
 
-<example name="Layout: ELK Advanced">
+<example name="Layout: ELK">
 
-### ELK Layout (Advanced)
+### ELK Layout
 
-For complex diagrams with better automatic layout:
+For one large diagram whose edges cross badly under dagre:
 
 ```mermaid
 ---
@@ -57,6 +59,8 @@ flowchart TD
 - `NETWORK_SIMPLEX` - Network optimization
 - `LINEAR_SEGMENTS` - Linear arrangement
 - `BRANDES_KOEPF` - Balanced (default)
+
+A renderer without ELK falls back to dagre or fails, depending on its version.
 
 </example>
 
@@ -108,7 +112,7 @@ config:
   layout: dagre
   themeVariables:
     primaryColor: "#ff6b6b"
-    primaryTextColor: "#fff"
+    primaryTextColor: "#1a1a1a"
     primaryBorderColor: "#d63031"
     lineColor: "#74b9ff"
     secondaryColor: "#00b894"
@@ -121,7 +125,7 @@ flowchart TD
     Process -->|No| Error[Show Error]
     Store --> Notify[Send Notification]
     Error --> Input
-    Notify --> End([Complete])
+    Notify --> Finish([Complete])
 ```
 
 </example>
@@ -130,7 +134,7 @@ flowchart TD
 
 ## Click Events and Links
 
-Add interactive elements:
+Make nodes open a URL:
 
 ```mermaid
 flowchart LR
@@ -145,13 +149,15 @@ flowchart LR
     A --> B --> C
 ```
 
+Clicks work only when the renderer runs with `securityLevel: 'loose'`. Mermaid's default is `strict`, which turns them off, so most hosted renderers show the nodes without links.
+
 </example>
 
 <example name="Tooltips">
 
 ## Tooltips
 
-Add hover text to nodes using the `click` callback syntax:
+The quoted string after the URL is the hover text, and `_blank` opens the link in a new tab:
 
 ```mermaid
 flowchart LR
@@ -163,6 +169,8 @@ flowchart LR
     click A href "https://api.example.com" "API Documentation" _blank
     click B href "https://dashboard.example.com" "Service Dashboard" _blank
 ```
+
+The same `securityLevel` limit as click events applies.
 
 </example>
 
@@ -179,7 +187,7 @@ flowchart TD
 
     A[Start]
     B[Process]
-    C[End]
+    C[Finish]
 
     %% Define relationships
     A --> B
@@ -230,47 +238,33 @@ Use CSS to make diagrams responsive:
 </div>
 ```
 
-## SVG Export Options
+## mermaid-cli Options
 
-When exporting to SVG:
+SKILL.md Step 3 has the render routine. These flags adjust the output:
 
 ```bash
-# Export with custom dimensions
-mmdc -i diagram.mmd -o output.svg -w 1920 -H 1080
+# Transparent background (the default is white)
+mmdc -i diagram.mmd -o diagram.svg -b transparent
 
-# Export with background color
-mmdc -i diagram.mmd -o output.svg -b "#ffffff"
+# Sharper PNG: double the device scale factor
+mmdc -i diagram.mmd -o diagram.png -s 2
 
-# Export with transparent background
-mmdc -i diagram.mmd -o output.svg -b "transparent"
+# Built-in theme without editing the diagram
+mmdc -i diagram.mmd -o diagram.svg -t dark
+
+# Render every mermaid block in a Markdown file to images,
+# and write a copy of the file that links to them
+mmdc -i README.md -o README.rendered.md
 ```
 
-<example name="Performance: Large Diagrams">
+Size flags differ between mermaid-cli versions (`-w` and `-H` in older releases, `--size` in newer ones). Run `mmdc -h` and use the flags it lists.
 
-## Performance Considerations
+## Large Diagrams
 
-For large diagrams:
-
-```mermaid
----
-config:
-  layout: elk
-  elk:
-    mergeEdges: true
----
-flowchart TD
-    %% ELK handles complex layouts better
-    %% Merge edges reduces visual clutter
-```
-
-**Performance tips:**
-- Use ELK layout for diagrams with >20 nodes
-- Enable edge merging for simplified connections
-- Split very large diagrams into multiple focused views
+SKILL.md Step 2 sets the default: split a diagram of more than about 15 nodes into focused views. When the user wants one large diagram anyway:
+- Switch to `layout: elk` and enable `mergeEdges` (see ELK Layout above)
 - Group related nodes in subgraphs to reduce visual complexity
-- Limit styling to essential elements
-
-</example>
+- Limit styling to the nodes that need it
 
 <example name="Integration: Markdown">
 
@@ -293,12 +287,14 @@ flowchart LR
 
 ### HTML Files
 
+Load Mermaid from a CDN pinned to a major version (11 in this example), and verify the current major version against the Mermaid docs.
+
 ```html
 <!DOCTYPE html>
 <html>
 <head>
     <script type="module">
-        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs';
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
         mermaid.initialize({
             startOnLoad: true,
             theme: 'dark',
@@ -321,35 +317,45 @@ flowchart LR
 
 ### React Components
 
+Pass the diagram as a string, because JSX joins text lines and Mermaid needs the line breaks. `mermaid.render` returns a promise of the SVG markup:
+
 ```jsx
-import React from 'react';
+import { useEffect, useRef } from 'react';
 import mermaid from 'mermaid';
 
-mermaid.initialize({
-    startOnLoad: true,
-    theme: 'forest'
-});
+mermaid.initialize({ startOnLoad: false, theme: 'forest' });
 
-function DiagramComponent() {
-    React.useEffect(() => {
-        mermaid.contentLoaded();
-    }, []);
+let diagramCount = 0;
 
-    return (
-        <div className="mermaid">
-            flowchart LR
-                A --> B
-        </div>
-    );
+export function MermaidDiagram({ chart }) {
+    const ref = useRef(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        const id = `mermaid-${++diagramCount}`;
+        mermaid.render(id, chart)
+            .then(({ svg }) => {
+                if (!cancelled && ref.current) ref.current.innerHTML = svg;
+            })
+            .catch((err) => {
+                // Show the parse error instead of an empty box
+                if (!cancelled && ref.current) ref.current.textContent = String(err);
+            });
+        return () => { cancelled = true; };
+    }, [chart]);
+
+    return <div ref={ref} />;
 }
+
+// Usage:
+// <MermaidDiagram chart={`flowchart LR
+//     A --> B`} />
 ```
 
 </example>
 
 ## Best Practices for Advanced Features
 
-1. **Switch to ELK when dagre produces crossed lines** - Add `layout: elk` to the config frontmatter. ELK handles 20+ node diagrams better.
-2. **Add a `%%` comment above every `themeVariables` block** explaining the colour rationale.
-3. **Export to PNG/SVG and open the file** before committing -- renderer differences between platforms are common.
-4. **Group related nodes in subgraphs** when a diagram has more than 8 nodes. Name each subgraph after the bounded context it represents.
-5. **Commit config frontmatter alongside the diagram** so theme changes appear in code review diffs.
+1. **Switch to ELK when dagre produces crossed lines** in a diagram the user wants kept whole. Add `layout: elk` to the config frontmatter.
+2. **Group each distinct phase or bounded context in a subgraph** named after it.
+3. **Commit config frontmatter alongside the diagram** so theme changes appear in code review diffs.

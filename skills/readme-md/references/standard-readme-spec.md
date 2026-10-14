@@ -4,7 +4,7 @@
 
 A compliant README must satisfy all the requirements listed below.
 
-> Note: Standard Readme is designed for open source libraries. Although it's [historically](README.md#background) made for Node and npm projects, it also applies to libraries in other languages and package managers.
+> Note: Standard Readme is designed for open source libraries. Although it's [historically](https://github.com/RichardLitt/standard-readme#background) made for Node and npm projects, it also applies to libraries in other languages and package managers.
 
 **Requirements:**
   - Be called README (with capitalization) and have a specific extension depending on its format (`.md` for Markdown, `.org` for Org Mode Markup syntax, `.html` for HTML, ...)
@@ -71,7 +71,7 @@ _Note: This is only a navigation guide for the specification, and does not defin
 - Must be newline delimited.
 
 **Suggestions:**
-- Use http://shields.io or a similar service to create and host the images.
+- Use https://shields.io or a similar service to create and host the images.
 - Add the [Standard Readme badge](https://github.com/RichardLitt/standard-readme#badge).
 
 ### Short Description
@@ -109,7 +109,7 @@ able to refresh their memory without hitting "page down". As your
 reader continues through the document, they should receive a
 progressively greater amount of knowledge."
 
-  ~ [Kirrily "Skud" Robert, perlmodstyle](http://perldoc.perl.org/perlmodstyle.html)
+  ~ [Kirrily "Skud" Robert, perlmodstyle](https://perldoc.perl.org/perlmodstyle)
 
 ### Table of Contents
 **Status:** Required; optional for READMEs shorter than 100 lines.

@@ -14,7 +14,7 @@ What Anthropic and the Claude Code docs say about writing skills, and how it sha
 8. [Evaluation-driven development](#evaluation-driven-development)
 9. [Claude A and Claude B](#claude-a-and-claude-b)
 10. [Scripts](#scripts)
-11. [Claude Code specifics](#claude-code-specifics)
+11. [Claude Code and Cowork specifics](#claude-code-and-cowork-specifics)
 12. [Anti-patterns](#anti-patterns)
 13. [Security review](#security-review)
 
@@ -35,7 +35,7 @@ skill-name/
   scripts/        code Claude runs; only the output enters context
   references/     documentation Claude reads when a step calls for it
   assets/         files used in the output: templates, images, fonts
-  evals/          evals.json and trigger_queries.json (Repertoire convention; not packaged)
+  evals/          evals.json and trigger_queries.json (Repertoire convention; left out of zips)
 ```
 
 Claude Code requires no frontmatter field. `name` defaults to the directory name, and `description` falls back to the first non-empty line of the body. Write both anyway. The description decides triggering, and the Agent Skills spec requires both fields. Claude Code ignores unknown fields silently, and malformed YAML loads the body with empty metadata. That is why `quick_validate.py` parses the frontmatter strictly.
@@ -144,21 +144,26 @@ The Claude platform has no built-in eval runner. `evals_guide.md` describes the 
   - Return meaningful exit codes, and keep the output size predictable.
 - **MCP tools.** Write the fully qualified name, `ServerName:tool_name`, or `mcp__server__tool_name` in Claude Code. A bare tool name is ambiguous when several servers are connected.
 
-## Claude Code specifics
+## Claude Code and Cowork specifics
 
 - **Locations,** by precedence: enterprise, then personal (`~/.claude/skills/<name>/SKILL.md`), then project (`.claude/skills/<name>/SKILL.md`).
-  - Plugin skills are namespaced `/plugin:skill`.
+  - Plugin skills are namespaced `/plugin:skill`. A plugin is the one route that reaches both Claude Code and Cowork (`distribution.md`).
   - Nested `.claude/skills/` directories load on first touch, and `--add-dir` directories load too.
-  - Edits reload live, except a new top-level skills directory, which needs `/reload-skills`.
+  - Edits reload live, except in a top-level skills directory created during the session: Claude Code does not watch it, so run `/reload-skills` after each change there. A plugin, including a linked checkout (`distribution.md`), applies changes with `/reload-plugins` instead.
   - Do not name a skill directory `synced`, or `anthropic-skills*` outside plugins.
 - **Tools.**
   - The agent-dispatch tool is Agent; `Task(...)` still works as an alias in settings and agent definitions.
-  - TaskCreate, TaskList, TaskUpdate, and TaskGet manage the to-do list and do not dispatch agents.
+  - TaskCreate, TaskList, TaskUpdate, and TaskGet manage the todo list and do not dispatch agents.
   - Workflow also dispatches agents, but subagents do not get it. SendMessage messages agents.
 - **Subagents.**
   - Subagents can dispatch subagents up to 3 levels deep by default (`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`). Ordinary subagents lose AskUserQuestion and Workflow.
   - Subagents do not inherit the parent's invoked skills, but they can invoke project, user, and plugin skills through the Skill tool. A subagent definition's `skills:` field preloads full skill content.
 - **Fork.** `context: fork` semantics are in `frontmatter_reference.md`, and the fork decision test is in `authoring_rules.md`.
+- **Cowork.** It runs the Claude Code engine with the installed plugins' skills, in a desktop VM or a cloud container.
+  - Subagents (the Agent tool), hooks, scripts, and network access within the egress rules work, and `${CLAUDE_SKILL_DIR}` is substituted.
+  - It never reads `~/.claude/skills`, has no display or browser, and desktop Cowork replaces dynamic context injection with a placeholder.
+  - Local stdio MCP servers run only in desktop Cowork, never in cloud sessions, so a skill that uses one states a fallback.
+  - These limits are M11 "Breaks in Cowork"; create-skill's step 6 checks them.
 - **Diagnostics.** `/skill-doctor` reports each skill's context cost and usage; it is not a linter.
 - **Testing.** Test with and without the skill, each in a fresh session.
 
@@ -176,6 +181,8 @@ The Claude platform has no built-in eval runner. `evals_guide.md` describes the 
 | Asking the model to print its hidden reasoning | Remove it; newer models refuse such requests |
 | Undocumented constants | Comment the reason for each value |
 | Assuming tools are installed | List requirements and install commands |
+| Opening a window or browser to show results | Write files (in Cowork, to the outputs folder) |
+| Reaching the skill's own files through an install location | `${CLAUDE_SKILL_DIR}/...`, which works wherever the skill is installed |
 
 ## Security review
 

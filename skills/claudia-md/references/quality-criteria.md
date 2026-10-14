@@ -203,7 +203,7 @@ For rapid rule-by-rule review. **Only evaluate rules/patterns sections**, not fa
 - `.claude/rules/*.md` files: Patterns sections need reasoning
 - Generated subdirectory CLAUDE.md: Patterns sections need reasoning
 - Root CLAUDE.md: Patterns/Conventions sections need reasoning
-- Hand-crafted subfolder CLAUDE.md: Conventions sections should have reasoning
+- Hand-crafted subdirectory CLAUDE.md: Conventions sections should have reasoning
 
 **Total: /13** (with potential negatives for conflicts)
 
@@ -220,8 +220,9 @@ For rapid rule-by-rule review. **Only evaluate rules/patterns sections**, not fa
 
 1. Read the CLAUDE.md file completely
 2. Cross-reference with actual codebase:
-   - Run documented commands (mentally or actually)
+   - Check that each documented command exists in `package.json` scripts, the Makefile, `pyproject.toml`, or the matching config. Run nothing in Audit or Review, because a command such as `npm start` can start a server or change files
    - Check if referenced files exist
+   - Check that each `@path` import resolves from the file that contains it
    - Verify architecture descriptions
 3. Score each criterion
 4. Calculate total and assign grade
@@ -233,7 +234,9 @@ For rapid rule-by-rule review. **Only evaluate rules/patterns sections**, not fa
 ## Red Flags
 
 - Commands that would fail (wrong paths, missing deps)
-- References to deleted files/folders
+- References to deleted files or directories
+- `@` imports that do not resolve from the importing file, or that import a file Claude Code loads anyway (a `.claude/rules/` file, a parent CLAUDE.md)
+- A file over 200 lines (the Claude Code docs' target)
 - Outdated tech versions
 - Copy-paste from templates without customization
 - Generic advice not specific to the project

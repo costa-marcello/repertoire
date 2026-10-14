@@ -77,6 +77,7 @@ From the Agent Skills specification. Report gaps as advisory notes unless a rule
   ```
 
 - **Paths.** Scripts take paths as arguments or derive them from their own location. A user-specific absolute path in a script is reported by security_scan as an `[m11] minor check` line; confirm it by reading.
+- **Runs in Cowork (M11).** A script that reaches its own skill's files through an install location (`~/.claude/skills/<own-name>/`, `.claude/skills/<own-name>/`, or the same under `.agents/skills/`) breaks in plugin installs and in Cowork; derive the path from `Path(__file__).resolve().parent`. Also M11, after confirming by reading: opening a browser or window (quick_validate prints a `webbrowser` import as an `[M11] major check` line), calling `claude -p`, needing a `localhost` service with no fallback, or reading secrets only from a home-directory dotfile.
 
 ## Security (M10)
 
@@ -99,5 +100,6 @@ Script review:
 - [ ] Failures exit non-zero with an actionable message (M6)
 - [ ] SKILL.md says run or read for each script, and names its requirements (m13)
 - [ ] Network use, file access, and credentials checked against SKILL.md (M10)
+- [ ] Own files reached through the script's location, no browser or window, no `claude -p`, a fallback for local services, secrets from environment variables (M11)
 - [ ] --help, stdout/stderr split, output size, documented constants (advisory)
 ```

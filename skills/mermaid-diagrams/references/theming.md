@@ -25,7 +25,7 @@ config:
   theme: base
   themeVariables:
     primaryColor: "#ff6b6b"
-    primaryTextColor: "#fff"
+    primaryTextColor: "#1a1a1a"
     primaryBorderColor: "#333"
     lineColor: "#666"
     secondaryColor: "#4ecdc4"
@@ -41,19 +41,14 @@ flowchart TD
 
 ### Built-in Themes
 
-```mermaid
----
-config:
-  theme: default
----
-```
-
-**Available themes (default to `default`; use `base` when you need full colour control):**
-- `default` - Standard blue theme (recommended)
+Set `theme:` under `config:` in the frontmatter, as in the examples below. Default to `default`; use `base` when you need custom colors.
+- `default` - Standard blue theme
 - `forest` - Green earth tones
 - `dark` - Dark mode friendly
-- `neutral` - Grayscale professional
-- `base` - Minimal base theme for full customisation
+- `neutral` - Grayscale, good for print
+- `base` - Minimal base theme, the only one `themeVariables` can change
+
+Newer Mermaid releases add more themes. Verify the list against the Mermaid theming docs before using a theme not listed here.
 
 <example name="Default Theme">
 
@@ -107,7 +102,7 @@ flowchart LR
 
 ## Custom Theme Variables
 
-Override specific colors:
+Override specific colors. Two rules decide whether an override shows up: it works only with `theme: base`, and only hex colors are recognized (`#ff6b6b` works, `red` does not).
 
 ```mermaid
 ---
@@ -115,7 +110,7 @@ config:
   theme: base
   themeVariables:
     primaryColor: "#ff6b6b"
-    primaryTextColor: "#fff"
+    primaryTextColor: "#1a1a1a"
     primaryBorderColor: "#d63031"
     lineColor: "#74b9ff"
     secondaryColor: "#00b894"
@@ -146,9 +141,9 @@ flowchart TD
     B[Warning]:::warning
     C[Error]:::error
 
-    classDef success fill:#00b894,stroke:#00a383,color:#fff
+    classDef success fill:#00b894,stroke:#00a383,color:#1a1a1a
     classDef warning fill:#fdcb6e,stroke:#e8b923,color:#333
-    classDef error fill:#ff6b6b,stroke:#ee5253,color:#fff
+    classDef error fill:#ff6b6b,stroke:#ee5253,color:#1a1a1a
 
     A --> B --> C
 ```
@@ -296,10 +291,6 @@ flowchart TB
     style servers fill:#fff3e0,stroke:#ff9800,stroke-width:2px
     style monitoring fill:#e3f2fd,stroke:#2196f3,stroke-width:2px
 
-    style lb fill:#ffeb3b,stroke:#fbc02d,stroke-width:2px
-    style cache fill:#ce93d8,stroke:#ab47bc,stroke-width:2px
-    style db fill:#ce93d8,stroke:#ab47bc,stroke-width:2px
-
     classDef serverClass fill:#81c784,stroke:#4caf50,stroke-width:2px,color:#000
     class app1,app2,app3 serverClass
 
@@ -342,7 +333,7 @@ flowchart TD
 ## Best Practices for Theming
 
 1. **Pick one theme per document** - All diagrams in the same page or README should share the same theme for visual consistency.
-2. **Limit custom colours to 3-4** - More than that creates visual noise. Use `classDef` to apply them consistently.
+2. **Limit custom fill colors to 3-4 per diagram** - More than that creates visual noise. Use `classDef` to apply them consistently.
 3. **Try `look: handDrawn` for informal docs** and `look: classic` for technical specifications. Match the tone to the audience.
-4. **Check WCAG AA contrast** (4.5:1 ratio) for every `primaryTextColor`/`primaryColor` pair. Test with a colour contrast checker.
+4. **Check text contrast** (the ratio is in SKILL.md's Best Practices) for every `primaryTextColor`/`primaryColor` pair and every `classDef` fill and text color.
 5. **Put config frontmatter in the diagram** rather than global CSS so each diagram is self-contained and portable.

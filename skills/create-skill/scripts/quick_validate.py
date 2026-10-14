@@ -4,6 +4,11 @@
 Implements the definitive checks in review-skill/references/rules.md and prints
 heuristic leads as "check" lines. Every check is read-only.
 
+The default target is Claude Code and Cowork: a plugin skill that may use every
+Claude Code frontmatter field. --portable grades a single-skill upload to
+claude.ai or the Claude API, which accepts only six frontmatter fields. M11
+(Breaks in Cowork) applies to both targets.
+
 Usage:
     python scripts/quick_validate.py <skill-dir> [--portable]
 
@@ -57,7 +62,7 @@ SKILL_FILE = "SKILL.md"
 
 # Output order: rule IDs in the order rules.md lists them.
 RULE_ORDER = (
-    "F", "M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10",
+    "F", "M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10", "M11", "M12",
     "m1", "m2", "m3", "m4", "m9", "m10", "m11", "m12", "m13", "m14", "m15",
     "S1", "S2", "S3", "S4", "S5", "S6", "S7",
 )
@@ -83,6 +88,7 @@ MAX_EXAMPLES = 5  # S2: house maximum before examples belong in references/
 MIN_EVAL_CASES = 3  # S5: Anthropic's checklist asks for at least three evaluations
 NEGATION_WINDOW = 120  # M2: characters before a match searched for a negation (the clause bounds it further)
 MAX_LISTED_LINES = 8  # message length cap when a finding lists extra line numbers
+MAX_QUOTED_PATH = 120  # M11: message length cap for a quoted install path or injected command
 FRONTMATTER_FIRST_LINE = 2  # YAML reports 0-based lines; its line 0 is file line 2, after the opening ---
 
 # --- Vocabularies -------------------------------------------------------------
@@ -343,10 +349,21 @@ WEAK_VERB_RE = re.compile(
     re.IGNORECASE,
 )
 EMPHASIS_RE = re.compile(r"\b(?:" + "|".join(EMPHASIS_WORDS) + r")\b")
-# The two forms of dynamic context injection Claude Code runs. The fence form is
-# written without overlapping quantifiers so an unclosed "```!" costs linear time.
-INJECTION_INLINE_RE = re.compile(r"(?:^|(?<=\s))!`[^`]+`", re.MULTILINE)
+# M11: the two forms of dynamic context injection Claude Code runs, which Cowork
+# replaces with a placeholder. The fence form is written without overlapping
+# quantifiers so an unclosed "```!" costs linear time.
+INJECTION_INLINE_RE = re.compile(r"(?:^|(?<=\s))!`(?P<command>[^`]+)`", re.MULTILINE)
 INJECTION_FENCE_RE = re.compile(r"```![\s\S]*?```")
+# M11: a skills folder under an install location (~/, $HOME/, ${HOME}/, %USERPROFILE%\,
+# $env:USERPROFILE\, a project, or any other base), followed by a skill name that
+# _own_install_path_re fills in. ".claude" must start a path segment.
+INSTALL_SKILLS_DIR = r"(?<![\w.-])\.(?:claude|agents)[/\\]+skills[/\\]+"
+# The name ends at a separator, a quote, a backtick, whitespace, or the end of the
+# line, so "research-tools" or "research.md" never matches the skill "research".
+INSTALL_NAME_END = r"(?=[/\\'\"`\s]|$)"
+PATH_TOKEN_STOPS = "'\"`([="  # with whitespace, where the path before a match starts
+PATH_TOKEN_TAIL_RE = re.compile(r"[^\s'\"`)\]]*")  # the rest of the path after a match
+DISPLAY_MODULES = frozenset({"webbrowser"})  # M11 lead: opens a browser, which Cowork cannot show
 ARGUMENT_TOKEN_RE = re.compile(r"(?<!\\)\$(?:ARGUMENTS(?:\[\d+\])?|\d)")
 TOC_HEADING_RE = re.compile(r"^#{1,6}\s*(?:table of )?contents\b", re.IGNORECASE)
 DRIVE_BACKSLASH_RE = re.compile(r"\b[A-Za-z]:\\")
@@ -1096,6 +1113,24 @@ def _check_python_script(tree: ast.Module, rel: str, out: _Collector) -> None:
                 "(check sys.stdin.isatty() or take a file argument)")
 
 
+def _check_display_imports(tree: ast.Module, rel: str, out: _Collector) -> None:
+    """M11 lead: a script that imports a module which opens a browser; Cowork has no display."""
+    imports: list[tuple[int, str]] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            modules = [alias.name for alias in node.names]
+        elif isinstance(node, ast.ImportFrom) and not node.level and node.module:
+            modules = [node.module]
+        else:
+            continue
+        imports.extend((node.lineno, module) for module in modules if module.split(".")[0] in DISPLAY_MODULES)
+    if imports:
+        line, module = min(imports)
+        out.add("M11", CHECK, rel, line,
+                f"imports {module}, which opens a browser, and Cowork has no display; "
+                "confirm the script also writes its result to a file or has a headless path")
+
+
 def _check_shell_script(path: Path, rel: str, out: _Collector) -> None:
     source, error = _read_text_or_error(path)
     if source is None:
@@ -1149,6 +1184,7 @@ def _check_scripts(skill: _Skill, out: _Collector) -> None:
         if tree is None:
             continue
         _check_python_script(tree, rel, out)
+        _check_display_imports(tree, rel, out)
         if stdlib is None:
             continue
         for node in _unguarded_imports(tree):
@@ -1310,16 +1346,91 @@ def _check_leftovers(skill: _Skill, out: _Collector) -> None:
     for placeholder in INIT_PLACEHOLDER_FILES:
         if (skill.root / placeholder).exists():
             out.add("M9", DEFINITIVE, placeholder, 0, "init placeholder file remains; delete it or replace it")
+
+
+def _check_injection(skill: _Skill, out: _Collector) -> None:
+    """M11: dynamic context injection in SKILL.md, code fences included; one finding per line."""
     body = _View(skill.body_lines, skill.body_first_line)
-    injected = sorted({
-        body.line_of(match.start())
-        for pattern in (INJECTION_INLINE_RE, INJECTION_FENCE_RE)
-        for match in pattern.finditer(body.text)
-    })
-    for line in injected:
-        out.add("M9", CHECK, SKILL_FILE, line,
-                "dynamic context injection syntax runs a command on every invocation; "
-                "confirm it is intended or move the demonstration into references/")
+    found: dict[int, str] = {}
+    for match in INJECTION_INLINE_RE.finditer(body.text):
+        command = _shorten(_one_line(match.group("command")))
+        found.setdefault(body.line_of(match.start()),
+                         f"dynamic context injection (!`{command}`) runs on every invocation in Claude Code "
+                         f"and becomes a placeholder in Cowork; write it as a step (\"Run `{command}`\"), "
+                         "or move a syntax demonstration into references/")
+    for match in INJECTION_FENCE_RE.finditer(body.text):
+        found.setdefault(body.line_of(match.start()),
+                         "a fenced injection block (opened with ```!) runs on every invocation in Claude Code "
+                         "and becomes a placeholder in Cowork; write each command as a step (\"Run `cmd`\"), "
+                         "or move a syntax demonstration into references/")
+    for line, message in found.items():
+        out.add("M11", DEFINITIVE, SKILL_FILE, line, message)
+
+
+def _own_install_path_re(name: str) -> re.Pattern:
+    return re.compile(INSTALL_SKILLS_DIR + re.escape(name) + INSTALL_NAME_END)
+
+
+def _first_own_install_path(text: str, pattern: re.Pattern) -> tuple[int, str, str]:
+    """Own-name install paths on one line: (how many, the first path as written, its part after the name).
+
+    Only the first path is measured, so a long line costs linear time.
+    """
+    matches = list(pattern.finditer(text))
+    if not matches:
+        return 0, "", ""
+    first = matches[0]
+    start = first.start()
+    while start > 0 and not (text[start - 1].isspace() or text[start - 1] in PATH_TOKEN_STOPS):
+        start -= 1  # back to where the path starts: "~/", "$HOME/", "C:\Users\me\"
+    rest = PATH_TOKEN_TAIL_RE.match(text, first.end()).group(0).rstrip(PATH_TRAILING_CHARS)
+    written = _shorten(text[start:first.end()] + rest)
+    return len(matches), written, _shorten(rest.replace("\\", "/").rstrip("/"))
+
+
+def _shorten(text: str) -> str:
+    """Cap a quoted path, so one odd line cannot flood the report."""
+    return text if len(text) <= MAX_QUOTED_PATH else text[:MAX_QUOTED_PATH - 3] + "..."
+
+
+def _check_own_install_paths(skill: _Skill, out: _Collector, references: list[Path]) -> set[tuple[str, int]]:
+    """M11: SKILL.md, references, or scripts reach the skill's own folder through an install location.
+
+    Plugin installs keep the skill elsewhere and Cowork never reads these folders.
+    Markdown <example> blocks are skipped. Returns the (file, line) locations, so
+    that m11 never reports the same location.
+    """
+    name = _folder_name(skill.root)
+    pattern = _own_install_path_re(name)
+    documents: list[tuple[str, list[str], bool]] = [(SKILL_FILE, skill.lines, True)]
+    for path in references:
+        text = _read_text(path)
+        if text is not None and name in text:
+            documents.append((_rel(skill.root, path), text.splitlines(), True))
+    for path in _iter_files(skill.root / "scripts", "*"):
+        text = _read_text(path)
+        if text is not None and name in text and "\x00" not in text:  # a NUL byte marks a binary file
+            documents.append((_rel(skill.root, path), text.splitlines(), False))
+
+    locations: set[tuple[str, int]] = set()
+    for rel, lines, markdown in documents:
+        examples = _example_mask(lines) if markdown else [False] * len(lines)
+        for index, line in enumerate(lines):
+            if examples[index] or name not in line:
+                continue
+            count, written, rest = _first_own_install_path(_mask(URL_RE, line), pattern)
+            if not count:
+                continue
+            more = f" (and {count - 1} more on this line)" if count > 1 else ""
+            if markdown:
+                fix = f"write ${{CLAUDE_SKILL_DIR}}{rest} instead"
+            else:
+                fix = "build the path from the script's own location (Path(__file__).resolve().parent in Python)"
+            out.add("M11", DEFINITIVE, rel, index + 1,
+                    f"reaches the skill's own files through the install location '{written}'{more}, "
+                    f"which plugin installs and Cowork do not use; {fix}")
+            locations.add((rel, index + 1))
+    return locations
 
 
 def _check_argument_tokens(skill: _Skill, out: _Collector, fence_tags: list[str | None]) -> None:
@@ -1394,7 +1505,9 @@ def _check_reference_chains(skill: _Skill, out: _Collector) -> None:
                     f"links {target}, which SKILL.md does not link; link it from SKILL.md if it holds essential content")
 
 
-def _check_paths_in_markdown(skill: _Skill, out: _Collector, references: list[Path]) -> None:
+def _check_paths_in_markdown(skill: _Skill, out: _Collector, references: list[Path],
+                             reported: set[tuple[str, int]]) -> None:
+    """m11; reported holds the (file, line) locations M11 already took, which m11 skips."""
     documents = [(SKILL_FILE, skill.lines)]
     for path in references:
         text = _read_text(path)
@@ -1403,7 +1516,7 @@ def _check_paths_in_markdown(skill: _Skill, out: _Collector, references: list[Pa
     for rel, lines in documents:
         tags = _fence_tags(lines)
         for index, line in enumerate(lines):
-            if tags[index] in SHELL_FENCE_TAGS:
+            if tags[index] in SHELL_FENCE_TAGS or (rel, index + 1) in reported:
                 continue
             masked = _mask(URL_RE, line)
             problem = None
@@ -1534,10 +1647,12 @@ def collect_findings(skill_path, portable: bool = False) -> list[Finding]:
         _check_description(skill, out)
     _check_frontmatter_keys(skill, out)
     _check_leftovers(skill, out)
+    _check_injection(skill, out)
+    install_paths = _check_own_install_paths(skill, out, references)
     _check_argument_tokens(skill, out, fence_tags)
     _check_reference_tocs(skill, out, references)
     _check_reference_chains(skill, out)
-    _check_paths_in_markdown(skill, out, references)
+    _check_paths_in_markdown(skill, out, references, install_paths)
     _check_layout(skill, out, nofence)
     _check_evals(skill, out)
     return out.sorted()
@@ -1613,7 +1728,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("skill_dir", help="path to the skill directory (the folder holding SKILL.md)")
     parser.add_argument(
         "--portable", action="store_true",
-        help="grade for claude.ai, the Claude API, and other Agent Skills clients instead of Claude Code",
+        help="grade a single-skill upload to claude.ai or the Claude API (or another Agent Skills client) "
+             "instead of the default target, Claude Code and Cowork",
     )
     return parser
 

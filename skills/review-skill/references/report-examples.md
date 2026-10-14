@@ -18,11 +18,12 @@ The report format, one full sample report, and three before/after Auto-Fix runs.
 
 | Field | Value |
 |-------|-------|
-| Target | <path or GitHub URL> |
-| Mode | <Review Only, Review + Auto-Fix, Auto-Fix, External Review, or Auto-PR> |
-| Graded for | <claude-code or portable> |
+| Target | <the skill folder's path> |
+| Mode | <Review Only, Review + Auto-Fix, or Auto-Fix>, plus "with regression" when `regression` was given |
+| Graded for | <the platform target: claude-code (Claude Code and Cowork) or portable (single-skill uploads to claude.ai and the API)> |
 | quick_validate | <ran, exit N (meaning)> or <not run (reason)> |
 | security_scan | <ran with --no-marker, exit N (RESULT secrets=<n> leads=<n>)> or <secret scan not run (reason)> |
+| Regression | <only when a regression run was requested or triggered: ran, with case counts, or not run (reason)> |
 
 ## Grade: <letter>
 
@@ -57,6 +58,7 @@ Rules for filling it in:
 - Quote the evidence exactly, with its line number. A heuristic finding without a quote is not a finding.
 - Write each fix as an edit or a command the reader can apply without guessing.
 - Write "None." in an empty section instead of dropping it, so the reader can see the check ran.
+- The Regression row and the M12 finding follow the format in `mode-regression.md`.
 
 ## Sample report: Review Only, Grade C
 
@@ -69,7 +71,7 @@ quick_validate printed two definitive m9 lines, three Style lines (S2, and S5 on
 |-------|-------|
 | Target | ./skills/invoice-extract |
 | Mode | Review Only |
-| Graded for | claude-code |
+| Graded for | claude-code (Claude Code and Cowork) |
 | quick_validate | ran, exit 4 (definitive Minor only) |
 | security_scan | ran with --no-marker, exit 0 (RESULT secrets=0 leads=1) |
 
@@ -130,11 +132,12 @@ Review + Auto-Fix appends this after the report; Auto-Fix prints the findings li
 | Field | Value |
 |-------|-------|
 | Passes | <n> of 3 |
-| Backup | <the printed path, or "not needed: tracked and clean in the project repository"> |
+| Backup | <the printed path, or "not needed: tracked and clean in your own repository"> |
 | Files changed | <file (before -> after lines)>, <added files> |
 | Fixed | <IDs> |
 | Still open | <ID: reason>, or "none" |
 | Grade | <before> -> <after> |
+| Regression | <ran: <n> cases, <p> passed, <f> passed on the re-run, <m> failed twice>, or <not run (reason)> |
 | Style notes left as is | <IDs> (Style fixes were not requested) |
 ```
 
@@ -176,17 +179,20 @@ Pass 1 applied the rules.md fixes:
 
 Re-check: quick_validate exit 0, and the rules walk found no Major or Minor. S4 stays as a Style note because Style fixes were not requested. No `context: fork` was added.
 
+The skill is tracked in the user's own repository and the loop changed it, so a regression run followed without asking. All 3 eval cases passed on the first run.
+
 ```markdown
 ## Fix summary
 
 | Field | Value |
 |-------|-------|
 | Passes | 1 of 3 |
-| Backup | not needed: tracked and clean in the project repository |
+| Backup | not needed: tracked and clean in your own repository |
 | Files changed | SKILL.md (580 -> 352 lines), added sql-syntax.md |
 | Fixed | M1, M7, M8, m1 (S3 and S6 cleared as side effects of the M1 move and the M8 rewrite) |
 | Still open | none |
 | Grade | D -> A |
+| Regression | ran: 3 cases, 3 passed, 0 passed on the re-run, 0 failed twice |
 | Style notes left as is | S4 |
 ```
 
@@ -229,6 +235,8 @@ Re-check after pass 1: quick_validate exit 4 with two m9 lines, one for each new
 
 Pass 2: added a `## Contents` list to both new references. Re-check: exit 0, no Major or Minor.
 
+No regression run: the folder is not in the user's own repository, and the skill has no evals.
+
 ```markdown
 ## Fix summary
 
@@ -236,10 +244,11 @@ Pass 2: added a `## Contents` list to both new references. Re-check: exit 0, no 
 |-------|-------|
 | Passes | 2 of 3 |
 | Backup | /tmp/tmp.k3J9qA/api-tester-backup (the folder was not in a git repository) |
-| Files changed | SKILL.md (720 -> 298 lines), added api-patterns.md and schema-validation.md |
+| Files changed | SKILL.md (720 -> 279 lines), added api-patterns.md and schema-validation.md |
 | Fixed | M1, M2, M7, M8, m1, and m9 (introduced in pass 1, fixed in pass 2); S3 and S6 cleared as side effects of the M1 move and the M8 rewrite |
 | Still open | none |
 | Grade | F -> A |
+| Regression | not run (not in your own repository) |
 | Style notes left as is | S5 |
 ```
 
@@ -265,16 +274,19 @@ Pass 1:
 
 Re-check: 1 Major (M3) and 0 Minor, so C ("1 Major"). The loop stops here rather than spending passes 2 and 3 on a fix that needs the author's answer. When the user replies, the next pass applies it and counts toward the 3-pass limit.
 
+The loop changed a skill in the user's own repository, so a regression run followed. Case 2 failed its first run and passed the re-run, so it is listed as flaky under advisory notes, not as M12. Its publish command went to `would_run.txt`, as the isolation rules require.
+
 ```markdown
 ## Fix summary
 
 | Field | Value |
 |-------|-------|
 | Passes | 1 of 3 |
-| Backup | not needed: tracked and clean in the project repository |
+| Backup | not needed: tracked and clean in your own repository |
 | Files changed | SKILL.md |
 | Fixed | M4, m15, m4 |
 | Still open | M3: needs the publish command; question sent to the user |
 | Grade | D -> C |
+| Regression | ran: 3 cases, 2 passed, 1 passed on the re-run, 0 failed twice |
 | Style notes left as is | none |
 ```

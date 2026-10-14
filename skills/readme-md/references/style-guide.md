@@ -5,7 +5,7 @@
 - **No install steps** - Never assume setup is obvious
 - **No examples** - Show, don't just tell
 - **Wall of text** - Use headers, tables, lists
-- **Stale content** - Add "last reviewed" date
+- **Stale content** - Add a "Last reviewed" date to config READMEs, and to internal ones that drift (see `section-checklist.md`)
 - **Generic tone** - Write for YOUR audience
 
 ## Prose Mistakes with Examples
@@ -46,10 +46,3 @@
 |--------|-------|-----|
 | "To install the package, you'll want to open your terminal application and type the following command..." | `npm install mytool` | Let the code speak |
 | "The next step in the process is to..." | (just show the next step) | Remove filler |
-
-## Prose Quality
-
-- Write short sentences. One idea per sentence.
-- Cut filler words: "basically", "actually", "in order to", "it should be noted that".
-- Use active voice: "The script creates a backup" not "A backup is created by the script".
-- Show, don't tell: code examples beat prose explanations.

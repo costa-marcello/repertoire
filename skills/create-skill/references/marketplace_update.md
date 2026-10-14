@@ -54,12 +54,13 @@ Minimal file with one plugin that bundles several skills:
 
 ## Adding a skill
 
-1. Read the existing file and follow its structure: either one plugin per skill, or one plugin that lists several skills.
+1. Read the existing file and follow its structure: one plugin per skill, one plugin that lists several skills, or one plugin that finds its skills in `skills/`.
 2. **One plugin per skill:** add an entry whose `name` is the skill name.
    - `source`: the plugin's directory.
    - `description`: shortened from the SKILL.md description.
    - `version`: `"1.0.0"`, if the other entries carry versions.
-3. **One plugin for several skills:** add the skill's path to that plugin's `skills` array, and bump its minor version.
+3. **One plugin for several skills:** add the skill's path to that plugin's `skills` array, and bump its minor version if it has one.
+4. **One plugin that finds its skills in `skills/`** (no `skills` array, as in Repertoire): a new `skills/<skill-name>/` needs no manifest change. Run the validation below anyway.
 
 ## Updating a skill
 
@@ -71,10 +72,12 @@ Bump `version` on the plugin that contains the skill:
 | Minor (1.x.0) | New features, new reference files, new workflow steps | Added a validation step |
 | Major (x.0.0) | Breaking changes | Renamed the skill, changed its arguments, restructured the workflow |
 
-If the existing entries have no `version` field, do not add one just for this change.
+If the existing entries have no `version` field, do not add one just for this change. Without a version, a plugin update installs the latest pushed commit.
 
 ## Validating
 
 1. From the repository root, run `claude plugin validate .`.
 2. Fix every error. Read every warning: an unknown field is usually a typo.
 3. Run `git diff .claude-plugin/marketplace.json` and check that only the intended entries changed.
+
+Without the `claude` CLI (a Cowork session may not have it), replace steps 1 and 2 with a check by hand against [Schema](#schema): valid JSON, the required fields, kebab-case names, and `./` source paths that exist. Tell the user that the command did not run, and ask them to run it where Claude Code is installed.

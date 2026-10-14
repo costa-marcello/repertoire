@@ -3,9 +3,13 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
 
+# The research lookback window in days. SKILL.md ("Lookback window") states
+# this default once; everything else in the skill links to it.
+LOOKBACK_DAYS = 60
 
-def get_date_range(days: int = 60) -> Tuple[str, str]:
-    """Get the date range for the last N days (default: 60).
+
+def get_date_range(days: int = LOOKBACK_DAYS) -> Tuple[str, str]:
+    """Get the date range for the last N days (default: LOOKBACK_DAYS).
 
     Returns:
         Tuple of (from_date, to_date) as YYYY-MM-DD strings
@@ -107,7 +111,7 @@ def days_ago(date_str: Optional[str]) -> Optional[int]:
         return None
 
 
-def recency_score(date_str: Optional[str], max_days: int = 60) -> int:
+def recency_score(date_str: Optional[str], max_days: int = LOOKBACK_DAYS) -> int:
     """Calculate recency score (0-100).
 
     0 days ago = 100, max_days ago = 0, clamped.

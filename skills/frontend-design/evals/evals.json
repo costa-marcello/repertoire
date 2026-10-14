@@ -1,0 +1,51 @@
+{
+  "skill_name": "frontend-design",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Build a single-file landing page (index.html with inline CSS, no build step) for Ember & Oak, a small-batch coffee roaster that sells monthly bean subscriptions. Save it in the output folder.",
+      "expected_output": "One index.html with a committed aesthetic direction: a distinctive display and body font pairing (not Inter, Roboto, Arial, or a system stack) that is actually loaded and has a fallback stack, 3-5 colour custom properties used throughout, a staggered entry animation and hover states that animate only transform, opacity, filter, or colour and are reduced under prefers-reduced-motion, :focus-visible styles on every link and button, a mobile media query, semantic landmarks, and alt text. Verification is done from the code, and the final message gives the file's path without claiming the page was viewed in a browser.",
+      "files": [],
+      "expectations": [
+        "Writes one index.html in the output folder, with inline CSS and no build step",
+        "Uses a display font and a body font, neither of which is Inter, Roboto, Arial, or a bare system-ui stack; both are loaded (a font link or @font-face) and each font-family ends with a fallback",
+        "Defines 3-5 colour custom properties on :root, and hex colours appear only in those definitions",
+        "Every a and button element has a :focus-visible style",
+        "Animations and transitions change only transform, opacity, filter, or colour; none animates margin, height, or width",
+        "The entry animation is disabled or reduced inside a prefers-reduced-motion media query, and no animation loops without one",
+        "Has a media query that covers a 375px-wide screen, and uses main plus at least one of nav, section, or article",
+        "Every img element has an alt attribute",
+        "The final message gives the file's path and does not claim the page was viewed in a browser unless a headless screenshot was actually taken"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Our Next.js app uses shadcn/ui and Tailwind; components/ui/card.tsx and components/ui/button.tsx exist. Restyle this plan card so it feels premium for a boutique hotel brand, without changing what it does, and write the result to PlanCard.tsx:\n\n```tsx\nexport function PlanCard({ plan }) {\n  return (\n    <div className=\"bg-white rounded-lg shadow p-6\">\n      <h3 className=\"text-xl font-semibold\">{plan.name}</h3>\n      <p className=\"text-gray-600\">{plan.description}</p>\n      <span className=\"text-2xl font-bold\">{plan.price}</span>\n      <button className=\"bg-blue-500 text-white px-4 py-2 rounded\" onClick={plan.onSelect}>Book</button>\n    </div>\n  );\n}\n```",
+      "expected_output": "PlanCard.tsx keeps the component's props and behaviour but builds on the shadcn/ui Card and Button primitives instead of raw elements, with a stated premium tone and font pairing, theme tokens instead of raw palette classes, a visible focus style on the button, and hover effects limited to colour, shadow, transform, or opacity.",
+      "files": [],
+      "expectations": [
+        "Writes PlanCard.tsx as a React component that keeps the plan prop, shows the name, description, and price, and still calls plan.onSelect from the button",
+        "Imports Card (or its parts) and Button from the project's components/ui modules instead of using a raw div and button",
+        "Keeps an h3 (or a heading of the same level) for the plan name",
+        "The button has a visible focus-visible style",
+        "Colours come from theme tokens or CSS custom properties, not raw palette classes such as bg-blue-500 or text-gray-600",
+        "Hover effects change only colour, shadow, transform, or opacity",
+        "States the chosen tone and font pairing in a sentence or two"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Create the colour tokens and a theme toggle for a fintech KPI dashboard in plain CSS and vanilla JavaScript. Dark mode is the default; light mode must pass WCAG AA too. Put them in theme.css and theme.js in the output folder, and tell me the contrast ratios of the main text and the muted text against the page background in both modes.",
+      "expected_output": "theme.css defines one set of colour custom properties for dark (the default) and the same names for light, switched by an attribute or class; theme.js toggles it from a labelled button. The answer lists the contrast ratio of main and muted text against the background in both modes, each at least 4.5:1, computed from the real hex values, with no step that depends on looking at the page in a browser.",
+      "files": [],
+      "expectations": [
+        "theme.css defines the same colour custom property names for dark and light, with dark applied by default",
+        "theme.js switches the theme by setting an attribute or class that theme.css uses",
+        "The toggle is a button with an accessible name, and its pressed state or label changes with the theme",
+        "The answer gives four contrast ratios (main and muted text, dark and light), each at least 4.5:1",
+        "Recomputing any reported ratio from the hex values in theme.css gives the same number to one decimal place",
+        "No transition in theme.css animates margin, height, or width"
+      ]
+    }
+  ]
+}

@@ -7,7 +7,8 @@ from typing import Any, Dict, List, Optional
 
 from . import http
 
-# Fallback models when the selected model isn't accessible (e.g., org not verified for GPT-5)
+# Fallback models when the selected model isn't accessible (e.g., org not verified for GPT-5).
+# Hard-coded IDs: verify against platform.openai.com/docs/models if they stop working.
 MODEL_FALLBACK_ORDER = ["gpt-4o", "gpt-4o-mini"]
 
 
@@ -186,6 +187,12 @@ def search_reddit(
     raise http.HTTPError("No models available")
 
 
+def _clean_subreddit(value: Any) -> str:
+    """Drop a leading "/r/" or "r/" prefix ("r/rust" -> "rust", "rust" stays)."""
+    name = str(value or "").strip()
+    return name.removeprefix("/").removeprefix("r/")
+
+
 def parse_reddit_response(response: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Parse OpenAI response to extract Reddit items.
 
@@ -193,7 +200,11 @@ def parse_reddit_response(response: Dict[str, Any]) -> List[Dict[str, Any]]:
         response: Raw API response
 
     Returns:
-        List of item dicts
+        List of item dicts (empty when the reply's items list is empty)
+
+    Raises:
+        http.BadResponseError: the reply is an error, has no output text, or
+            has no readable JSON items list.
     """
     items = []
 
@@ -204,7 +215,7 @@ def parse_reddit_response(response: Dict[str, Any]) -> List[Dict[str, Any]]:
         _log_error(f"OpenAI API error: {err_msg}")
         if http.DEBUG:
             _log_error(f"Full error response: {json.dumps(response, indent=2)[:1000]}")
-        return items
+        raise http.BadResponseError(f"OpenAI API error: {err_msg}")
 
     # Try to find the output text
     output_text = ""
@@ -236,17 +247,18 @@ def parse_reddit_response(response: Dict[str, Any]) -> List[Dict[str, Any]]:
                 break
 
     if not output_text:
-        print(f"[REDDIT WARNING] No output text found in OpenAI response. Keys present: {list(response.keys())}", flush=True)
-        return items
+        raise http.BadResponseError(
+            f"no output text in the OpenAI response (keys: {list(response.keys())})"
+        )
 
     # Extract JSON from the response
     json_match = re.search(r'\{[\s\S]*"items"[\s\S]*\}', output_text)
-    if json_match:
-        try:
-            data = json.loads(json_match.group())
-            items = data.get("items", [])
-        except json.JSONDecodeError:
-            pass
+    if not json_match:
+        raise http.BadResponseError("no JSON items list in the OpenAI response")
+    try:
+        items = json.loads(json_match.group()).get("items", [])
+    except (json.JSONDecodeError, AttributeError) as e:
+        raise http.BadResponseError(f"unreadable JSON in the OpenAI response: {e}") from e
 
     # Validate and clean items
     clean_items = []
@@ -262,7 +274,7 @@ def parse_reddit_response(response: Dict[str, Any]) -> List[Dict[str, Any]]:
             "id": f"R{i+1}",
             "title": str(item.get("title", "")).strip(),
             "url": url,
-            "subreddit": str(item.get("subreddit", "")).strip().lstrip("r/"),
+            "subreddit": _clean_subreddit(item.get("subreddit", "")),
             "date": item.get("date"),
             "why_relevant": str(item.get("why_relevant", "")).strip(),
             "relevance": min(1.0, max(0.0, float(item.get("relevance", 0.5)))),

@@ -13,7 +13,7 @@
 9. [Framework-Specific Heuristics](#framework-specific-heuristics)
 10. [Common Mistakes to Avoid](#common-mistakes-to-avoid)
 
-<!-- v1.0 | 2026-02-02 -->
+<!-- v1.1 | 2026-10-14 -->
 
 Detailed workflow for Generate mode — creating CLAUDE.md files in subdirectories that benefit from instant context.
 
@@ -23,13 +23,16 @@ Detailed workflow for Generate mode — creating CLAUDE.md files in subdirectori
 
 Generate mode analyzes codebase structure, scores directories by "needs context" heuristics, and creates minimal CLAUDE.md files for high-value directories. User approval required before any file creation.
 
-**Token Budgets (Critical):**
+**How a subdirectory file loads:** Claude Code loads every CLAUDE.md from the working directory up at launch, and loads a subdirectory's CLAUDE.md when Claude first reads or edits a file in that directory. A generated file therefore never imports its parent: `@../CLAUDE.md` would load the parent twice, and an import resolves relative to the importing file, so in `src/api/` it would point to `src/CLAUDE.md`, not the root. Source: the Claude Code memory docs (https://code.claude.com/docs/en/memory); recheck them when Claude Code changes.
+
+**Size Budgets:** this table is the single source for generated-file sizes.
 
 | Location | Budget | Purpose |
 |----------|--------|---------|
-| Root CLAUDE.md | 500-1000 tokens | Project-wide context |
-| Subdirectory CLAUDE.md | 150-300 tokens | Directory-specific context |
-| Total static context | <3000 tokens | Avoid context bloat |
+| Root CLAUDE.md | Under 200 lines (the Claude Code docs' target) | Project-wide context |
+| Subdirectory CLAUDE.md, minimal (score 4-5) | About 100 tokens | Context + Key Files |
+| Subdirectory CLAUDE.md, full (score 6+) | 150-300 tokens | Adds Patterns and Gotchas |
+| Any generated file | Never over 500 tokens | Hard cap |
 
 **Token Estimation (Rule of Thumb):**
 
@@ -48,11 +51,9 @@ Example: Auth Service file with ~100 words ≈ ~130 tokens ✓
 
 ## Phase G1: Directory Discovery
 
-### Command
+### Method
 
-```bash
-find . -type d -not -path '*/\.*' -not -path '*/node_modules/*' -not -path '*/dist/*' -not -path '*/__pycache__/*' -not -path '*/build/*' -not -path '*/coverage/*' -not -path '*/.next/*' -not -path '*/.nuxt/*' -not -path '*/vendor/*' | head -100
-```
+Glob returns files, not directories. Glob `**/*`, take the parent directory of each file path, and drop the skip list below. When the result is truncated, Glob each top-level directory in turn (`<dir>/**/*`). This works in Claude Code and Cowork, with or without a shell. Stop at 100 directories and say so when there are more.
 
 ### Skip List
 
@@ -78,7 +79,7 @@ Calculate "needs context" score for each directory:
 
 | Signal | Score | Detection Method |
 |--------|-------|------------------|
-| **File count >15** | +3 | `ls -1 | wc -l` |
+| **File count >15** | +3 | Glob `<dir>/*` and count the files |
 | **Has entry point** | +2 | `index.{ts,js,py}`, `main.{py,go,rs}`, `mod.rs` |
 | **Non-obvious naming** | +2 | Abbreviations (`src/svc`), jargon (`src/dal`), single letters |
 | **Deep nesting (>3 levels)** | +1 | Path depth from project root |
@@ -97,18 +98,20 @@ Calculate "needs context" score for each directory:
 | 4-5 | **Medium priority** | Minimal: Context + Key Files only; skip Patterns if obvious |
 | < 4 | **Skip** | No generation — directory is self-explanatory |
 
-**Minimal vs Full:**
-- **Minimal (score 4-5):** ~100 tokens. Context sentence + 2-3 key files. Skip Patterns unless non-obvious.
-- **Full (score >=6):** ~200-300 tokens. Context + Key Files + Patterns with reasoning + Gotchas if applicable.
+**Minimal vs Full** (sizes from the Size Budgets table):
+- **Minimal (score 4-5):** Context sentence + 2-3 key files. Skip Patterns unless non-obvious.
+- **Full (score >=6):** Context + Key Files + Patterns with reasoning + Gotchas if applicable.
 
 ### Example Scoring
 
+Every point comes from a signal in the table above:
+
 ```
-src/api/           Score: 8 (23 files +3, has index.ts +2, is API domain +2, config +1)
-packages/shared/   Score: 6 (monorepo +3, 18 files +3)
-src/utils/         Score: 2 (12 files, obvious naming) — SKIP
-tests/             Score: 3 (obvious directory, no special patterns) — SKIP
-src/services/auth/ Score: 5 (domain jargon +2, deep nesting +1, entry point +2)
+src/api/            Score: 7 (23 files +3, index.ts +2, config file +1, README +1)
+packages/shared/    Score: 6 (monorepo package +3, 18 files +3)
+src/svc/authz/      Score: 5 (abbreviated names +2, index.ts +2, .env.example +1)
+tests/              Score: 3 (18 files +3) — SKIP
+src/utils/          Score: 2 (index.ts +2; 12 files, obvious name) — SKIP
 ```
 
 ---
@@ -128,18 +131,13 @@ For each candidate directory, gather:
 
 ### 2. Key Files
 
-Identify entry points and important files:
+Identify entry points and important files with Glob, inside the candidate directory:
 
-```bash
-# Entry points
-ls -la index.* main.* mod.* 2>/dev/null
-
-# Config files
-ls -la *.config.* tsconfig.json package.json Cargo.toml 2>/dev/null
-
-# By file size (larger = likely more important)
-ls -lS *.{ts,js,py,go,rs} 2>/dev/null | head -5
-```
+| Look for | Glob pattern |
+|----------|--------------|
+| Entry points | `index.*`, `main.*`, `mod.*` |
+| Config files | `*.config.*`, `tsconfig.json`, `package.json`, `Cargo.toml` |
+| Source files | `*.{ts,js,py,go,rs}`; prefer the ones other directories import (step 4) |
 
 ### 3. Patterns
 
@@ -150,10 +148,7 @@ Look for:
 
 ### 4. Internal Dependencies
 
-```bash
-# Find imports to other project directories
-grep -r "from '\.\./\|from \"\.\./\|import \.\./\|require('\.\./\|require(\"\.\." --include="*.{ts,js,py}" | head -10
-```
+Find imports that reach other project directories with Grep, using the pattern `from ['"]\.\./|require\(['"]\.\./|from \.\.` and the glob `*.{ts,js,py}`. Read the first 10 matches.
 
 ### 5. Gotchas
 
@@ -197,8 +192,6 @@ When a directory lacks clear metadata:
 **Content:**
 # {Directory Name}
 
-@../CLAUDE.md
-
 ## Context
 {one_sentence_purpose}
 
@@ -220,7 +213,8 @@ When a directory lacks clear metadata:
 ### Preview Quality Checklist
 
 Before showing preview:
-- [ ] Each file is 150-300 tokens
+- [ ] Each file fits the Size Budgets table: about 100 tokens (minimal) or 150-300 (full), never over 500
+- [ ] No `@` import of a parent CLAUDE.md
 - [ ] Context is one sentence, not a paragraph
 - [ ] Key Files lists 2-5 files (not exhaustive)
 - [ ] Patterns are directory-specific, not project-wide
@@ -238,9 +232,9 @@ Present clear options:
 ## Ready to Generate {N} Files
 
 **Proposed files:**
-1. src/api/CLAUDE.md (Score: 8) — API routes context
+1. src/api/CLAUDE.md (Score: 7) — API routes context
 2. packages/shared/CLAUDE.md (Score: 6) — Shared utilities
-3. src/services/auth/CLAUDE.md (Score: 5) — Auth domain
+3. src/svc/authz/CLAUDE.md (Score: 5) — Authorization domain
 
 **Options:**
 - [A] Approve all — create all {N} files
@@ -262,7 +256,7 @@ For each approved file:
 ```
 - [ ] Parent directory exists
 - [ ] No existing CLAUDE.md (double-check)
-- [ ] Content starts with @../CLAUDE.md
+- [ ] No `@../CLAUDE.md` or other import of a parent CLAUDE.md
 - [ ] Under 500 tokens
 - [ ] Has Context section
 - [ ] Has Key Files section
@@ -272,19 +266,21 @@ For each approved file:
 
 ### Post-Creation Verification
 
+Re-read each created file and check it against the list above, then report:
+
 ```markdown
 ## Generation Complete
 
 **Created {N} files:**
 - [x] src/api/CLAUDE.md (287 tokens)
 - [x] packages/shared/CLAUDE.md (203 tokens)
-- [x] src/services/auth/CLAUDE.md (156 tokens)
+- [x] src/svc/authz/CLAUDE.md (96 tokens)
 
-**Total added context:** 646 tokens
+**Total added context:** 586 tokens, each loaded only when Claude works in that directory
 
 **Next steps:**
 - Review generated files and customize as needed
-- Run `/claudia-md review` to check quality
+- Run `/repertoire:claudia-md review` (or `/claudia-md review` when the skill is installed on its own) to check quality
 - Consider removing generic patterns, keep only project-specific
 ```
 
@@ -296,8 +292,6 @@ For each approved file:
 
 ```markdown
 # Auth Service
-
-@../CLAUDE.md
 
 ## Context
 JWT-based authentication with Redis session storage. Handles login, logout, token refresh.
@@ -319,8 +313,6 @@ JWT-based authentication with Redis session storage. Handles login, logout, toke
 
 ```markdown
 # Auth Service
-
-@../CLAUDE.md
 
 ## Context
 This directory contains the authentication service for the application. It is responsible for handling user authentication, including login, logout, and session management. The service uses modern security practices and follows industry standards for authentication.
@@ -399,7 +391,8 @@ This directory contains the authentication service for the application. It is re
 | Mistake | Why It's Bad | Instead |
 |---------|--------------|---------|
 | Generate for every directory | Context bloat | Only score >= 4 |
-| Copy root CLAUDE.md content | Duplication | Reference with `@../CLAUDE.md` |
+| Copy root CLAUDE.md content | Duplication | Leave it out: Claude Code loads the root file already |
+| Import the parent with `@../CLAUDE.md` | Loads the parent twice, or the wrong file in a nested directory | No import; ancestors load on their own |
 | List all files | Noisy, outdated quickly | 2-5 key files only |
 | Generic advice | Wastes tokens | Directory-specific only |
 | Patterns without reasoning | Review mode flags as issue | Add brief "— why" |

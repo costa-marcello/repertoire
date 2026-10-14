@@ -1,57 +1,100 @@
 ---
 name: mermaid-diagrams
-description: "Creates professional software diagrams using Mermaid's text-based syntax. Use when users request diagrams, visualizations, or documentation of software architecture including class diagrams, sequence diagrams, flowcharts, ERDs, C4 architecture diagrams, state machines, git graphs, or gantt charts. Triggers: 'diagram', 'visualize', 'model', 'map out', 'show the flow', database design, code structure."
+description: "Creates software diagrams as Mermaid code (flowchart, sequence, class, ER, C4, state, git graph, and gantt diagrams), fixes Mermaid code that fails to render, and renders diagrams to SVG, PNG, or PDF files on request. Use when the user asks for a Mermaid diagram; asks to diagram, visualize, or map out software architecture, an API or user flow, a database schema, code structure, a state machine, a branching strategy, or a project timeline; or shares Mermaid code that shows a syntax error. Not for charts plotted from datasets or for slide decks."
 license: MIT
 ---
 
-# Mermaid Diagramming
+# Mermaid Diagrams
 
-Create professional software diagrams using Mermaid's text-based syntax.
+Writes Mermaid diagrams that parse on the first try, and renders them to files without a display.
 
 <instructions>
 
-## Core Syntax Structure
+## Workflow
 
-All Mermaid diagrams follow this pattern:
+1. **Pick the type** from the table below. Default to a flowchart when the intent is unclear, because it covers the widest range of requests.
+2. **Read the reference** for that type before writing anything beyond what the examples below show.
+3. **Write** the diagram by the Step 1 syntax rules.
+4. **Self-check** it (Step 2). Fix every problem yourself; never ask the user to fix syntax.
+5. **Render** it to a file when Step 3 says to.
+6. **Repair** any render error (Step 4) and render again.
 
-```mermaid
-diagramType
-  definition content
-```
+| Type (keyword) | Use for | Read |
+|----------------|---------|------|
+| Flowchart (`flowchart`) | Processes, algorithms, decision trees, user journeys | `references/flowcharts-basic.md`; styling and long examples in `references/flowcharts-advanced.md` |
+| Sequence (`sequenceDiagram`) | API calls, auth flows, messages between components | `references/sequence-diagrams.md` |
+| Class (`classDiagram`) | Domain models, object-oriented design | `references/class-diagrams.md` |
+| ER (`erDiagram`) | Database schemas, table relationships | `references/erd-basic.md`; full schemas and patterns in `references/erd-patterns.md` |
+| C4 (`C4Context`, `C4Container`, `C4Component`) | Architecture at the context, container, and component levels | `references/c4-diagrams.md` |
+| State (`stateDiagram-v2`) | Lifecycles, state machines | `references/other-diagrams.md` |
+| Git graph (`gitGraph`) | Branching strategies, release flow | `references/other-diagrams.md` |
+| Gantt (`gantt`) | Timelines, sprint plans | `references/other-diagrams.md` |
+| Pie (`pie`), quadrant (`quadrantChart`) | A few proportions, 2x2 prioritization | `references/other-diagrams.md` |
 
-**Key principles:**
-- First line declares diagram type (e.g., `classDiagram`, `sequenceDiagram`, `flowchart`)
-- Use `%%` for comments
-- Whitespace aids readability; not required
-- Typos break diagrams silently -- validate in Mermaid Live
+For themes, colors, and node styling, read `references/theming.md`. For layout engines, click links, mermaid-cli flags, and embedding in HTML or React, read `references/advanced-features.md`.
 
-## Diagram Type Selection Guide
+Mermaid also has mindmap, timeline, user journey, sankey, XY chart, block, and architecture diagrams. Some still take a `-beta` keyword, and older renderers lack the newer ones, so verify the keyword against the Mermaid docs (mermaid.js.org) before using one.
 
-| Type | When to use | Reference |
-|------|-------------|-----------|
-| Class Diagram | Domain modelling, OOP design, entity relationships | `references/class-diagrams.md` |
-| Sequence Diagram | API flows, authentication, component interactions | `references/sequence-diagrams.md` |
-| Flowchart | Processes, algorithms, decision trees, user journeys | `references/flowcharts-basic.md`, `references/flowcharts-advanced.md` |
-| ERD | Database schemas, table relationships, data modelling | `references/erd-basic.md`, `references/erd-patterns.md` |
-| C4 Diagram | Software architecture at Context, Container, Component levels | `references/c4-diagrams.md` |
-| State Diagram | State machines, lifecycle states, workflow status | `references/other-diagrams.md` |
-| Git Graph | Branching strategies, commit history | `references/other-diagrams.md` |
-| Gantt Chart | Project timelines, scheduling, sprint planning | `references/other-diagrams.md` |
-| Pie/Quadrant | Data distribution, prioritisation matrices | `references/other-diagrams.md` |
+### Step 1: Write by these syntax rules
 
-Default to **flowchart** when the user's intent is unclear. Flowcharts cover the widest range of use cases.
+| Rule | Wrong | Right | Why |
+|------|-------|-------|-----|
+| Quote labels that contain brackets or parentheses | `A[Retry (max 3)]` | `A["Retry (max 3)"]` | An inner `(`, `[`, or `{` ends the shape early |
+| Quote labels that contain `%`, `&`, `<`, `>`, `#`, or `;` | `A[Load: 50% & rising]` | `A["Load: 50% & rising"]` | These characters start comments, node chains, HTML, entity codes, or new lines. Plain words with `?`, `:`, `'`, `+`, or a single `-` need no quotes, and quoting any label is safe |
+| Write a double quote inside a label as `#quot;` | `A["Say "hi""]` | `A["Say #quot;hi#quot;"]` | A bare `"` ends the quoted label |
+| Never name a node lowercase `end` | `D --> end` | `D --> End["end"]` | `end` closes subgraphs and blocks |
+| Keep `{}` out of `%%` comments | `%% config: {dark}` | `%% config: dark theme` | `%%{ }%%` is directive syntax |
+| Space out links before IDs that start with `o` or `x` | `dev---ops` | `dev --- ops` | `---o` and `---x` draw circle and cross edges |
+| Write a semicolon in a sequence message as `#59;` | `A->>B: save; notify` | `A->>B: save#59; notify` | `;` ends the line in sequence diagrams |
+| Give each distinct node its own ID | `A` reused in two subgraphs | `A1`, `A2` | A reused ID is the same node, silently moved |
+| Put config frontmatter first | Any line above `---` | `---` alone on line 1 | Mermaid reads frontmatter only from the first line |
+
+### Step 2: Self-check
+
+Check the diagram before output:
+
+1. The first line after any frontmatter is the type keyword with its exact case (`classDiagram`, not `classdiagram`).
+2. Every label passes the Step 1 table.
+3. The arrows match the type: `-->` in flowcharts and state diagrams, `->>` and `-->>` in sequence diagrams, `<|--`, `*--`, `o--`, `..>` in class diagrams, `||--o{` and similar in ER diagrams.
+4. Every `subgraph`, `alt`, `opt`, `loop`, `par`, `critical`, `break`, `rect`, and `box` block closes with its own `end`.
+5. Sequence participants whose names have spaces or punctuation get a short ID and an alias: `participant Auth as Authorization server`. Avoid `as`, `end`, and other keywords as IDs.
+6. The diagram has about 15 nodes or fewer. Split a bigger one into focused views linked from an overview, unless the user wants one large diagram (then see Layout under Configuration).
+
+Most mistakes make the whole diagram fail with "Syntax error". Some fail silently instead: a reused ID merges two nodes, and a misspelled config key is ignored.
+
+### Step 3: Render to a file
+
+Rendering needs no display: mermaid-cli (`mmdc`) draws the diagram in a headless browser and writes a file.
+
+**When to render:** when the user asks for an image (SVG, PNG, or PDF) or asks to check that a diagram renders. When you only write a `.mmd` or Markdown file and `mmdc` is already installed, render it to a temporary folder as a check. Otherwise the Step 2 self-check is the check, and the code is the output.
+
+1. Save the diagram as a `.mmd` file named after its subject, such as `checkout-flow.mmd`: in Cowork, in the outputs folder; in a repository, next to the code it describes; for a check only, in a temporary folder. If a file of that name exists and is not the diagram you are updating, pick a new name instead of overwriting it.
+2. Run `mmdc -i checkout-flow.mmd -o checkout-flow.svg`. Use `.png` for slides and chat (add `-s 2` for a sharper image) and `.pdf` for print.
+3. Without `mmdc`, run `npx -y -p @mermaid-js/mermaid-cli mmdc -i checkout-flow.mmd -o checkout-flow.svg`. The first run downloads mermaid-cli from npm and a headless Chrome build for it (network; the browser is a large download). The render itself runs locally and uploads nothing.
+4. If Chrome fails to launch (often "No usable sandbox" when running as root, as in a container), add `-p ${CLAUDE_SKILL_DIR}/assets/puppeteer-config.json`, which turns off the browser sandbox for this local render. Add it only after that failure.
+5. If the command prints an error, take the message to Step 4. To check the layout, render a PNG too and read it as an image.
+6. When neither command can run (no Node.js or no network), output the code, say that it was not rendered here and why, and give the `npx` command from item 3 to run elsewhere. The code also renders on GitHub, on GitLab, and in VS Code with a Mermaid extension. Offer [mermaid.live](https://mermaid.live) only as a last resort, for a user with a browser who wants an image file.
+
+### Step 4: Repair
+
+1. Read the error message. A parse error names the failing line.
+2. Match that line against the Step 1 table and Step 2 list, and fix it.
+3. Render again if Step 3 ran, and output the fixed diagram, naming each fix in one line.
+4. Never output the same broken syntax twice.
+
+If `mmdc` renders a diagram that fails on the user's platform, the platform probably runs an older Mermaid: see Platform support below.
 
 </instructions>
 
-<example name="Class Diagram (Domain Model)">
+<example>
 
-### Class Diagram
+### Class diagram (domain model)
 ```mermaid
 classDiagram
-    Title -- Genre
-    Title *-- Season
-    Title *-- Review
-    User --> Review : creates
+    Title "0..*" -- "1..*" Genre : categorized as
+    Title "1" *-- "0..*" Season : contains
+    Title "1" *-- "0..*" Review : receives
+    User "1" --> "0..*" Review : writes
 
     class Title {
         +string name
@@ -67,18 +110,18 @@ classDiagram
 
 </example>
 
-<example name="Sequence Diagram (API Flow)">
+<example>
 
-### Sequence Diagram
+### Sequence diagram (API flow)
 ```mermaid
 sequenceDiagram
     participant User
     participant API
-    participant Database
+    participant DB as Database
 
     User->>API: POST /login
-    API->>Database: Query credentials
-    Database-->>API: Return user data
+    API->>DB: Query credentials
+    DB-->>API: Return user data
     alt Valid credentials
         API-->>User: 200 OK + JWT token
     else Invalid credentials
@@ -88,14 +131,14 @@ sequenceDiagram
 
 </example>
 
-<example name="Flowchart (User Journey)">
+<example>
 
-### Flowchart
+### Flowchart (user journey)
 ```mermaid
 flowchart TD
     Start([User visits site]) --> Auth{Authenticated?}
     Auth -->|No| Login[Show login page]
-    Auth -->|Yes| Dashboard[Show dashboard]
+    Auth -->|Yes| Dashboard([Show dashboard])
     Login --> Creds[Enter credentials]
     Creds --> Validate{Valid?}
     Validate -->|Yes| Dashboard
@@ -105,14 +148,14 @@ flowchart TD
 
 </example>
 
-<example name="ERD (Database Schema)">
+<example>
 
-### ERD
+### ER diagram (database schema)
 ```mermaid
 erDiagram
     USER ||--o{ ORDER : places
     ORDER ||--|{ LINE_ITEM : contains
-    PRODUCT ||--o{ LINE_ITEM : includes
+    PRODUCT ||--o{ LINE_ITEM : "ordered in"
 
     USER {
         int id PK
@@ -131,9 +174,9 @@ erDiagram
 
 </example>
 
-<example name="State Diagram (Order Lifecycle)">
+<example>
 
-### State Diagram
+### State diagram (order lifecycle)
 ```mermaid
 stateDiagram-v2
     [*] --> Draft
@@ -148,151 +191,68 @@ stateDiagram-v2
 
 </example>
 
-<references>
-
-## Detailed References
-
-- **[references/class-diagrams.md](references/class-diagrams.md)** - Domain modelling, relationships (association, composition, aggregation, inheritance), multiplicity, methods/properties
-- **[references/sequence-diagrams.md](references/sequence-diagrams.md)** - Actors, participants, messages (sync/async), activations, loops, alt/opt/par blocks, notes
-- **[references/flowcharts-basic.md](references/flowcharts-basic.md)** - Node shapes, connections, subgraphs
-- **[references/flowcharts-advanced.md](references/flowcharts-advanced.md)** - Styling, comprehensive examples, patterns
-- **[references/erd-basic.md](references/erd-basic.md)** - Entities, relationships, cardinality, attributes
-- **[references/erd-patterns.md](references/erd-patterns.md)** - Schema examples, design patterns
-- **[references/c4-diagrams.md](references/c4-diagrams.md)** - System context, container, component diagrams, boundaries
-- **[references/advanced-features.md](references/advanced-features.md)** - Configuration, layout, export options
-- **[references/theming.md](references/theming.md)** - Themes, colours, visual styling
-- **[references/other-diagrams.md](references/other-diagrams.md)** - State diagrams, git graphs, gantt charts, pie/quadrant
-
-</references>
-
-<best-practices>
-
-## Best Practices
-
-1. **Draft core entities first** - Add 3-5 main nodes, then connect. Add attributes and detail in a second pass.
-2. **Label every node and edge** - Unlabelled arrows force readers to guess the relationship.
-3. **Add `%%` comments above complex sections** - Explain why, not what. Future editors read comments before syntax.
-4. **Split at 15 nodes** - Diagrams with more than 15 nodes lose clarity. Break into focused views linked by a parent diagram.
-5. **Store `.mmd` files next to the code they describe** - Keep diagrams and source in the same PR so they stay in sync.
-6. **Set a title on every diagram** - Use the `title` keyword or a Markdown heading directly above the code block.
-7. **Test in Mermaid Live before committing** - Paste the diagram into [mermaid.live](https://mermaid.live) to catch silent failures.
-8. **Check colour contrast** - Verify foreground/background pairs meet WCAG AA (4.5:1 ratio). Do not rely on colour alone to convey meaning.
-
-</best-practices>
-
-<validation>
-
-## Validation Loop (Required)
-
-Every diagram passes through this generate-validate-repair cycle before output.
-
-### Step 1: Generate
-Write the diagram using strict Mermaid syntax. Apply these rules during generation:
-
-| Rule | Wrong | Correct | Why |
-|------|-------|---------|-----|
-| Escape parentheses in labels | `node[Node (example)]` | `node["Node (example)"]` | Bare parentheses crash the parser |
-| Quote text with special characters | `A[Price: $100]` | `A["Price: $100"]` | `$`, `%`, `&`, `<`, `>` break parsing |
-| Quote the reserved word `end` | `A --> end` | `A --> End["end"]` | Unquoted `end` silently breaks diagrams |
-| Use HTML entities when quotes fail | `A["alert()"]` | `A["alert&lpar;&rpar;"]` | Nested parens inside quotes still fail |
-| Avoid `{}` in comments | `%% config: {dark}` | `%% config dark theme` | Curly braces in comments break parsing |
-| Use unique node IDs | Reusing `A` across subgraphs | `A1`, `A2` for distinct nodes | Duplicate IDs cause silent overwrites |
-
-### Step 2: Validate
-Self-check the generated diagram against these failure patterns:
-
-1. **Scan all node labels** for unescaped special characters: `( ) { } $ % & < > #`
-2. **Check for bare `end`** used as a node name or label (not as a block closer)
-3. **Verify arrow syntax** matches the diagram type (e.g., `-->` for flowchart, `->>` for sequence)
-4. **Confirm diagram type keyword** is spelled correctly on line 1
-5. **Check participant/actor names** for spaces (wrap in quotes if present)
-
-If any issue is found, fix it before output. Do not ask the user to fix syntax.
-
-### Step 3: Render verification
-After outputting the diagram, recommend the user verify rendering:
-- **Quick check**: paste into [Mermaid Live](https://mermaid.live)
-- **CLI validation**: `npx @mermaid-js/mermaid-cli -i diagram.mmd -o test.png`
-- **MCP tools**: if a Mermaid MCP server is available, use it for in-session validation
-
-### Step 4: Repair (if rendering fails)
-If the user reports a rendering failure:
-1. Read the error message (if available) and identify the failing line
-2. Check the syntax rules table above for the matching pattern
-3. Fix and re-output the corrected diagram
-4. Never output the same broken syntax twice
-
-</validation>
-
 <configuration>
 
-## Configuration and Theming
+## Configuration
 
-Configure diagrams using frontmatter:
+Configure a diagram in frontmatter at the top of the code:
 
 ```mermaid
 ---
+title: Order flow
 config:
   theme: base
   themeVariables:
     primaryColor: "#ff6b6b"
+    primaryTextColor: "#1a1a1a"
 ---
 flowchart LR
     A --> B
 ```
 
-**Themes (default to `default`; use `base` for full colour control):**
+**Theme:** default to `default`.
 
 | Theme | When to use |
 |-------|-------------|
-| `default` | General-purpose diagrams (recommended) |
-| `forest` | Green earth tones for environmental or organic topics |
-| `dark` | Dark-mode pages or presentations |
-| `neutral` | Grayscale professional documentation |
-| `base` | Full colour customisation via `themeVariables` |
+| `default` | General-purpose diagrams |
+| `neutral` | Grayscale documentation and print |
+| `dark` | Dark-mode pages or slides |
+| `forest` | Green tones, when the page calls for them |
+| `base` | Custom colors through `themeVariables` |
 
-**Layout:** Default to `dagre`. Switch to `elk` when dagre produces crossed lines on 20+ node diagrams.
+`themeVariables` take effect only with `theme: base`, and only hex colors work (`#ff6b6b`, not `red`).
 
-**Look:** Default to `classic`. Use `handDrawn` for informal docs or whiteboard-style presentations.
+**Layout:** leave `layout` unset to get the renderer's default. When one large diagram has badly crossed edges, set `layout: elk`.
 
-## Exporting and Rendering
+**Look:** default to `classic`. Use `handDrawn` for informal docs and whiteboard-style slides.
 
-**Platform support:**
+Which themes, layouts, and looks exist depends on the Mermaid version, and newer releases add more. Verify against the Mermaid docs before relying on anything beyond the defaults above.
 
-| Platform | Status | Notes |
-|----------|--------|-------|
-| GitHub README/Issues | Works | Wiki rendering broken. C4 diagrams often fail. |
-| GitLab | Works | May need cache refresh after adding new diagrams. |
-| VS Code | Works | Requires Markdown Mermaid extension. |
-| Obsidian | Partial | Desktop works. iOS fails entirely. Pie charts render as empty boxes. |
-| Azure DevOps | Works | Requires `::: mermaid` syntax, not backtick fences. |
-| PDF export | Fails | Export as PNG/SVG from mermaid.live first. |
+## Platform support
 
-**Export commands:**
-- **Online**: [Mermaid Live Editor](https://mermaid.live) with PNG/SVG export
-- **CLI**: `mmdc -i input.mmd -o output.png` (install via `npm install -g @mermaid-js/mermaid-cli`)
-- **Docker**: `docker run --rm -v $(pwd):/data minlag/mermaid-cli -i /data/input.mmd -o /data/output.png`
+Each platform bundles its own Mermaid version, so syntax that `mmdc` renders (`look`, `layout: elk`, newer node shapes and diagram types) can still fail there. Treat this table as a starting point and verify against the platform's docs when it matters.
+
+| Platform | How it renders Mermaid |
+|----------|------------------------|
+| GitHub | Code fences tagged `mermaid` in Markdown files, issues, and pull requests. C4 is experimental in Mermaid and often fails. |
+| GitLab | Code fences tagged `mermaid` |
+| VS Code | Markdown preview, once a Mermaid extension is installed |
+| Azure DevOps wiki | `::: mermaid` blocks closed by `:::`, not backtick fences |
+| Markdown-to-PDF tools | Often print the code. Render an SVG or PNG (Step 3) and embed the image. |
+
+With Docker and no Node.js, the mermaid-cli image does the Step 3 render: `docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd)":/data minlag/mermaid-cli -i checkout-flow.mmd -o checkout-flow.svg`. In PowerShell, mount with `-v "${PWD}:/data"` and drop `-u`. The first run pulls the image from Docker Hub (network).
 
 </configuration>
 
-<pitfalls>
+<best-practices>
 
-## Common Pitfalls
+## Best Practices
 
-**Syntax failures (most frequent):**
-- **Unescaped special characters** - Parentheses, brackets, `$`, `%` in node labels crash the parser. Always quote labels containing these characters.
-- **Reserved word `end`** - Using `end` as a node name breaks diagrams silently. Wrap in quotes or rename.
-- **Misspelled diagram types** - `classDiagram` not `classdiagram`. Case matters for the type keyword.
-- **Wrong arrow syntax** - Each diagram type uses different arrows. Flowcharts use `-->`, sequence uses `->>`, class uses `..>`.
+1. **Draft core entities first.** Add 3-5 main nodes, connect them, then add attributes and detail in a second pass.
+2. **Label every relationship.** Label class and ER relationships, flowchart decision branches, sequence messages, and state transitions. These need no label: plain sequential flowchart steps, `[*]` start and end transitions, fork and join edges, and inheritance or realization lines.
+3. **Put a `%%` comment above a complex section** that says why it is built that way.
+4. **Give each diagram a title:** the frontmatter `title:` key, or a Markdown heading above the code block.
+5. **Keep subgraph nesting to 2 levels.** Deeper nesting lays out poorly and is hard to read.
+6. **Check color contrast.** Text and its background need at least a 4.5:1 ratio (WCAG AA), and color must never be the only way meaning is shown.
 
-**Platform-specific failures:**
-- **GitHub Wiki** - Mermaid rendering is broken despite documentation claiming support. Use README or Pages instead.
-- **Azure DevOps** - Requires `::: mermaid` syntax, not standard backtick fences.
-- **Obsidian iOS** - Mermaid fails to render entirely on iOS. Desktop works.
-- **C4 diagrams on GitHub** - C4 is experimental in Mermaid. Renders in mermaid.live but often fails on GitHub.
-
-**Structural issues:**
-- **Overcomplexity** - Split diagrams with more than 15 nodes into multiple focused views.
-- **Nested subgraphs** - Deep nesting fails on some platforms. Keep to 2 levels maximum.
-
-</pitfalls>
+</best-practices>
