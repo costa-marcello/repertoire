@@ -11,10 +11,11 @@ All notable changes to this project will be documented in this file.
 - Added a `## Contents` section that links each `##` heading to every reference file longer than 100 lines (41 files across 9 skills), clearing all m9 findings
 
 ### Changed
+- **BREAKING**: Renamed the claude-md skill to claudia-md, because Anthropic's platform rejects skill names that contain "claude" when uploading to claude.ai or the Claude API; reinstall with `npx skills add costa-marcello/skillkit -s claudia-md` and run it as `/claudia-md`
 - Refocused the project from a coding-agent skill kit into a smaller general-purpose collection of 13 skills
 - Rewrote the README intro, quick start, and category descriptions for the 13 skills and renamed the "AI and Research" category to "Research"
 - Dropped the research skill's `agent_allocation.md` reference and expanded its sub-agent prompts reference
-- Polished wording and examples across the changelog, claude-md, docx, frontend-design, pdf, pptx, readme-md, and xlsx skills, including sharper changelog filter rules and one `<example>` tag per xlsx example
+- Polished wording and examples across the changelog, claudia-md, docx, frontend-design, pdf, pptx, readme-md, and xlsx skills, including sharper changelog filter rules and one `<example>` tag per xlsx example
 - **BREAKING**: Redefined M2: `context: fork` is now opt-in, and only a fork on a skill that cannot work forked (one that asks the user, waits for confirmation, uses Workflow, needs the conversation, or holds only guidelines) is a finding; a missing fork is never one
 - **BREAKING**: Retired m5-m8 (their IDs are never reused); XML tags, example counts, the 400-line target, root layout, and evals are now ungraded style notes (S1-S7), and new rules M9, M10, and m9-m15 cover loading, safety, tables of contents, reference chains, paths, frontmatter hygiene, script contracts, MCP names, and shouted directives
 - **BREAKING**: quick_validate.py now requires PyYAML, parses frontmatter as YAML, prints one `[ID] severity confidence file:line message` line per finding, and uses exit codes 0 (clean), 1 (Major), 4 (Minor only), 2 (usage), and 3 (environment)
@@ -34,7 +35,7 @@ All notable changes to this project will be documented in this file.
 - Fixed all four scripts crashing on Windows when output is piped, and documented running `python`, with `python3` only where `python` is not on the path
 - Fixed pptx's `inventory.py` and `rearrange.py` silently swallowing errors (M6): they now catch specific exceptions and print an actionable warning on stderr before falling back to the same defaults
 - Fixed quick_validate.py missing M2 pauses on forked skills: it now catches "ask user" without an article, "user approval", "after user approval", questionnaires ("Ask all 10 questions"), and choice prompts such as "[All / Select / Cancel]", reports pauses in references that SKILL.md sends Claude to as a step (pptx's intake questionnaire), and prints a `check` lead for pauses in other linked references
-- Fixed M2 across the kit by removing `context: fork` (and any `agent` key) from nine skills that cannot work forked: find-skills and readme-md ask the user, claude-md waits for approval, pptx runs an intake questionnaire, and docx, frontend-design, mermaid-diagrams, pdf, and xlsx are guidelines or toolkits whose task comes from the conversation. changelog stays forked
+- Fixed M2 across the kit by removing `context: fork` (and any `agent` key) from nine skills that cannot work forked: find-skills and readme-md ask the user, claudia-md waits for approval, pptx runs an intake questionnaire, and docx, frontend-design, mermaid-diagrams, pdf, and xlsx are guidelines or toolkits whose task comes from the conversation. changelog stays forked
 - Fixed the README's changelog description, which still listed the push and update modes removed in 0.7.0, a broken Contents link in pptx's content-workflow WORKFLOW.md, and pptx warnings that did not name the slide or layout
 
 ### Removed

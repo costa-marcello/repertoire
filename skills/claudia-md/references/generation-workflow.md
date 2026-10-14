@@ -284,7 +284,7 @@ For each approved file:
 
 **Next steps:**
 - Review generated files and customize as needed
-- Run `/claude-md review` to check quality
+- Run `/claudia-md review` to check quality
 - Consider removing generic patterns, keep only project-specific
 ```
 

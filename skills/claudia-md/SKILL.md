@@ -1,5 +1,5 @@
 ---
-name: claude-md
+name: claudia-md
 description: Manages CLAUDE.md files. Audits, reviews, improves, refactors, updates, and generates subdirectory context. Discovers all CLAUDE.md files, evaluates quality against research-backed criteria, generates improvement reports, applies targeted updates, syncs CLAUDE.md with current codebase state, restructures using progressive disclosure, and creates contextual CLAUDE.md files for directories that benefit from instant context. Use when the user says "audit CLAUDE.md", "review my rules", "improve instructions", "organize Claude config", "update CLAUDE.md", "sync my rules", "init project", "generate subdirectory context", or "CLAUDE.md maintenance".
 allowed-tools: Read, Glob, Grep, Bash, Edit
 license: MIT

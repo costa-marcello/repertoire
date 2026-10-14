@@ -634,7 +634,7 @@ class ForkNegation(ValidatorCase):
 
 
 class ForkPausesMissedBefore(ValidatorCase):
-    """M2 pauses that claude-md (at 6f40f09) and pptx's intake reference slipped past."""
+    """M2 pauses that claude-md (now claudia-md, at 6f40f09) and pptx's intake reference slipped past."""
 
     INTAKE = (
         "# Intake Questionnaire\n\n"

@@ -183,14 +183,14 @@ Five skills that manage the files and skills around your project: creating, revi
 <th>Install</th>
 </tr>
 <tr>
-<td><strong>claude-md</strong></td>
+<td><strong>claudia-md</strong></td>
 <td>
 
 The complete CLAUDE.md management tool. Six modes: audit (discover and score all rule files), review (detailed quality report against research-backed criteria), improve (targeted updates with diffs), refactor (restructure using progressive disclosure), update (scan the codebase and sync CLAUDE.md with current project state, or create one from scratch), and generate (create CLAUDE.md files for subdirectories that need context). Built on the insight that rules with reasoning outperform bare rules because models generalise from "why" explanations. Bundles references for quality criteria, anti-patterns, templates, update guidelines, and real examples.
 
 </td>
-<td><code>/claude-md</code> + mode<br/><code>/claude-md audit</code> — scan and score rules<br/><code>/claude-md review</code> — quality report<br/><code>/claude-md improve</code> — apply targeted fixes<br/><code>/claude-md refactor</code> — restructure layout<br/><code>/claude-md update</code> — sync with codebase<br/><code>/claude-md generate</code> — create for subdirs</td>
-<td><code>npx skills add costa-marcello/skillkit -s claude-md</code></td>
+<td><code>/claudia-md</code> + mode<br/><code>/claudia-md audit</code> — scan and score rules<br/><code>/claudia-md review</code> — quality report<br/><code>/claudia-md improve</code> — apply targeted fixes<br/><code>/claudia-md refactor</code> — restructure layout<br/><code>/claudia-md update</code> — sync with codebase<br/><code>/claudia-md generate</code> — create for subdirs</td>
+<td><code>npx skills add costa-marcello/skillkit -s claudia-md</code></td>
 </tr>
 <tr>
 <td><strong>readme-md</strong></td>
