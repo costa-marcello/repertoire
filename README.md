@@ -91,10 +91,10 @@ Three skills that cover releases, UI implementation, and visual documentation.
 <td><strong>changelog</strong></td>
 <td>
 
-Creates a versioned release in one flow: gathers the commits since the last tag, writes a dated Keep a Changelog entry, then commits, tags, and pushes. Every invocation is a release. Auto-detects the next semantic version from commit types (breaking, feat, fix) or accepts an explicit one (`/changelog v2.0.0`), and stops with "No release needed" when only docs, test, ci, or chore commits landed. Translates developer commit messages into user-friendly descriptions. Runs pre-flight checks (clean working directory, branch sync, no duplicate tags) before git operations. When the push fails, for example in a Cowork session without git credentials, it keeps the commit and tag local and prints the commands to finish the release. Follows Keep a Changelog format and Conventional Commits conventions.
+Creates a versioned release in one flow: gathers the commits since the last tag, writes a dated Keep a Changelog entry, then commits, tags, and pushes. Auto-detects the next semantic version from commit types (breaking, feat, fix; while the major version is 0, a breaking change bumps the minor version) or accepts an explicit one (`/repertoire:changelog v2.0.0`), follows the last tag's `v` style, and stops with "No release needed" when only docs, test, ci, or chore commits landed. An optional second argument names the repository folder, since the skill runs in a forked subagent. Translates developer commit messages into user-friendly descriptions. Runs pre-flight checks (clean working directory, branch on origin and in sync, no detached HEAD, no duplicate tags) before git operations. When the push fails, for example in a Cowork session without git credentials, it keeps the commit and tag local and prints the commands to finish the release. Follows Keep a Changelog format and Conventional Commits conventions.
 
 </td>
-<td><code>/repertoire:changelog</code> — release with the auto-detected version<br/><code>/repertoire:changelog v2.0.0</code> — release with an explicit version<br/>Commits, tags, and pushes after pre-flight checks.</td>
+<td><code>/repertoire:changelog</code> — release with the auto-detected version<br/><code>/repertoire:changelog v2.0.0</code> — release with an explicit version<br/><code>/repertoire:changelog v2.0.0 ~/code/app</code> — release another repository<br/>Commits, tags, and pushes after pre-flight checks.</td>
 </tr>
 <tr>
 <td><strong>frontend-design</strong></td>
