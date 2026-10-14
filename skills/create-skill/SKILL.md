@@ -68,7 +68,7 @@ Read `references/evals_guide.md` for formats, prompts, isolation, and grading.
 3. **Isolate every eval subagent** (here and in step 6), because it acts in the user's real environment and cannot ask anyone: only an inputs folder and an output folder (never one holding `evals.json`), a local bare repository as any remote, and `would_run.txt` for any command that pushes, publishes, posts, or sends. The prompts in `references/evals_guide.md` carry these rules.
 4. Record what each baseline run got wrong, skipped, or worked out from scratch. That list is what the skill teaches; leave out what the baseline already does well.
 5. If the baseline meets every expectation, the skill may add little or the cases are too easy: ask the user whether to continue (the default) or harden them.
-6. **Without subagents** (claude.ai chat): skip the baseline, and run the cases yourself one after another in step 6.
+6. **Without subagents:** skip the baseline; run the cases yourself in step 6.
 
 ### Step 3: Plan the contents
 
@@ -129,7 +129,7 @@ Then run the Cowork check (M11 "Breaks in Cowork", both targets). Every Claude C
 
 **Updates: regression run.** Once a pass is clean, invoke `repertoire:review-skill` (or `review-skill`) from this conversation, never a subagent, with `"<absolute-skill-dir>" report only regression`. It asks the user, then re-runs each case in the skill's `evals/evals.json` and repeats a failing case once; you make the fixes. Without review-skill, follow "Regression runs" in `references/evals_guide.md`. A case that fails twice blocks finishing: fix the skill, or a wrong expectation (say why), and run it again. Inside an eval run (a subagent confined to an inputs and an output folder), skip it and say so.
 
-**The bar:** Grade A (0 Major, 0 Minor) with zero Style notes, a clean Layer 1, with-skill runs that meet the expectations the baseline missed, and for an update no case failing the regression twice. After the third pass, stop: report the remaining findings with their locations, and ask the user whether to accept them, keep fixing, or change the scope.
+**The bar:** Grade A (0 Major, 0 Minor) with zero Style notes, a clean Layer 1, with-skill runs that meet the expectations the baseline missed, and for an update no case failing the regression twice. In an update, findings in parts the change did not touch go to the user as a separate list and do not block the bar. After the third pass, stop: report the remaining findings with their locations, and ask the user whether to accept them, keep fixing, or change the scope.
 
 ### Step 7: Sanitize (optional)
 

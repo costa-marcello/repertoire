@@ -153,7 +153,7 @@ The Claude platform has no built-in eval runner. `evals_guide.md` describes the 
   - Do not name a skill directory `synced`, or `anthropic-skills*` outside plugins.
 - **Tools.**
   - The agent-dispatch tool is Agent; `Task(...)` still works as an alias in settings and agent definitions.
-  - TaskCreate, TaskList, TaskUpdate, and TaskGet manage the to-do list and do not dispatch agents.
+  - TaskCreate, TaskList, TaskUpdate, and TaskGet manage the todo list and do not dispatch agents.
   - Workflow also dispatches agents, but subagents do not get it. SendMessage messages agents.
 - **Subagents.**
   - Subagents can dispatch subagents up to 3 levels deep by default (`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`). Ordinary subagents lose AskUserQuestion and Workflow.
