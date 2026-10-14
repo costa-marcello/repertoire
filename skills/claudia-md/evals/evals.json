@@ -45,22 +45,47 @@
     },
     {
       "id": 3,
-      "prompt": "init project: notes-cli/ has no CLAUDE.md yet. Create one from what's in the folder. I approve whatever you propose, so go ahead and write it.",
-      "expected_output": "A new notes-cli/CLAUDE.md built from the root template: a one-line description from pyproject.toml or README.md, the make install/test/lint commands and the notes entry point, the src/notes_cli layout and key file, and placeholder Hard Rules and Gotchas sections. The full file is previewed, then written, and the reply names the path.",
+      "prompt": "init CLAUDE.md: notes-cli/ has no CLAUDE.md yet. Create one from what's in the folder. I approve whatever you propose, so go ahead and write it.",
+      "expected_output": "A new notes-cli/CLAUDE.md built from the Project Root template in templates.md (Minimal by default, or Comprehensive for the pytest and ruff setup). Because notes-cli/AGENTS.md exists, its first line is @AGENTS.md and it does not repeat the AGENTS.md rules. It has a one-line description from pyproject.toml or README.md, the make install/test/lint commands and the notes entry point, the src/notes_cli layout and key file, and placeholder Hard Rules and Gotchas sections. The full file is previewed, then written and re-read, and the reply names the path.",
       "files": [
         "evals/files/notes-cli/pyproject.toml",
         "evals/files/notes-cli/Makefile",
         "evals/files/notes-cli/README.md",
+        "evals/files/notes-cli/AGENTS.md",
         "evals/files/notes-cli/src/notes_cli/main.py"
       ],
       "expectations": [
         "Shows the full proposed CLAUDE.md before writing it",
-        "Writes notes-cli/CLAUDE.md and creates or changes no other file",
+        "Writes notes-cli/CLAUDE.md and creates or changes no other file; notes-cli/AGENTS.md stays byte-for-byte unchanged",
+        "Makes @AGENTS.md the first line of notes-cli/CLAUDE.md, and does not copy the two AGENTS.md rules (run make test and make lint before finishing; add a migration instead of editing CREATE TABLE) into it",
         "Lists make install, make test, and make lint, plus the notes command from [project.scripts], and invents no command that the Makefile or pyproject.toml lacks",
         "Opens with a one-line project description taken from pyproject.toml or README.md",
         "Names src/notes_cli/main.py as the entry point or a key file",
         "Includes Hard Rules and Gotchas placeholder sections with a comment asking for project-specific rules",
         "Ends by naming the path of the file it created"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "First save this as shopfront/CLAUDE.md (the rest of the shopfront project is already there):\n\n# Shopfront\n\nOnline store monorepo (pnpm workspaces).\n\n## Commands\n\n- `pnpm build` - build every package\n- `pnpm test` - test every package\n\nThen generate CLAUDE.md files for the directories in shopfront that need their own context. I approve whatever you propose, so write them.",
+      "expected_output": "A Generate-mode preview that scores the directories and proposes only packages/billing/CLAUDE.md (monorepo package, index.ts entry point, package.json, README), then writes it. The file has a one-sentence Context, index.ts and webhooks.ts as key files, the idempotency-key pattern with its reason, and the STRIPE_WEBHOOK_SECRET gotcha. It imports no parent CLAUDE.md, stays under 500 tokens, and the reply lists the created path.",
+      "files": [
+        "evals/files/shopfront/package.json",
+        "evals/files/shopfront/packages/billing/package.json",
+        "evals/files/shopfront/packages/billing/README.md",
+        "evals/files/shopfront/packages/billing/index.ts",
+        "evals/files/shopfront/packages/billing/checkout.ts",
+        "evals/files/shopfront/packages/billing/webhooks.ts",
+        "evals/files/shopfront/scripts/seed.ts"
+      ],
+      "expectations": [
+        "Shows a preview that lists each proposed file with its score before writing anything",
+        "Writes packages/billing/CLAUDE.md, and writes no CLAUDE.md for scripts/ or packages/, which score below 4",
+        "packages/billing/CLAUDE.md contains no @../CLAUDE.md line and no other @ import of a parent CLAUDE.md",
+        "Its Context is one sentence about Stripe subscriptions and one-time payments, and its Key Files name index.ts and webhooks.ts",
+        "Records that Stripe calls pass an idempotency key, with the reason (a retried request never charges twice), and the gotcha that webhooks need STRIPE_WEBHOOK_SECRET",
+        "Keeps packages/billing/CLAUDE.md under 500 tokens and does not repeat the root Commands section",
+        "Leaves shopfront/CLAUDE.md as saved and ends by listing the path of each file it created"
       ]
     }
   ]

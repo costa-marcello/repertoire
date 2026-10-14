@@ -1,4 +1,4 @@
-<!-- v2.0 | 2026-01-30 -->
+<!-- v2.1 | 2026-10-14 -->
 
 # Before/After Examples
 
@@ -83,19 +83,12 @@ Real-time analytics visualization with TypeScript and React.
 - **Test behavior, not implementation** — Tests survive refactoring when they verify outcomes.
 - **Conventional commits** — `feat:`, `fix:`, `chore:`. Enables automated changelogs.
 
-## Rules (Detailed)
-
-@rules/coding.md
-@rules/testing.md
-@rules/workflow.md
-
 ## Rule Conflicts
 
 When rules conflict: Hard Rules > Core Principles > Style preferences
 
 ## Critical Reminders
 
-These rules are repeated here because research shows end-position improves recall:
 - **Never commit secrets** — check before every commit
 - **PRs < 400 lines** — split if larger
 ```
@@ -103,6 +96,11 @@ These rules are repeated here because research shows end-position improves recal
 **`.claude/rules/coding.md` (~60 lines):**
 
 ```markdown
+---
+paths:
+  - "src/**/*.{ts,tsx}"
+---
+
 # Coding Guidelines
 
 ## TypeScript
@@ -135,7 +133,7 @@ These rules are repeated here because research shows end-position improves recal
 **Improvements:**
 - Root has high-value content with reasoning ("why")
 - Critical rules appear at BOTH start AND end (research-backed)
-- Detailed rules extracted to `.claude/rules/` but still include reasoning
+- Detailed rules extracted to `.claude/rules/` but still include reasoning. The root imports none of them: Claude Code loads rule files on its own, and `paths:` keeps the coding rules out of context until Claude touches a TypeScript file
 - Priority hierarchy is explicit
 - No vague instructions ("write clean code" removed entirely)
 
@@ -148,7 +146,7 @@ These rules are repeated here because research shows end-position improves recal
 ```markdown
 ## Triage Assessment
 
-**Score:** 5/6
+**Score:** 6 (4 or more means Skip)
 **Recommendation:** Skip refactoring
 
 **Strengths:**
@@ -161,7 +159,7 @@ These rules are repeated here because research shows end-position improves recal
 **Issues found:**
 - None significant
 
-**Proceed with Phase 1?** No — file is already well-organized.
+**Refactor?** No — file is already well-organized.
 
 **Alternative offers:**
 - Minor cleanup of any verbose sections?
@@ -173,13 +171,13 @@ These rules are repeated here because research shows end-position improves recal
 
 ## Example 3: What to Keep vs What to Remove
 
-### Keep (Research-Backed Reasons)
+### Keep (and Why)
 
 | Instruction | Why Keep |
 |-------------|----------|
-| "Never commit secrets" | Safety reinforcement — repetition improves compliance 76% |
+| "Never commit secrets" | Safety reinforcement — one line guards against an expensive mistake |
 | "Never force-push main — rewrites shared history" | Has reasoning; context improves generalization |
-| "Hard Rules > Core Principles > Style" | Explicit priority — models struggle with implicit hierarchy |
+| "Hard Rules > Core Principles > Style" | Explicit priority — without it, Claude may follow either of two conflicting rules |
 | "PRs < 400 lines" (even if "obvious") | Override reinforcement for training patterns |
 
 ### Remove (Actually Vague)
@@ -272,13 +270,11 @@ Research finding: "Lost in the middle" — models process beginning and end bett
 ## Core Principles
 [...]
 
-## Detailed Rules
-@rules/coding.md
-@rules/workflow.md
+## Commands
+[...]
 
 ## Critical Reminders
 
-For emphasis (research shows end-position aids recall):
 - Check for secrets before every commit
 - Never force-push to main
 ```

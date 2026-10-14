@@ -11,7 +11,7 @@
 7. [Greenfield Mode (No Existing CLAUDE.md)](#greenfield-mode-no-existing-claudemd)
 8. [Monorepo Handling](#monorepo-handling)
 
-<!-- v1.1.0 | 2026-10-14 -->
+<!-- v1.2.0 | 2026-10-14 -->
 
 Detailed algorithm for the Update mode. The SKILL.md contains the compact summary; this reference provides the full scanning heuristics.
 
@@ -109,7 +109,7 @@ Identify entry points and important files:
 
 ## Phase U2: Existing CLAUDE.md Read
 
-Read the current `./CLAUDE.md` (or `./.claude/CLAUDE.md`) if it exists. Parse into sections by heading level.
+Read the current `./CLAUDE.md` (or `./.claude/CLAUDE.md`) if it exists. Parse into sections by heading level. Also note whether `./AGENTS.md` exists: Claude Code reads it by default only while the project has no CLAUDE.md, so a new CLAUDE.md must import it (see Greenfield Mode).
 
 **Section classification:**
 
@@ -206,9 +206,9 @@ Apply approved changes using the Edit tool. Preserve:
 - User-authored reasoning and rules
 - Comments and formatting conventions
 
-If creating a new CLAUDE.md from scratch, use the root template from `references/templates.md` as the base structure, and write it with the Write tool to `CLAUDE.md` at the project folder root (the connected folder in Cowork).
+If creating a new CLAUDE.md from scratch, start from *Project Root (Minimal)* in `references/templates.md` (switch to *Project Root (Comprehensive)* when the scan found environment variables, a test setup, or code-style config), and write it with the Write tool to `CLAUDE.md` at the project folder root (the connected folder in Cowork).
 
-Finish by naming every file you changed or created, with its path from the project folder root.
+Re-read each written file to confirm the change landed and that user-authored sections are intact. Finish by naming every file you changed or created, with its path from the project folder root.
 
 ---
 
@@ -217,10 +217,11 @@ Finish by naming every file you changed or created, with its path from the proje
 When no CLAUDE.md exists, Update mode acts as an init:
 
 1. Run full codebase scan (Phase U1)
-2. Generate a complete CLAUDE.md using the root template
+2. Generate a complete CLAUDE.md from *Project Root (Minimal)* in `references/templates.md`, or *Project Root (Comprehensive)* when the scan found environment variables, a test setup, or code-style config
 3. Include: project description (from README or package.json), commands, architecture, key files
-4. Add placeholder sections: `## Hard Rules`, `## Gotchas` with a comment `<!-- Add project-specific rules here -->`
-5. Preview the full file for approval before writing
+4. Keep the template's `## Hard Rules` and `## Gotchas` placeholder sections and their comments asking for project-specific rules (Claude Code strips block-level HTML comments before loading, so the placeholders cost no context)
+5. If `./AGENTS.md` exists, make `@AGENTS.md` the first line and add only what AGENTS.md lacks. Without the import, Claude Code stops reading AGENTS.md as soon as the new CLAUDE.md exists
+6. Preview the full file for approval before writing
 
 ---
 

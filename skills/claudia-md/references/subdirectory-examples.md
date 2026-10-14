@@ -1,17 +1,17 @@
-<!-- v1.0 | 2026-01-28 -->
+<!-- v1.1 | 2026-10-14 -->
 
-# Subfolder CLAUDE.md Examples
+# Subdirectory CLAUDE.md Examples
 
 ## Contents
 
 1. [tests/CLAUDE.md](#testsclaudemd)
 2. [src/components/CLAUDE.md](#srccomponentsclaudemd)
 3. [src/api/CLAUDE.md](#srcapiclaudemd)
-4. [When to Create Subfolder Files](#when-to-create-subfolder-files)
+4. [When to Create Subdirectory Files](#when-to-create-subdirectory-files)
 5. [Auto-Generated Examples](#auto-generated-examples)
 6. [Generated vs Hand-Crafted](#generated-vs-hand-crafted)
 
-Real-world examples of subfolder-specific CLAUDE.md files.
+Real-world examples of subdirectory-specific CLAUDE.md files. None of them imports the parent CLAUDE.md: Claude Code already loads every CLAUDE.md from the working directory up, and loads a subdirectory's file when Claude first touches a file there.
 
 ---
 
@@ -19,8 +19,6 @@ Real-world examples of subfolder-specific CLAUDE.md files.
 
 ```markdown
 # Testing Guidelines
-
-@../CLAUDE.md
 
 ## Context
 
@@ -50,8 +48,6 @@ Test files for the application. Use Vitest with React Testing Library.
 ```markdown
 # Component Guidelines
 
-@../CLAUDE.md
-
 ## Context
 
 React components using Tailwind CSS and shadcn/ui.
@@ -78,8 +74,6 @@ React components using Tailwind CSS and shadcn/ui.
 ```markdown
 # API Guidelines
 
-@../CLAUDE.md
-
 ## Context
 
 Backend API routes using Express/Fastify. All routes require authentication.
@@ -101,7 +95,7 @@ Backend API routes using Express/Fastify. All routes require authentication.
 
 ---
 
-## When to Create Subfolder Files
+## When to Create Subdirectory Files
 
 | Directory Pattern | Create If | Purpose |
 |-------------------|-----------|---------|
@@ -129,8 +123,6 @@ These examples show minimal CLAUDE.md files created by Generate mode. They prior
 ```markdown
 # Utils Package
 
-@../CLAUDE.md
-
 ## Context
 Shared utility functions used across all packages. Pure functions, no side effects.
 
@@ -151,8 +143,6 @@ Shared utility functions used across all packages. Pure functions, no side effec
 
 ```markdown
 # Payments Service
-
-@../CLAUDE.md
 
 ## Context
 Stripe integration for subscriptions and one-time payments.
@@ -177,9 +167,9 @@ Stripe integration for subscriptions and one-time payments.
 
 | Aspect | Generated | Hand-Crafted |
 |--------|-----------|--------------|
-| Length | 100-200 tokens | 200-500 tokens |
+| Length | About 100 (minimal) to 300 (full) tokens | 200-500 tokens |
 | Context | One sentence | May include background |
-| Key Files | 2-4 files | May list more |
+| Key Files | 2-5 files | May list more |
 | Patterns | 1-2 essential | May include style preferences |
 | Gotchas | Only if found | Comprehensive list |
 
@@ -202,8 +192,6 @@ Expand manually when:
 ```markdown
 # Auth Service
 
-@../CLAUDE.md
-
 ## Context
 JWT authentication with Redis sessions.
 
@@ -218,8 +206,6 @@ JWT authentication with Redis sessions.
 **After manual expansion:**
 ```markdown
 # Auth Service
-
-@../CLAUDE.md
 
 ## Context
 JWT authentication with Redis sessions.

@@ -1,0 +1,9 @@
+{
+  "name": "shopfront",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test"
+  }
+}

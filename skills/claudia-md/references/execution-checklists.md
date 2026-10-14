@@ -9,9 +9,9 @@
 5. [Update Mode](#update-mode)
 6. [Generate Mode](#generate-mode)
 
-<!-- v1.0.0 | 2026-01-30 -->
+<!-- v1.1.0 | 2026-10-14 -->
 
-Mode-specific checklists for tracking progress during CLAUDE.md operations.
+Mode-specific checklists for tracking progress during CLAUDE.md operations. Phase numbers match SKILL.md.
 
 ---
 
@@ -33,18 +33,19 @@ Summary:
 ## Review Mode
 
 ```
-- [ ] Phase 0: Quality score ___/13 | Rating: [Excellent/Good/Fair/Poor]
-- [ ] Phase 1: Issues found - Missing reasoning: ___ | Vague: ___ | Negative: ___ | Conflicts: ___
-- [ ] Phase 2: All rules analyzed
-- [ ] Phase 3: Report generated
+- [ ] Phase 1: Discovery - Files found: ___
+- [ ] Phase 2: Rubric score ___/100 | Rule quality ___/13 | Rating: [Excellent/Good/Fair/Poor]
+- [ ] Phase 4: Issues found - Missing reasoning: ___ | Vague: ___ | Negative: ___ | Conflicts: ___ | Wrong imports: ___
+- [ ] Phase 3: Report output, with the Phase 4 issues
+- [ ] No file changed, no project command run
 
-Quality dimensions:
+Rule quality dimensions:
 - [ ] Reasoning score: ___/3
 - [ ] Specificity score: ___/3
 - [ ] Positive framing score: ___/3
 - [ ] Examples score: ___/2
 - [ ] Structure score: ___/2
-- [ ] Conflicts: ___
+- [ ] Conflicts: ___ (-1 each, down to -3)
 ```
 
 ---
@@ -55,8 +56,9 @@ Quality dimensions:
 - [ ] Phase 1: Discovery complete
 - [ ] Phase 2: Quality assessment complete
 - [ ] Phase 3: Report presented to user
-- [ ] Phase 4: User approved changes
-- [ ] Phase 5: Updates applied
+- [ ] Phase 4: Issues detected (reasoning, vague, negative-only, conflicts, wrong imports)
+- [ ] Phase 5: Targeted updates proposed with diffs, user approved
+- [ ] Phase 7: Updates applied and each file re-read
 
 Changes made:
 - [ ] Commands added/updated
@@ -71,12 +73,12 @@ Changes made:
 ## Refactor Mode
 
 ```
-- [ ] Phase 0: Triage score ___ | Decision: [Skip/Light/Standard/Deep]
-- [ ] Phase 1: Contradictions - Found: ___ | Resolved: ___
-- [ ] Phase 2: Keep vs Extract determined
-- [ ] Phase 3: Categories created
-- [ ] Phase 4: Structure built
-- [ ] Phase 5: Validation passed
+- [ ] Phase 6: Triage score ___ | Decision: [Skip/Light/Standard/Deep]
+- [ ] Phase 6: Contradictions - Found: ___ | Resolved: ___
+- [ ] Phase 6: Keep vs Extract determined
+- [ ] Phase 6: Rule files planned, with a paths: glob for each topic-specific rule
+- [ ] Phase 7: User approved, files written and re-read
+- [ ] Phase 7: Validation checklist from the Refactoring Complete template passed
 
 Quality improvements applied:
 - [ ] Missing reasoning added
@@ -85,6 +87,7 @@ Quality improvements applied:
 - [ ] Examples added where needed
 - [ ] Hybrid format validated
 - [ ] Critical rules at BOTH start AND end
+- [ ] No @ import of a .claude/rules/ file
 ```
 
 ---
@@ -98,6 +101,7 @@ Quality improvements applied:
   - [ ] Directory structure mapped
   - [ ] Frameworks detected: ___
   - [ ] Config/env files found: ___
+  - [ ] AGENTS.md present: [yes/no]
 - [ ] Phase U2: Existing CLAUDE.md read (or none found)
 - [ ] Phase U3: Drift detection complete
   - [ ] Stale commands: ___
@@ -106,7 +110,7 @@ Quality improvements applied:
   - [ ] Tech stack changes: ___
 - [ ] Phase U4: Change preview presented
 - [ ] Phase U5: User approved changes
-- [ ] Phase U6: Updates applied
+- [ ] Phase U6: Updates applied and each file re-read
 
 Preservation check:
 - [ ] Hard Rules untouched
@@ -125,7 +129,7 @@ Preservation check:
 - [ ] Phase G3: Content extraction complete
 - [ ] Phase G4: Preview generated
 - [ ] Phase G5: User approved files: ___
-- [ ] Phase G6: Files created
+- [ ] Phase G6: Files created and each one re-read
 
 Directory scores:
 - [ ] {path} - Score: ___ [Create/Skip]
@@ -133,8 +137,8 @@ Directory scores:
 - [ ] {path} - Score: ___ [Create/Skip]
 
 Quality gate (per file):
-- [ ] Starts with @../CLAUDE.md (parent reference)
-- [ ] Under 500 tokens hard limit (target 150-300)
+- [ ] No @ import of a parent CLAUDE.md (it loads already)
+- [ ] Under 500 tokens hard cap (about 100 minimal, 150-300 full)
 - [ ] One-sentence Context (not verbose)
 - [ ] Key Files lists 2-5 files only (not exhaustive)
 - [ ] Patterns include reasoning ("pattern — why")
