@@ -2,8 +2,6 @@
 name: find-skills
 description: "Discovers and installs agent skills from the open ecosystem and CCPM registries. Use when users ask 'how do I do X', 'find a skill for X', 'is there a skill that can...', 'ccpm', 'claude code skill', 'installed skills', or want to extend capabilities."
 license: MIT
-context: fork
-agent: general-purpose
 ---
 
 # Find Skills

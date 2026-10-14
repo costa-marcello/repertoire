@@ -2,8 +2,6 @@
 name: pdf
 description: "Extracts text and tables from PDFs, creates new documents, merges/splits files, fills forms, and converts markdown to PDF. Use when working with PDF files, when the user mentions PDFs, document extraction, form filling, OCR, or markdown-to-PDF conversion."
 license: MIT
-context: fork
-agent: general-purpose
 ---
 
 # PDF Processing

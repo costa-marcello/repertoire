@@ -2,8 +2,6 @@
 name: readme-md
 description: Guides README creation and improvement with audience-matched templates. Use when writing READMEs for open source, personal, internal, or config projects, or when the user mentions documentation, README, or project setup.
 license: MIT
-context: fork
-agent: general-purpose
 argument-hint: "[task and project type]"
 ---
 

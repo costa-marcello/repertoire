@@ -2,7 +2,6 @@
 name: docx
 description: "Creates, edits, and analyzes Word documents with tracked changes, comments, and formatting preservation. Use when working with .docx files for document creation, modification, redlining, or text extraction."
 license: MIT
-context: fork
 ---
 
 # DOCX Creation, Editing, and Analysis

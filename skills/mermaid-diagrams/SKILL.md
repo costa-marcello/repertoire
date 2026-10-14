@@ -2,8 +2,6 @@
 name: mermaid-diagrams
 description: "Creates professional software diagrams using Mermaid's text-based syntax. Use when users request diagrams, visualizations, or documentation of software architecture including class diagrams, sequence diagrams, flowcharts, ERDs, C4 architecture diagrams, state machines, git graphs, or gantt charts. Triggers: 'diagram', 'visualize', 'model', 'map out', 'show the flow', database design, code structure."
 license: MIT
-context: fork
-agent: general-purpose
 ---
 
 # Mermaid Diagramming

@@ -2,8 +2,6 @@
 name: frontend-design
 description: "Creates and improves distinctive, production-grade frontend interfaces that avoid generic AI aesthetics. Includes style/color/typography guides by industry, 30+ UX rules, 25+ chart types, and 10 tech stacks. Use when designing components, building pages, choosing palettes, implementing UI patterns, or improving existing interfaces."
 license: MIT
-context: fork
-agent: general-purpose
 ---
 
 # Frontend Design Intelligence

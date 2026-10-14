@@ -2,8 +2,6 @@
 name: xlsx
 description: "Creates, edits, and analyses spreadsheets with formulas, formatting, and data visualisation. Use when working with .xlsx, .xlsm, .csv, or .tsv files, creating spreadsheets from scratch, reading or analysing tabular data, modifying files while preserving formulas, building financial models, or recalculating formula values."
 license: MIT
-context: fork
-agent: general-purpose
 ---
 
 # Output Rules

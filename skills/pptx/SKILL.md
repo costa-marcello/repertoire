@@ -2,7 +2,6 @@
 name: pptx
 description: "Creates, edits, and analyses PowerPoint presentations with layouts, speaker notes, and design elements. Use when working with .pptx files, creating presentations from topics, modifying slides, or extracting content. Triggers: 'create presentation from topic', 'slide deck from document', 'powerpoint from scratch'."
 license: MIT
-context: fork
 ---
 
 # PPTX creation, editing, and analysis
