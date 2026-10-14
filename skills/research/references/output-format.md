@@ -138,13 +138,16 @@ Unlock Reddit & X data: set these environment variables
 
 ## Invitation
 
+Pick the invitation by `QUERY_TYPE` and `TARGET_TOOL`. Only a prompting request, or a named tool, gets a prompt offer.
+
+**PROMPTING, or any query type with a named TARGET_TOOL:**
 ```
 ---
 Share your vision for what you want to create and I'll write a thoughtful prompt
 you can copy-paste directly into {TARGET_TOOL}.
 ```
 
-If TARGET_TOOL is still unknown, ask instead:
+If QUERY_TYPE is PROMPTING and TARGET_TOOL is still unknown, ask instead:
 ```
 What tool will you use these prompts with?
 
@@ -153,4 +156,12 @@ Options:
 2. Nano Banana Pro (image generation)
 3. ChatGPT / Claude (text/code)
 4. Other (tell me)
+```
+
+**RECOMMENDATIONS, NEWS, or GENERAL with TARGET_TOOL unknown:** offer follow-ups, not a prompt:
+```
+---
+Ask me anything about {TOPIC}: I can go deeper on a finding, compare two
+options side by side, or check for anything newer. If you plan to use this
+with an AI tool, name it and I'll write a prompt for it.
 ```

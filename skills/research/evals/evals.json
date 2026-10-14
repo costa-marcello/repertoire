@@ -15,7 +15,7 @@
         "QUERY_TYPE is NEWS, and the NEWS subagents are told to pass time_range month",
         "The report has the community section, the official section, and a cross-reference table with 3-5 rows marked Aligned, Divergent, or Gap",
         "The stats footer has a line 'Search backend: SearXNG (...)' naming the fully qualified searxng_web_search tool",
-        "The report ends with the invitation or the target-tool question and then waits for the user"
+        "The report ends with the follow-up invitation (NEWS with no target tool), not a prompt offer or a target-tool question, and then waits for the user"
       ]
     },
     {
@@ -30,7 +30,8 @@
         "Every subagent prompt carries the WebSearch + WebFetch search block with the recorded reason, and none lists SearXNG tools",
         "The stats footer has a line 'Search backend: WebSearch + WebFetch (fallback: no SearXNG tool)' or '(fallback: SearXNG not reachable)'",
         "A line under the footer points to references/searxng-setup.md",
-        "The community section is a 'Most Mentioned' list of specific database names with mention counts and sources"
+        "The community section is a 'Most Mentioned' list of specific database names with mention counts and sources",
+        "The report ends with the follow-up invitation (RECOMMENDATIONS with no target tool), not a prompt offer or a target-tool question"
       ]
     },
     {
@@ -44,6 +45,20 @@
         "The community subagent prompts say the script covered no sites, so Reddit threads are in scope",
         "The stats footer has no Reddit line and no X line, and still has a 'Search backend:' line naming SearXNG or WebSearch + WebFetch",
         "The footer hint names OPENAI_API_KEY and XAI_API_KEY as environment variables and describes ~/.config/research/.env as a Claude Code convenience that Cowork lacks",
+        "No API key value appears anywhere in the output"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "/research what are people saying about the Zed editor lately --quick",
+      "expected_output": "Precondition: only XAI_API_KEY is set (OPENAI_API_KEY unset, no ~/.config/research/.env). The script runs in x-only mode and covers X only, so Reddit is left to the community subagents. The footer keeps the X line, drops the Reddit line, and keeps the search backend line.",
+      "files": [],
+      "expectations": [
+        "The script output shows 'Mode: x-only' and 'Script covered: x.com, twitter.com', and the skill continues to Phase 2 without stopping",
+        "The C2 subagent prompt puts Reddit in scope, because reddit.com is not in SCRIPT_SOURCES",
+        "No subagent prompt asks for x.com or twitter.com to be searched",
+        "Exactly 6 subagents (C1-C3 and O1-O3) are dispatched in a single message through the Agent tool",
+        "The stats footer has an X line and a 'Search backend:' line, and no Reddit line",
         "No API key value appears anywhere in the output"
       ]
     }

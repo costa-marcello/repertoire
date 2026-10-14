@@ -20,6 +20,11 @@ from urllib.parse import urlparse
 from . import dates, schema
 
 
+def _plausible_year(year: str) -> bool:
+    """A URL or text year from 2000 to next year (rules out false matches like /1234/)."""
+    return 2000 <= int(year) <= datetime.now().year + 1
+
+
 # Month name mappings for date parsing
 MONTH_MAP = {
     "jan": 1, "january": 1,
@@ -55,21 +60,21 @@ def extract_date_from_url(url: str) -> Optional[str]:
     match = re.search(r'/(\d{4})/(\d{2})/(\d{2})/', url)
     if match:
         year, month, day = match.groups()
-        if 2020 <= int(year) <= 2030 and 1 <= int(month) <= 12 and 1 <= int(day) <= 31:
+        if _plausible_year(year) and 1 <= int(month) <= 12 and 1 <= int(day) <= 31:
             return f"{year}-{month}-{day}"
 
     # Pattern 2: /YYYY-MM-DD/ or /YYYY-MM-DD-
     match = re.search(r'/(\d{4})-(\d{2})-(\d{2})[-/]', url)
     if match:
         year, month, day = match.groups()
-        if 2020 <= int(year) <= 2030 and 1 <= int(month) <= 12 and 1 <= int(day) <= 31:
+        if _plausible_year(year) and 1 <= int(month) <= 12 and 1 <= int(day) <= 31:
             return f"{year}-{month}-{day}"
 
     # Pattern 3: /YYYYMMDD/ (compact)
     match = re.search(r'/(\d{4})(\d{2})(\d{2})/', url)
     if match:
         year, month, day = match.groups()
-        if 2020 <= int(year) <= 2030 and 1 <= int(month) <= 12 and 1 <= int(day) <= 31:
+        if _plausible_year(year) and 1 <= int(month) <= 12 and 1 <= int(day) <= 31:
             return f"{year}-{month}-{day}"
 
     return None
@@ -105,7 +110,7 @@ def extract_date_from_snippet(text: str) -> Optional[str]:
     if match:
         month_str, day, year = match.groups()
         month = MONTH_MAP.get(month_str[:3])
-        if month and 2020 <= int(year) <= 2030 and 1 <= int(day) <= 31:
+        if month and _plausible_year(year) and 1 <= int(day) <= 31:
             return f"{year}-{month:02d}-{int(day):02d}"
 
     # Pattern 2: DD Month YYYY (e.g., "24 January 2026")
@@ -119,14 +124,14 @@ def extract_date_from_snippet(text: str) -> Optional[str]:
     if match:
         day, month_str, year = match.groups()
         month = MONTH_MAP.get(month_str[:3])
-        if month and 2020 <= int(year) <= 2030 and 1 <= int(day) <= 31:
+        if month and _plausible_year(year) and 1 <= int(day) <= 31:
             return f"{year}-{month:02d}-{int(day):02d}"
 
     # Pattern 3: YYYY-MM-DD (ISO format)
     match = re.search(r'\b(\d{4})-(\d{2})-(\d{2})\b', text)
     if match:
         year, month, day = match.groups()
-        if 2020 <= int(year) <= 2030 and 1 <= int(month) <= 12 and 1 <= int(day) <= 31:
+        if _plausible_year(year) and 1 <= int(month) <= 12 and 1 <= int(day) <= 31:
             return f"{year}-{month}-{day}"
 
     # Pattern 4: Relative dates ("3 days ago", "yesterday", etc.)

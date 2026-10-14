@@ -55,7 +55,7 @@ After delivering a prompt:
 
 After delivering a prompt, end with:
 
-**Full/partial mode:**
+**Full/partial mode:** as in the stats footer, drop the Reddit part when the script did not cover Reddit, and the X part when it did not cover X.
 ```
 ---
 Expert in: {TOPIC} for {TARGET_TOOL}

@@ -5,14 +5,24 @@ from typing import Dict, List, Optional, Tuple
 
 from . import cache, http
 
-# OpenAI API
+# The model IDs below are hard-coded defaults that were current when this
+# skill was written. Providers retire models, so verify them against the
+# provider docs (platform.openai.com/docs/models, docs.x.ai/docs/models)
+# when a call fails with "model not found". Users can override without
+# editing code: OPENAI_MODEL_POLICY=pinned + OPENAI_MODEL_PIN=<id>, or
+# XAI_MODEL_POLICY=pinned + XAI_MODEL_PIN=<id> (see SKILL.md, "API keys").
+
+# OpenAI API. "auto" picks the newest mainline gpt-5 model from the models
+# endpoint; this list is used only when that call fails or finds none.
 OPENAI_MODELS_URL = "https://api.openai.com/v1/models"
 OPENAI_FALLBACK_MODELS = ["gpt-5.2", "gpt-5.1", "gpt-5", "gpt-4o"]
 
-# xAI API - Agent Tools API requires grok-4 family
+# xAI API. The x_search tool needs a grok-4 family model. Both policy names
+# map to one fixed default; it is not resolved from the models endpoint, so
+# "latest" does not follow new releases. Pin a newer model to move on.
 XAI_MODELS_URL = "https://api.x.ai/v1/models"
 XAI_ALIASES = {
-    "latest": "grok-4-1-fast",  # Required for x_search tool
+    "latest": "grok-4-1-fast",
     "stable": "grok-4-1-fast",
 }
 

@@ -117,12 +117,6 @@ def render_compact(report: schema.Report, limit: int = 15, missing_keys: str = "
         lines.append("---")
         lines.append("")
 
-    # Cache indicator
-    if report.from_cache:
-        age_str = f"{report.cache_age_hours:.1f}h old" if report.cache_age_hours else "cached"
-        lines.append(f"**⚡ CACHED RESULTS** ({age_str}) - use `--refresh` for fresh data")
-        lines.append("")
-
     lines.append(f"**Date Range:** {report.range_from} to {report.range_to}")
     lines.append(f"**Mode:** {report.mode}")
     lines.append(covered_line(report))

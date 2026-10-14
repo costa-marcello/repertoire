@@ -254,14 +254,6 @@ class ProgressDisplay:
             sys.stderr.write(f"✓ Research complete ({elapsed:.1f}s) - Reddit: {reddit_count} threads, X: {x_count} posts\n")
         sys.stderr.flush()
 
-    def show_cached(self, age_hours: float = None):
-        if age_hours is not None:
-            age_str = f" ({age_hours:.1f}h old)"
-        else:
-            age_str = ""
-        sys.stderr.write(f"{Colors.GREEN}⚡{Colors.RESET} {Colors.DIM}Using cached results{age_str} - use --refresh for fresh data{Colors.RESET}\n\n")
-        sys.stderr.flush()
-
     def show_error(self, message: str):
         sys.stderr.write(f"{Colors.RED}✗ Error:{Colors.RESET} {message}\n")
         sys.stderr.flush()

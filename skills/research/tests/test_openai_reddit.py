@@ -8,7 +8,46 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
 from lib import http
-from lib.openai_reddit import _is_model_access_error, MODEL_FALLBACK_ORDER
+from lib.openai_reddit import _is_model_access_error, MODEL_FALLBACK_ORDER, parse_reddit_response
+
+
+def _reply(text):
+    """An OpenAI Responses API reply whose message text is `text`."""
+    return {"output": [{"type": "message", "content": [{"type": "output_text", "text": text}]}]}
+
+
+class TestParseRedditResponse(unittest.TestCase):
+    def _subreddits(self, *names):
+        items = ",".join(
+            f'{{"title": "t", "url": "https://www.reddit.com/r/x/comments/{i}/t", "subreddit": "{n}"}}'
+            for i, n in enumerate(names)
+        )
+        return [i["subreddit"] for i in parse_reddit_response(_reply(f'{{"items": [{items}]}}'))]
+
+    def test_strips_only_the_r_prefix(self):
+        self.assertEqual(
+            self._subreddits("r/rust", "rust", "/r/reactjs", "reactjs", "r/r"),
+            ["rust", "rust", "reactjs", "reactjs", "r"],
+        )
+
+    def test_empty_items_list_is_not_an_error(self):
+        self.assertEqual(parse_reddit_response(_reply('{"items": []}')), [])
+
+    def test_unreadable_json_raises(self):
+        with self.assertRaises(http.BadResponseError):
+            parse_reddit_response(_reply('{"items": [ {"title": }'))
+
+    def test_no_json_block_raises(self):
+        with self.assertRaises(http.BadResponseError):
+            parse_reddit_response(_reply("I could not find any threads."))
+
+    def test_no_output_text_raises(self):
+        with self.assertRaises(http.BadResponseError):
+            parse_reddit_response({"output": []})
+
+    def test_api_error_raises(self):
+        with self.assertRaises(http.BadResponseError):
+            parse_reddit_response({"error": {"message": "rate limited"}})
 
 
 class TestIsModelAccessError(unittest.TestCase):

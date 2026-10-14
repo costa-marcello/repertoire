@@ -37,6 +37,14 @@ class HTTPError(Exception):
         self.body = body
 
 
+class BadResponseError(ValueError):
+    """The API answered, but its reply held no readable items list.
+
+    Callers record this as the source's error, so the site is not reported
+    as covered and the research subagents search it instead.
+    """
+
+
 def request(
     method: str,
     url: str,

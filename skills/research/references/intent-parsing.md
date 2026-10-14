@@ -20,6 +20,8 @@ Before doing anything, parse the user's input for these four variables:
 | **NEWS** | "what's happening with X", "X news", "latest on X" | "what's new with OpenAI" |
 | **GENERAL** | Anything that doesn't match above | "how does RAG work" |
 
+When two types match, PROMPTING wins over RECOMMENDATIONS: "best practices for React prompts" is PROMPTING, not RECOMMENDATIONS.
+
 ## Depth Flags
 
 `--quick`, no flag (default), or `--deep`. Strip the flag from TOPIC. The same flag is passed to the script in Phase 1; the subagent count for each depth is in SKILL.md, Phase 2.
@@ -35,4 +37,4 @@ Before doing anything, parse the user's input for these four variables:
 
 Store as: `TOPIC`, `TARGET_TOOL` (or "unknown"), `QUERY_TYPE`, `DEPTH`.
 
-If the tool is specified, use it. If not, run the research first and ask after showing results.
+If the tool is specified, use it. If not, run the research first; the invitation after the report decides whether to ask for one (see "Invitation" in `output-format.md`).

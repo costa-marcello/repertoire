@@ -16,8 +16,8 @@ Options:
     --mock              Use fixtures instead of real API calls
     --emit=MODE         Output mode: compact|json|md|context|path (default: compact)
     --sources=MODE      Source selection: auto|reddit|x|both (default: auto)
-    --quick             Faster research with fewer sources (8-12 each)
-    --deep              Comprehensive research with more sources (50-70 Reddit, 40-60 X)
+    --quick             Faster research with fewer sources (15-25 Reddit, 8-12 X)
+    --deep              Comprehensive research with more sources (70-100 Reddit, 40-60 X)
     --debug             Enable verbose debug logging
 """
 
@@ -103,8 +103,14 @@ def _search_reddit(
             raw_openai = {"error": str(e)}
             reddit_error = f"{type(e).__name__}: {e}"
 
-    # Parse response
-    reddit_items = openai_reddit.parse_reddit_response(raw_openai or {})
+    # Parse response. A reply with no readable items list is an error, so
+    # reddit.com is not reported as covered and the subagents search it.
+    reddit_items = []
+    if not reddit_error:
+        try:
+            reddit_items = openai_reddit.parse_reddit_response(raw_openai or {})
+        except http.BadResponseError as e:
+            reddit_error = f"Bad response: {e}"
 
     # Quick retry with simpler query if few results
     if len(reddit_items) < 5 and not mock and not reddit_error:
@@ -166,8 +172,14 @@ def _search_x(
             raw_xai = {"error": str(e)}
             x_error = f"{type(e).__name__}: {e}"
 
-    # Parse response
-    x_items = xai_x.parse_x_response(raw_xai or {})
+    # Parse response. A reply with no readable items list is an error, so
+    # x.com is not reported as covered.
+    x_items = []
+    if not x_error:
+        try:
+            x_items = xai_x.parse_x_response(raw_xai or {})
+        except http.BadResponseError as e:
+            x_error = f"Bad response: {e}"
 
     return x_items, raw_xai, x_error
 
@@ -286,6 +298,14 @@ def run_research(
         if progress:
             progress.end_reddit_enrich()
 
+        # Say why metrics are missing instead of leaving it silent
+        missing = sum(1 for item in reddit_items if not item.get("engagement"))
+        if missing and progress:
+            progress.show_error(
+                f"No engagement metrics for {missing} of {len(reddit_items)} Reddit threads: "
+                "reddit.com did not return the thread data (rerun with --debug for details)"
+            )
+
     return reddit_items, x_items, web_needed, raw_openai, raw_xai, raw_reddit_enriched, reddit_error, x_error
 
 
@@ -310,12 +330,12 @@ def main():
     parser.add_argument(
         "--quick",
         action="store_true",
-        help="Faster research with fewer sources (8-12 each)",
+        help="Faster research with fewer sources (15-25 Reddit, 8-12 X)",
     )
     parser.add_argument(
         "--deep",
         action="store_true",
-        help="Comprehensive research with more sources (50-70 Reddit, 40-60 X)",
+        help="Comprehensive research with more sources (70-100 Reddit, 40-60 X)",
     )
     parser.add_argument(
         "--debug",
@@ -480,8 +500,11 @@ def main():
     # Generate context snippet
     report.context_snippet_md = render.render_context_snippet(report)
 
-    # Write outputs
-    render.write_outputs(report, raw_openai, raw_xai, raw_reddit_enriched)
+    # Write outputs. The report still goes to stdout if the folder can't be written.
+    try:
+        render.write_outputs(report, raw_openai, raw_xai, raw_reddit_enriched)
+    except OSError as e:
+        progress.show_error(f"Could not write the report files to {render.OUTPUT_DIR}: {e}")
 
     # Show completion
     if sources == "web":
