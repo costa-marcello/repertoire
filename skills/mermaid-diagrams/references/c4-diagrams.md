@@ -2,22 +2,14 @@
 
 ## Contents
 
-1. [C4 Model Levels](#c4-model-levels)
-2. [C4 Context Diagram](#c4-context-diagram)
-3. [C4 Container Diagram](#c4-container-diagram)
-4. [C4 Component Diagram](#c4-component-diagram)
-5. [Microservices Architecture Example](#microservices-architecture-example)
-6. [Best Practices](#best-practices)
-7. [Common Architecture Patterns](#common-architecture-patterns)
+1. [C4 Context Diagram](#c4-context-diagram)
+2. [C4 Container Diagram](#c4-container-diagram)
+3. [C4 Component Diagram](#c4-component-diagram)
+4. [Microservices Architecture Example](#microservices-architecture-example)
+5. [Best Practices](#best-practices)
+6. [Common Architecture Patterns](#common-architecture-patterns)
 
-The C4 model provides a hierarchical way to visualize software architecture at different levels of abstraction: Context, Containers, Components, and Code.
-
-## C4 Model Levels
-
-1. **System Context** - Shows the system and its users/external systems
-2. **Container** - Shows applications, databases, and services within the system
-3. **Component** - Shows internal structure of containers
-4. **Code** - Class diagrams showing implementation details (use regular class diagrams)
+Use `C4Context`, `C4Container`, and `C4Component` for the first three C4 levels, and draw the Code level as a `classDiagram`. Mermaid marks its C4 support as experimental, so the syntax and layout may change between releases and some platforms fail to render it: verify against the Mermaid C4 docs, and render with `mmdc` (SKILL.md Step 3) before relying on a platform. The larger examples run past the 15-node default in SKILL.md Step 2 to show more syntax; they are not target sizes.
 
 <example name="C4 Context Basic">
 
@@ -91,7 +83,7 @@ C4Context
     System_Ext(email, "Email Service", "Sends notifications")
     System_Ext(sms, "SMS Service", "Sends SMS alerts")
     System_Ext(analytics, "Analytics Platform", "Tracks user behavior")
-    SystemQueue_Ext(shipping, "Shipping API", "Calculates shipping rates")
+    System_Ext(shipping, "Shipping API", "Calculates shipping rates")
 
     Rel(customer, ecommerce, "Browses products, places orders")
     Rel(admin, ecommerce, "Manages catalog, reviews orders")
@@ -153,8 +145,8 @@ C4Container
 ```mermaid
 C4Container
     Container_Boundary(boundary_name, "Boundary Label") {
-        Container(app1, "App 1", "Tech")
-        Container(app2, "App 2", "Tech")
+        Container(app1, "App 1", "Technology", "Description")
+        Container(app2, "App 2", "Technology", "Description")
     }
 ```
 
@@ -377,7 +369,7 @@ C4Container
 2. **Limit to one system per Context diagram** and one container per Component diagram.
 3. **Show only relationships that affect design decisions** - Omit trivial connections.
 4. **Reuse the same names across all C4 levels** - If the Context diagram says "Payment Gateway", the Container diagram must match.
-5. **Add technology and protocol to every Container/Component** - Write `Container(api, "API", "Node.js/Express", "Handles routing")` not just `Container(api, "API")`.
+5. **Give every Container and Component its technology** - Write `Container(api, "API", "Node.js/Express", "Handles routing")`, not just `Container(api, "API")`. Add a description unless the name already says what it does, and give every `Rel` that crosses a container boundary its protocol (`"HTTPS/JSON"`).
 6. **Wrap related containers in `Container_Boundary`** - Name boundaries after the deployment unit or team.
 7. **Mark external systems with `*_Ext` variants** - `System_Ext`, `Container_Ext` make trust boundaries visible.
 8. **Start at Context level** and drill down only when the audience needs internal detail.
@@ -451,16 +443,16 @@ C4Container
     ContainerQueue(events, "Event Bus", "Kafka", "Event streaming")
     ContainerDb(db, "Databases", "Various", "Service databases")
 
-    Rel(user, frontend, "Uses")
-    Rel(frontend, api, "Calls")
-    Rel(api, order, "Routes to")
+    Rel(user, frontend, "Uses", "HTTPS")
+    Rel(frontend, api, "Calls", "HTTPS/JSON")
+    Rel(api, order, "Routes to", "REST")
 
-    Rel(order, events, "Publishes OrderCreated")
-    Rel(events, inventory, "Consumes events")
-    Rel(events, notification, "Consumes events")
+    Rel(order, events, "Publishes OrderCreated", "Kafka")
+    Rel(events, inventory, "Consumes events", "Kafka")
+    Rel(events, notification, "Consumes events", "Kafka")
 
-    Rel(order, db, "Persists")
-    Rel(inventory, db, "Persists")
+    Rel(order, db, "Persists", "SQL")
+    Rel(inventory, db, "Persists", "SQL")
 ```
 
 </example>

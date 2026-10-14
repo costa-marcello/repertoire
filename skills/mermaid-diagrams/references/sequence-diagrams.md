@@ -19,8 +19,6 @@
 15. [Microservices Communication](#microservices-communication)
 16. [Best Practices](#best-practices)
 
-Sequence diagrams show interactions between participants over time. They're ideal for API flows, authentication sequences, and system component interactions.
-
 <example name="Basic Syntax">
 
 ## Basic Syntax
@@ -52,6 +50,15 @@ sequenceDiagram
 **Difference:**
 - `participant` - System components (services, classes, databases)
 - `actor` - External entities (users, external systems)
+
+**Aliases:** give a participant a short ID and a display name with `as`. Use one whenever the name has spaces or punctuation, and write messages with the ID:
+
+```mermaid
+sequenceDiagram
+    participant SPA as Single-page app
+    participant Auth as Authorization server
+    SPA->>Auth: GET /authorize
+```
 
 </example>
 
@@ -109,8 +116,9 @@ sequenceDiagram
     Server-->>-Client: Response
 ```
 
-- `+` after arrow activates
-- `-` before arrow deactivates
+- `+` right after the arrow activates the receiver (`Client->>+Server` activates Server)
+- `-` right after the arrow deactivates the sender (`Server-->>-Client` deactivates Server)
+- Deactivating a participant that is not active is an error, so pair each `-` with an earlier `+`
 
 </example>
 
@@ -398,6 +406,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    autonumber
     actor User
     participant Gateway
     participant OrderService
@@ -422,12 +431,12 @@ sequenceDiagram
 
     alt Payment successful
         PaymentService-->>-OrderService: Payment confirmed
-        OrderService->>MessageQueue: Publish OrderConfirmed event
+        OrderService-)MessageQueue: Publish OrderConfirmed event
 
-        par Async processing
-            MessageQueue->>InventoryService: Reduce stock
-        and
-            MessageQueue->>NotificationService: Send confirmation
+        par Update stock
+            MessageQueue-)InventoryService: Reduce stock
+        and Notify customer
+            MessageQueue-)NotificationService: Send confirmation
             NotificationService->>User: Email confirmation
         end
 
@@ -445,12 +454,12 @@ sequenceDiagram
 
 ## Best Practices
 
-1. **Order participants left-to-right by call chain** - User, Frontend, Backend, Database. This minimises arrow crossings.
-2. **Add `+`/`-` activations** on every request/response pair to show processing duration.
-3. **Wrap conditional logic in `alt`/`opt`/`par` blocks** - Never show branching without a control structure.
+1. **Order participants left-to-right by call chain** - User, Frontend, Backend, Database. This minimizes arrow crossings.
+2. **Add `+`/`-` activations** to request/response pairs when processing time or nesting matters. Short diagrams can skip them.
+3. **Wrap conditional logic in `alt`/`opt`/`break`/`par` blocks** - Never show branching without a control structure.
 4. **Add `Note over` to explain non-obvious logic** - e.g., "Validates JWT signature before forwarding".
-5. **One scenario per diagram** - Split "happy path" and "error path" into separate diagrams when combined length exceeds 20 messages.
+5. **One scenario per diagram** - Split "happy path" and "error path" into separate diagrams when combined length exceeds 20 messages. The comprehensive examples above combine paths to show more syntax at once; they are not target sizes.
 6. **Add `autonumber`** for any diagram with more than 6 messages.
-7. **Show every error response with `alt`/`else`** - Undocumented failure modes are the top cause of integration surprises.
-8. **Use open arrows (`-)`) for fire-and-forget** and solid arrows (`->>`) for request/response.
+7. **Show every error response**, in an `alt`/`else` branch or a `break` block. Undocumented failure modes are the top cause of integration surprises.
+8. **Use open arrows (`-)`) for messages to a queue or event bus**, where no reply comes back, and solid arrows (`->>`) for request/response.
 

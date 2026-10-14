@@ -13,8 +13,6 @@ State diagrams, git graphs, gantt charts, and pie/quadrant charts for specialize
 
 ## State Diagrams
 
-State diagrams model state machines, showing states and transitions. Ideal for modeling object lifecycles, UI states, or workflow status.
-
 <example name="Basic State">
 
 ### Basic Syntax
@@ -43,10 +41,12 @@ stateDiagram-v2
         InProgress --> Review : submit
         Review --> InProgress : request_changes
         Review --> Done : approve
+        Done --> [*]
     }
 
     Active --> Cancelled : cancel
     Active --> [*] : complete
+    Cancelled --> [*]
 ```
 
 </example>
@@ -75,8 +75,11 @@ stateDiagram-v2
 
     Cancelled --> [*]
 
-    note right of PaymentPending : Awaiting payment\nconfirmation
-    note right of Processing : Items being\npicked & packed
+    note right of PaymentPending : Awaiting payment confirmation
+    note right of Processing
+        Items being
+        picked and packed
+    end note
 ```
 
 </example>
@@ -89,8 +92,10 @@ stateDiagram-v2
     [*] --> Checkout
 
     state Checkout {
-        [*] --> fork_state
+        %% Declare fork and join states before the transitions that use them
         state fork_state <<fork>>
+        state join_state <<join>>
+        [*] --> fork_state
         fork_state --> ValidateCart
         fork_state --> ValidatePayment
         fork_state --> ValidateShipping
@@ -98,35 +103,34 @@ stateDiagram-v2
         ValidateCart --> join_state
         ValidatePayment --> join_state
         ValidateShipping --> join_state
-        state join_state <<join>>
 
         join_state --> ProcessOrder
     }
 
     Checkout --> Complete : success
     Checkout --> Failed : validation_error
+    Complete --> [*]
+    Failed --> [*]
 ```
 
 </example>
 
 ## Git Graphs
 
-Git graphs visualize branching strategies and commit history. Useful for documenting Git workflows.
-
 <example name="Basic Git Graph">
 
 ### Basic Syntax
 ```mermaid
 gitGraph
-    commit
-    commit
+    commit id: "init"
+    commit id: "add readme"
     branch develop
     checkout develop
-    commit
-    commit
+    commit id: "add api"
+    commit id: "add tests"
     checkout main
     merge develop
-    commit
+    commit id: "release notes"
 ```
 
 </example>
@@ -194,6 +198,7 @@ gitGraph
     checkout develop
     merge release/1.1
 
+    checkout main
     branch hotfix/security
     commit id: "patch CVE"
 
@@ -207,8 +212,6 @@ gitGraph
 </example>
 
 ## Gantt Charts
-
-Gantt charts visualize project timelines, task dependencies, and milestones. Essential for project planning.
 
 <example name="Basic Gantt">
 
@@ -298,8 +301,6 @@ gantt
 
 ## Pie Charts
 
-Pie charts show proportional data distribution. Use for simple percentage breakdowns.
-
 <example name="Basic Pie">
 
 ### Basic Syntax
@@ -332,7 +333,7 @@ pie showData
 
 ## Quadrant Charts
 
-Quadrant charts plot items on two axes for prioritization and analysis.
+The x-axis runs left to right and the y-axis bottom to top. `quadrant-1` is the top right, `quadrant-2` the top left, `quadrant-3` the bottom left, and `quadrant-4` the bottom right. Points are `Name: [x, y]`, with both values from 0 to 1.
 
 <example name="Basic Quadrant">
 
@@ -343,9 +344,9 @@ quadrantChart
     x-axis Low Effort --> High Effort
     y-axis Low Impact --> High Impact
 
-    quadrant-1 Do First
-    quadrant-2 Schedule
-    quadrant-3 Delegate
+    quadrant-1 Schedule
+    quadrant-2 Do First
+    quadrant-3 Fill In
     quadrant-4 Eliminate
 
     User Authentication: [0.2, 0.9]
@@ -368,7 +369,7 @@ quadrantChart
     y-axis Low Cost to Fix --> High Cost to Fix
 
     quadrant-1 Plan Carefully
-    quadrant-2 Fix When Possible
+    quadrant-2 Defer
     quadrant-3 Quick Wins
     quadrant-4 Address Immediately
 
@@ -385,23 +386,23 @@ quadrantChart
 ## Best Practices by Diagram Type
 
 ### State Diagrams
-- Begin every diagram with `[*] --> InitialState` and end with `FinalState --> [*]`.
-- Label every transition with the trigger event name (e.g., `: submit`, `: cancel`).
-- Wrap 3+ related states in a `state` composite block and name it after the lifecycle phase.
+- Begin every diagram with `[*] --> InitialState` and end every terminal state with `FinalState --> [*]`.
+- Label every transition with the trigger event name (e.g., `: submit`, `: cancel`). `[*]` and fork/join edges need none.
+- When several states share an exit (such as `cancel`), wrap them in a `state` composite block named after the phase, so one transition covers them all.
 - Add `note right of StateName` to explain non-obvious transition guards.
 
 ### Git Graphs
 - Set `id:` on every commit to a short descriptive label (e.g., `id: "add auth"`).
 - Tag release commits on main with `tag: "v1.0.0"`.
-- Name branches with the `type/name` convention (e.g., `feature/auth`, `hotfix/security`).
+- Name short-lived branches with the `type/name` convention (e.g., `feature/auth`, `hotfix/security`); long-lived ones keep plain names such as `develop`.
 
 ### Gantt Charts
-- Add `excludes weekends` for realistic timelines.
-- Mark critical path tasks with `crit` and key dates with `milestone`.
+- Add `excludes weekends` when durations count working days, as in the Sprint Planning example; leave it out when they count calendar days.
+- Mark key dates with `milestone`, and mark the critical path with `crit` when it matters to the reader.
 - Group tasks into `section` blocks named after project phases.
 - Use `after taskId` for dependencies rather than hardcoded dates where possible.
 
 ### Pie/Quadrant Charts
 - Cap pie charts at 5-7 segments. Merge small slices into "Other".
 - Add `showData` to every pie chart so values are visible.
-- Label all four quadrants with actionable names (e.g., "Do First", "Eliminate").
+- Label all four quadrants with actionable names (e.g., "Do First", "Eliminate"), and check each label against its corner: the high-x, high-y corner is `quadrant-1`, top right.

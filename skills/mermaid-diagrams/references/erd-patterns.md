@@ -18,7 +18,6 @@ erDiagram
     USER ||--o{ POST : creates
     USER ||--o{ COMMENT : writes
     POST ||--o{ COMMENT : receives
-    POST }o--o{ TAG : tagged_with
     POST ||--o{ POST_TAG : has
     TAG ||--o{ POST_TAG : applied_to
     POST }o--|| CATEGORY : "belongs to"
@@ -206,11 +205,11 @@ erDiagram
 
 ## Best Practices
 
-1. **Name entities in UPPERCASE singular** - `USER` not `USERS`, `ORDER` not `ORDERS`.
-2. **Mark every constraint** - Add `PK`, `FK`, `UK`, and `"NOT NULL"` on every column that has them. Missing constraints are invisible bugs.
+1. **Name entities in UPPERCASE singular** - `USER` not `USERS`, `ORDER` not `ORDERS`. When drawing an existing schema, keep its table names instead.
+2. **Mark every constraint the schema has** - Add `PK`, `FK`, `UK`, and `"NOT NULL"` on every column that has them. Missing constraints are invisible bugs.
 3. **Specify exact cardinality** - Use `||--o{` (one-to-many) vs `}o--o{` (many-to-many). Wrong cardinality misleads schema reviews.
-4. **Add `created_at` and `updated_at` timestamps** to every table for audit trails.
-5. **Model many-to-many with an explicit junction table** - Show the join entity with its own attributes (e.g., `enrolled_date` on `ENROLLMENT`).
+4. **Draw only the columns the schema has** - Show `created_at`, `updated_at`, and similar audit columns when they exist; never invent columns to fill out a table.
+5. **Use a junction table when the link has its own columns** - Show the join entity with its attributes (e.g., `enrolled_date` on `ENROLLMENT`), and do not also draw a direct many-to-many line between the same two entities. A link with no columns can be a single `}o--o{` line.
 6. **Mark computed columns with `"COMPUTED"`** so readers know they are derived, not stored.
 
 ## Common Patterns
@@ -236,7 +235,6 @@ erDiagram
 ### Junction Table (Many-to-Many)
 ```mermaid
 erDiagram
-    STUDENT }o--o{ COURSE : enrolls
     STUDENT ||--o{ ENROLLMENT : has
     COURSE ||--o{ ENROLLMENT : includes
 
@@ -263,13 +261,16 @@ erDiagram
 <example name="Polymorphic">
 
 ### Polymorphic Relationship
+
+Mermaid cannot draw a foreign key that points at one of several tables. Show the type and id columns, and say in a comment which tables they point at.
+
 ```mermaid
 erDiagram
     COMMENT {
         uuid id PK
         uuid user_id FK
-        varchar commentable_type "NOT NULL"
-        uuid commentable_id "NOT NULL"
+        varchar commentable_type "POST or VIDEO"
+        uuid commentable_id "id in that table"
         text content
     }
 

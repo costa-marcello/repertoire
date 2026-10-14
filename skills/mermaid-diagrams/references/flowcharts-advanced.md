@@ -11,7 +11,7 @@
 7. [Best Practices](#best-practices)
 8. [Common Patterns](#common-patterns)
 
-Styling, comprehensive examples, and common patterns for flowcharts.
+Styling, comprehensive examples, and common patterns for flowcharts. The comprehensive examples run past the 15-node default in SKILL.md Step 2 to show more syntax at once; they are not target sizes.
 
 ## Styling
 
@@ -23,7 +23,7 @@ flowchart LR
     A[Normal]
     B[Styled]
 
-    style B fill:#ff6b6b,stroke:#333,stroke-width:4px,color:#fff
+    style B fill:#ff6b6b,stroke:#333,stroke-width:4px,color:#1a1a1a
 ```
 
 </example>
@@ -48,7 +48,7 @@ flowchart LR
 ```mermaid
 flowchart LR
     A --> B
-    linkStyle 0 stroke:#ff3,stroke-width:4px,color:red
+    linkStyle 0 stroke:#ff3,stroke-width:4px,color:#b30000
 ```
 
 </example>
@@ -93,19 +93,20 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    Start([Start Binary Search]) --> Init[Set low = 0, high = array.length - 1]
-    Init --> Check{low <= high?}
+    %% Labels with brackets, parentheses, or < are quoted
+    Start([Start Binary Search]) --> Init["Set low = 0, high = array.length - 1"]
+    Init --> Check{"low <= high?"}
 
     Check -->|No| NotFound[Return -1: Not found]
     NotFound --> End([End])
 
-    Check -->|Yes| CalcMid[mid = low + (high - low) / 2]
-    CalcMid --> Compare{array[mid] == target?}
+    Check -->|Yes| CalcMid["mid = low + (high - low) / 2"]
+    CalcMid --> Compare{"array[mid] == target?"}
 
     Compare -->|Yes| Found[Return mid: Found]
     Found --> End
 
-    Compare -->|No| CheckLess{array[mid] < target?}
+    Compare -->|No| CheckLess{"array[mid] < target?"}
 
     CheckLess -->|Yes| MoveLow[low = mid + 1]
     MoveLow --> Check
@@ -128,7 +129,7 @@ flowchart TD
 ```mermaid
 flowchart LR
     subgraph Development
-        Commit[Developer commits code] --> Push[Push to repository]
+        Commit([Developer commits code]) --> Push[Push to repository]
     end
 
     subgraph CI
@@ -151,7 +152,7 @@ flowchart LR
         DeployProd --> HealthCheck{Health check passed?}
         HealthCheck -->|Yes| Success([Deployment successful])
         HealthCheck -->|No| Rollback[Rollback deployment]
-        Rollback --> Alert[Alert team]
+        Rollback --> Alert([Alert team])
     end
 
     ManualQA -->|Rejected| FixIssues[Fix issues]
@@ -176,7 +177,7 @@ flowchart TD
 
     Auth -->|Yes| Cart{Cart empty?}
     Cart -->|Yes| EmptyCart[Show empty cart message]
-    EmptyCart --> Browse[Redirect to products]
+    EmptyCart --> Browse([Redirect to products])
 
     Cart -->|No| Address[Show shipping address form]
     Address --> ValidateAddr{Valid address?}
@@ -261,12 +262,12 @@ flowchart TD
 
 ## Best Practices
 
-1. **Write action-oriented labels** - "Validate input" not "Validation". Every node should read as a step someone performs.
-2. **Use the same shape for the same type of action** - Rectangles for process steps, diamonds for decisions, stadiums `([...])` for start/end.
+1. **Write action-oriented labels** - "Validate input" not "Validation". Every process node should read as a step someone performs; decisions are questions, and end nodes may state the outcome.
+2. **Use the same shape for the same type of action** - Rectangles for process steps, diamonds for decisions, cylinders `[(...)]` for database writes, stadiums `([...])` for start/end.
 3. **Default to `TD` (top-down) or `LR` (left-right)** - These match natural reading direction. Use `BT` or `RL` only when the flow requires it.
-4. **Mark start and end nodes** with stadium/pill shapes `([Start])` and `([End])`.
-5. **Group 3+ related steps in a `subgraph`** - Name the subgraph after the phase (e.g., "Validation", "Deployment").
-6. **Apply `classDef` for colour coding** - Define reusable classes (`success`, `error`, `warning`) rather than styling individual nodes.
+4. **Mark start and end nodes in a full process flow** with stadium/pill shapes `([Start])` and `([Done])`. The short pattern fragments below leave them out.
+5. **Group each phase in a `subgraph` when a flow has distinct phases** - Name the subgraph after the phase (e.g., "Validation", "Deployment"), as the CI/CD example does.
+6. **Use `classDef` when 3 or more nodes share a style** - Define reusable classes (`success`, `error`, `warning`). A `style` line is fine for one or two nodes.
 7. **Limit to one process per diagram** - If you need to show two processes, create two diagrams and link them with a parent overview.
 
 ## Common Patterns
