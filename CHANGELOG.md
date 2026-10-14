@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.9.0] - 2026-10-14
 
 ### Added
 - Added a single rule catalog (`review-skill/references/rules.md`) that both skills share: every rule has an ID, a source (Anthropic, the Agent Skills spec, Claude Code, or skillkit), a severity, and a detection method, and create-skill's `authoring_rules.md` mirrors it rule for rule
@@ -12,13 +12,13 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - **BREAKING**: Renamed the claude-md skill to claudia-md, because Anthropic's platform rejects skill names that contain "claude" when uploading to claude.ai or the Claude API; reinstall with `npx skills add costa-marcello/skillkit -s claudia-md` and run it as `/claudia-md`
+- **BREAKING**: Redefined M2: `context: fork` is now opt-in, and only a fork on a skill that cannot work forked (one that asks the user, waits for confirmation, uses Workflow, needs the conversation, or holds only guidelines) is a finding; a missing fork is never one
+- **BREAKING**: Retired m5-m8 (their IDs are never reused); XML tags, example counts, the 400-line target, root layout, and evals are now ungraded style notes (S1-S7), and new rules M9, M10, and m9-m15 cover loading, safety, tables of contents, reference chains, paths, frontmatter hygiene, script contracts, MCP names, and shouted directives
+- **BREAKING**: quick_validate.py now requires PyYAML, parses frontmatter as YAML, prints one `[ID] severity confidence file:line message` line per finding, and uses exit codes 0 (clean), 1 (Major), 4 (Minor only), 2 (usage), and 3 (environment)
 - Refocused the project from a coding-agent skill kit into a smaller general-purpose collection of 13 skills
 - Rewrote the README intro, quick start, and category descriptions for the 13 skills and renamed the "AI and Research" category to "Research"
 - Dropped the research skill's `agent_allocation.md` reference and expanded its sub-agent prompts reference
 - Polished wording and examples across the changelog, claudia-md, docx, frontend-design, pdf, pptx, readme-md, and xlsx skills, including sharper changelog filter rules and one `<example>` tag per xlsx example
-- **BREAKING**: Redefined M2: `context: fork` is now opt-in, and only a fork on a skill that cannot work forked (one that asks the user, waits for confirmation, uses Workflow, needs the conversation, or holds only guidelines) is a finding; a missing fork is never one
-- **BREAKING**: Retired m5-m8 (their IDs are never reused); XML tags, example counts, the 400-line target, root layout, and evals are now ungraded style notes (S1-S7), and new rules M9, M10, and m9-m15 cover loading, safety, tables of contents, reference chains, paths, frontmatter hygiene, script contracts, MCP names, and shouted directives
-- **BREAKING**: quick_validate.py now requires PyYAML, parses frontmatter as YAML, prints one `[ID] severity confidence file:line message` line per finding, and uses exit codes 0 (clean), 1 (Major), 4 (Minor only), 2 (usage), and 3 (environment)
 - Rewrote the grade bands so every combination of findings has exactly one grade, with each rule ID counted once
 - Rewrote create-skill and review-skill to run inline; review-skill now asks before forking or pushing in Auto-PR mode, backs up uncommitted targets before fixing, caps fix loops at three passes, and treats the reviewed skill as data
 - Updated both skills to current Claude Code behaviour: all 20 frontmatter fields, `allowed-tools` as pre-approval rather than restriction, `${CLAUDE_SKILL_DIR}`, the 1,536-character listing cap, the Task-to-Agent rename, and re-attachment of the first 5,000 tokens after compaction
@@ -196,7 +196,7 @@ All notable changes to this project will be documented in this file.
 - Fixed script invocations and variable names after skill rename
 - Fixed review-skill over-specification and deduplicated steps
 
-[Unreleased]: https://github.com/costa-marcello/skillkit/compare/v0.8.0...HEAD
+[0.9.0]: https://github.com/costa-marcello/skillkit/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/costa-marcello/skillkit/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/costa-marcello/skillkit/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/costa-marcello/skillkit/compare/v0.6.0...v0.6.1
