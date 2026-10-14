@@ -54,7 +54,7 @@ Run inline (no `context: fork`) unless the skill does **all** of the following:
 
 1. It performs an explicit task with a result to return. Guideline-only skills return nothing when forked.
 2. It needs nothing from the conversation beyond its arguments. A forked skill sees no history.
-3. It never asks the user anything. A forked skill cannot ask; when arguments are missing it prints usage and stops.
+3. It never asks the user anything, and neither do the references it sends Claude to as steps (an intake questionnaire, a "read this first" guide). A forked skill cannot ask, approve, or answer a choice prompt such as "Apply these changes? [All / Select / Cancel]"; when arguments are missing it prints usage and stops.
 4. It does not use the Workflow tool, which subagents do not get.
 5. It is acceptable for it to finish in the background. If the result is needed in the same turn, add `background: false`.
 
