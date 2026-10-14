@@ -79,3 +79,5 @@ If the existing entries have no `version` field, do not add one just for this ch
 1. From the repository root, run `claude plugin validate .`.
 2. Fix every error. Read every warning: an unknown field is usually a typo.
 3. Run `git diff .claude-plugin/marketplace.json` and check that only the intended entries changed.
+
+Without the `claude` CLI (a Cowork session may not have it), replace steps 1 and 2 with a check by hand against [Schema](#schema): valid JSON, the required fields, kebab-case names, and `./` source paths that exist. Tell the user that the command did not run, and ask them to run it where Claude Code is installed.

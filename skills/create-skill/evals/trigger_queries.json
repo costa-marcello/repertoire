@@ -4,7 +4,7 @@
   {"query": "my pdf-forms skill never kicks in when people say 'fill out this form'. rework its description and add evals so it triggers properly", "should_trigger": true},
   {"query": "what frontmatter does a skill need if I want it to run in a forked subagent and only when I type the slash command myself?", "should_trigger": true},
   {"query": "my weekly-report skill opens its chart in a browser and falls over in Cowork. rework it so it runs there too, and make sure its evals still pass afterwards", "should_trigger": true},
-  {"query": "/review-skill skills/changelog regression - just rerun its evals and tell me if anything broke, don't change anything", "should_trigger": false},
+  {"query": "grade my changelog skill against the review rules and rerun its evals to check nothing broke. report only, don't change anything", "should_trigger": false},
   {"query": "write a CLAUDE.md for this repo that documents the build, lint, and test commands", "should_trigger": false},
   {"query": "add the costa-marcello/repertoire marketplace in Cowork and turn on the repertoire plugin for me", "should_trigger": false},
   {"query": "what are Claude skills and how are they different from MCP servers? just explain, I'm deciding whether to use them", "should_trigger": false},

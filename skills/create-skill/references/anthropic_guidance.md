@@ -149,7 +149,7 @@ The Claude platform has no built-in eval runner. `evals_guide.md` describes the 
 - **Locations,** by precedence: enterprise, then personal (`~/.claude/skills/<name>/SKILL.md`), then project (`.claude/skills/<name>/SKILL.md`).
   - Plugin skills are namespaced `/plugin:skill`. A plugin is the one route that reaches both Claude Code and Cowork (`distribution.md`).
   - Nested `.claude/skills/` directories load on first touch, and `--add-dir` directories load too.
-  - Edits reload live, except a new top-level skills directory, which needs `/reload-skills`.
+  - Edits reload live, except in a top-level skills directory created during the session: Claude Code does not watch it, so run `/reload-skills` after each change there. A plugin, including a linked checkout (`distribution.md`), applies changes with `/reload-plugins` instead.
   - Do not name a skill directory `synced`, or `anthropic-skills*` outside plugins.
 - **Tools.**
   - The agent-dispatch tool is Agent; `Task(...)` still works as an alias in settings and agent definitions.
