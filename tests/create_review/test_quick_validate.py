@@ -140,6 +140,18 @@ class NameAndKeys(ValidatorCase):
         self.assertIn("M9", self.ids(skill, portable=True))
         self.assertNotIn("m12", self.ids(skill, portable=True))
 
+    def test_argument_hint_is_fine_for_claude_code_but_m9_when_portable(self):
+        fm = f"name: {CLEAN_NAME}\ndescription: {CLEAN_DESCRIPTION}\nargument-hint: <file>\n"
+        skill = make_skill(self.tmp, frontmatter=fm)
+        self.assertClean(skill)
+        found = [f for f in self.findings(skill, portable=True) if f.rule_id == "M9"]
+        self.assertEqual([(qv.DEFINITIVE, 4)], [(f.confidence, f.line) for f in found])
+        self.assertIn("'argument-hint' is unknown to the portable target", found[0].message)
+        result = run_script("quick_validate.py", str(skill), "--portable")
+        self.assertEqual(1, result.returncode, result.stdout)
+        self.assertIn("[M9] major definitive SKILL.md:4", result.stdout)
+        self.assertNotIn("M11", result.stdout)
+
     def test_agent_without_fork_is_m12(self):
         fm = f"name: {CLEAN_NAME}\ndescription: {CLEAN_DESCRIPTION}\nagent: Explore\n"
         found = [f for f in self.findings(make_skill(self.tmp, frontmatter=fm)) if f.rule_id == "m12"]
@@ -406,10 +418,9 @@ class LeftoversAndSubstitution(ValidatorCase):
         body = body_with("The skill reads $ARGUMENTS as the file path.\n\n```text\nCost: \\$1.00\n```")
         self.assertClean(make_skill(self.tmp, body=body))
 
-    def test_injection_syntax_is_m9_check(self):
+    def test_injection_is_no_longer_m9(self):
         body = body_with("Current branch: !" + "`git branch --show-current`")
-        found = [f for f in self.findings(make_skill(self.tmp, body=body)) if f.rule_id == "M9"]
-        self.assertEqual([qv.CHECK], [f.confidence for f in found])
+        self.assertNotIn("M9", self.ids(make_skill(self.tmp, body=body)))
 
     def test_exclamation_inside_a_word_is_not_injection(self):
         body = body_with("| `#DIV/0!` | Division by zero | Add a guard `=IF(B2=0,0,A2/B2)` |")
@@ -546,6 +557,12 @@ class CommandLineContract(ValidatorCase):
         valid, message, _ = qv.validate_skill(make_skill(self.tmp, folder="broken", frontmatter=fm))
         self.assertFalse(valid)
         self.assertIn("[M9]", message)
+        fm = f"name: {CLEAN_NAME}\ndescription: {CLEAN_DESCRIPTION}\nargument-hint: <file>\n"
+        hinted = make_skill(self.tmp / "hinted", frontmatter=fm)
+        self.assertEqual((True, "Skill is valid", []), qv.validate_skill(hinted))
+        valid, message, _ = qv.validate_skill(hinted, portable=True)
+        self.assertFalse(valid)
+        self.assertIn("[M9] major definitive SKILL.md:4", message)
 
     def test_checks_are_read_only(self):
         skill = make_skill(self.tmp)
@@ -1074,6 +1091,159 @@ class EnvironmentAndErrors(ValidatorCase):
             valid, message, _ = qv.validate_skill(skill)
         self.assertFalse(valid)
         self.assertIn("internal error", message)
+
+
+def line_number(path: Path, needle: str) -> int:
+    """The 1-based number of the first line of path that contains needle."""
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if needle in line:
+            return number
+    raise AssertionError(f"{needle!r} not found in {path}")
+
+
+class BreaksInCowork(ValidatorCase):
+    """M11: injection and paths to the skill's own files through an install location, on both targets."""
+
+    OWN_PATH = f"~/.claude/skills/{CLEAN_NAME}/scripts/run.py"
+
+    def m11(self, skill: Path, portable: bool = False) -> list[tuple[str, str, int]]:
+        return [(f.confidence, f.file, f.line) for f in self.findings(skill, portable) if f.rule_id == "M11"]
+
+    def test_inline_injection_is_definitive_m11_on_both_targets(self):
+        skill = make_skill(self.tmp, body=body_with("Current branch: !" + "`git branch --show-current`"))
+        line = line_number(skill / "SKILL.md", "Current branch")
+        for portable in (False, True):
+            self.assertEqual([(qv.DEFINITIVE, "SKILL.md", line)], self.m11(skill, portable))
+            self.assertNotIn("M9", self.ids(skill, portable=portable))
+        message = next(f.message for f in self.findings(skill) if f.rule_id == "M11")
+        self.assertIn('"Run `git branch --show-current`"', message)
+        self.assertIn("references/", message)
+
+    def test_injection_counts_in_code_fences_once_per_line(self):
+        body = body_with("```bash\necho !`date` and !`whoami`\n```\n\n```!\ngit status\n```")
+        skill = make_skill(self.tmp, body=body)
+        lines = [line_number(skill / "SKILL.md", "echo !"), line_number(skill / "SKILL.md", "```!")]
+        self.assertEqual([(qv.DEFINITIVE, "SKILL.md", n) for n in lines], self.m11(skill))
+        self.assertEqual({"M11"}, self.ids(skill))
+
+    def test_injection_exits_1_from_the_command_line(self):
+        skill = make_skill(self.tmp, body=body_with("Today is !" + "`date`."))
+        line = line_number(skill / "SKILL.md", "Today is")
+        for extra in ((), ("--portable",)):
+            result = run_script("quick_validate.py", str(skill), *extra)
+            self.assertEqual(1, result.returncode, result.stdout)
+            lines = result.stdout.splitlines()
+            self.assertTrue(lines[0].startswith(f"[M11] major definitive SKILL.md:{line} "), lines)
+            self.assertEqual("RESULT major=1 minor=0 style=0 checks=0", lines[-1])
+
+    def test_own_install_path_in_skill_md_is_m11(self):
+        write_file(self.tmp / CLEAN_NAME / "scripts" / "run.py", "print('ok')\n")
+        skill = make_skill(self.tmp, body=body_with(f"Run `python {self.OWN_PATH} data.csv`."))
+        line = line_number(skill / "SKILL.md", "Run `python")
+        for portable in (False, True):
+            self.assertEqual([(qv.DEFINITIVE, "SKILL.md", line)], self.m11(skill, portable))
+        self.assertEqual({"M11"}, self.ids(skill))
+        message = next(f.message for f in self.findings(skill) if f.rule_id == "M11")
+        self.assertIn(f"'{self.OWN_PATH}'", message)
+        self.assertIn("write ${CLAUDE_SKILL_DIR}/scripts/run.py instead", message)
+
+    def test_every_install_location_form_is_m11(self):
+        forms = (
+            f"~/.claude/skills/{CLEAN_NAME}/",
+            f"$HOME/.claude/skills/{CLEAN_NAME}/scripts/run.py",
+            f"${{HOME}}/.claude/skills/{CLEAN_NAME}/scripts/run.py",
+            f"%USERPROFILE%/.claude/skills/{CLEAN_NAME}/scripts/run.py",
+            f"%USERPROFILE%\\.claude\\skills\\{CLEAN_NAME}\\scripts\\run.py",
+            f"$env:USERPROFILE\\.claude\\skills\\{CLEAN_NAME}\\scripts\\run.py",
+            f"$env:USERPROFILE/.agents/skills/{CLEAN_NAME}/scripts/run.py",
+            f"~/.agents/skills/{CLEAN_NAME}/",
+            f".claude/skills/{CLEAN_NAME}/scripts/run.py",
+            f"./.agents/skills/{CLEAN_NAME}",
+            f"\"~/.claude/skills/{CLEAN_NAME}\"",
+            f"'.claude/skills/{CLEAN_NAME}'",
+            f"`~/.claude/skills/{CLEAN_NAME}`",
+            f"~/.claude/skills/{CLEAN_NAME}",  # ends the line
+        )
+        for index, form in enumerate(forms):
+            folder = self.tmp / f"form-{index}"
+            skill = make_skill(folder, body=body_with(f"Installed at {form}"))
+            self.assertEqual({"M11"}, self.ids(skill), form)
+
+    def test_the_name_must_end_its_path_segment(self):
+        for index, path in enumerate((
+            f"~/.claude/skills/{CLEAN_NAME}-tools/scripts/run.py",
+            f"~/.claude/skills/{CLEAN_NAME}s/",
+            f"~/.claude/skills/{CLEAN_NAME}.md",
+            f"~/my.claude/skills/{CLEAN_NAME}/",
+            f"~/.claude/skills/x{CLEAN_NAME}/",
+        )):
+            skill = make_skill(self.tmp / f"segment-{index}", body=body_with(f"See {path} for more."))
+            self.assertClean(skill)
+
+    def test_paths_to_other_skills_are_unchanged(self):
+        body = body_with("Read `~/.claude/skills/review-skill/SKILL.md` or `.agents/skills/other/scripts/x.py`.")
+        self.assertClean(make_skill(self.tmp, body=body))
+        body = body_with("Read /Users/jsmith/.claude/skills/review-skill/SKILL.md.")
+        self.assertEqual({"m11"}, self.ids(make_skill(self.tmp / "other", body=body)))
+
+    def test_example_blocks_and_urls_are_skipped(self):
+        body = body_with(f"Source: https://github.com/o/r/tree/main/.claude/skills/{CLEAN_NAME}/SKILL.md")
+        body = body.replace('Request: "Summarise sales.csv"', f'Request: "Run {self.OWN_PATH}"')
+        self.assertClean(make_skill(self.tmp, body=body))
+
+    def test_references_and_any_script_are_checked(self):
+        skill = make_skill(self.tmp)
+        write_file(skill / "references" / "setup.md",
+                   f"# Setup\n\n<example>\n{self.OWN_PATH}\n</example>\n\nThen run `{self.OWN_PATH}`.\n")
+        write_file(skill / "scripts" / "run.py",
+                   f'import os\n\nHELPER = os.path.expanduser("~/.claude/skills/{CLEAN_NAME}/scripts/helper.py")\n')
+        write_file(skill / "scripts" / "lib" / "run.sh", f'#!/bin/sh\ncat "$HOME/.agents/skills/{CLEAN_NAME}/assets/x"\n')
+        write_file(skill / "scripts" / "data.json", f'{{"path": ".claude/skills/{CLEAN_NAME}/assets/x.json"}}\n')
+        (skill / "scripts" / "blob.bin").write_bytes(f"\x00.claude/skills/{CLEAN_NAME}/x".encode())
+        self.assertEqual([
+            (qv.DEFINITIVE, "references/setup.md", 7),
+            (qv.DEFINITIVE, "scripts/data.json", 1),
+            (qv.DEFINITIVE, "scripts/lib/run.sh", 2),
+            (qv.DEFINITIVE, "scripts/run.py", 3),
+        ], self.m11(skill))
+        messages = {f.file: f.message for f in self.findings(skill) if f.rule_id == "M11"}
+        self.assertIn("${CLAUDE_SKILL_DIR}/scripts/run.py", messages["references/setup.md"])
+        self.assertIn("Path(__file__).resolve().parent", messages["scripts/run.py"])
+
+    def test_m11_wins_over_m11_minor_at_one_location(self):
+        for index, path in enumerate((
+            f"/Users/jsmith/.claude/skills/{CLEAN_NAME}/scripts/run.py",
+            f"C:\\Users\\jsmith\\.claude\\skills\\{CLEAN_NAME}\\scripts\\run.py",
+        )):
+            skill = make_skill(self.tmp / f"both-{index}", body=body_with(f"Run {path} now."))
+            write_file(skill / "references" / "win.md", f"# Windows\n\nRun {path} now.\n")
+            found = [(f.rule_id, f.file) for f in self.findings(skill)]
+            self.assertEqual([("M11", "SKILL.md"), ("M11", "references/win.md")], found, path)
+
+    def test_several_paths_on_one_line_are_one_finding(self):
+        line = (f'S="$([ -f .claude/skills/{CLEAN_NAME}/scripts/run.py ] && echo .claude/skills/{CLEAN_NAME}/'
+                f'scripts/run.py || echo ~/.claude/skills/{CLEAN_NAME}/scripts/run.py)"')
+        skill = make_skill(self.tmp, body=body_with(f"```bash\n{line}\n```"))
+        found = [f for f in self.findings(skill) if f.rule_id == "M11"]
+        self.assertEqual(1, len(found))
+        self.assertIn(f"'.claude/skills/{CLEAN_NAME}/scripts/run.py' (and 2 more on this line)", found[0].message)
+
+    def test_long_lines_stay_fast(self):
+        skill = make_skill(self.tmp, body=body_with(("x" * 40 + f"/.claude/skills/{CLEAN_NAME}/") * 5000))
+        write_file(skill / "scripts" / "long.txt", "a" * 200000 + f".claude/skills/{CLEAN_NAME}/\n")
+        started = time.perf_counter()
+        found = [f for f in self.findings(skill) if f.rule_id == "M11"]
+        self.assertLess(time.perf_counter() - started, 10)
+        self.assertEqual(1, len(found))  # the long script line has no boundary before .claude
+        self.assertIn("(and 4999 more on this line)", found[0].message)
+        self.assertLess(len(found[0].message), 2 * qv.MAX_QUOTED_PATH + 300)  # the path and the fix are capped
+
+    def test_webbrowser_import_is_an_m11_check(self):
+        skill = make_skill(self.tmp)
+        write_file(skill / "scripts" / "show.py", "import sys\nimport webbrowser\n\nwebbrowser.open(sys.argv[1])\n")
+        write_file(skill / "scripts" / "other.py", "from webbrowser import open as show\n")
+        self.assertEqual([(qv.CHECK, "scripts/other.py", 1), (qv.CHECK, "scripts/show.py", 2)], self.m11(skill))
+        self.assertEqual(0, qv.exit_code_for(self.findings(skill)))
 
 
 if __name__ == "__main__":

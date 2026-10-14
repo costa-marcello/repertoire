@@ -140,6 +140,9 @@ class InitSkill(TempDirCase):
             skill = self.tmp / name
             fill_template(skill)
             self.assertEqual([], [f.format() for f in qv.collect_findings(skill)], name)
+            # No M11 on either target; only context: fork falls outside the six portable keys.
+            portable = [(f.rule_id, f.line) for f in qv.collect_findings(skill, portable=True)]
+            self.assertEqual([("M9", 4)] if fork else [], portable, name)
             result = run_script("quick_validate.py", str(skill))
             self.assertEqual(0, result.returncode, result.stdout)
             self.assertEqual("RESULT major=0 minor=0 style=0 checks=0", result.stdout.strip())
@@ -598,6 +601,9 @@ class PackageSkill(TempDirCase):
         out = self.tmp / "dist"
         code, output = self.package(skill)
         self.assertEqual(0, code, output)
+        self.assertIn(package_skill.UPLOAD_NOTE + "\n", output)
+        self.assertIn("claude.ai", package_skill.UPLOAD_NOTE)
+        self.assertIn("Cowork", package_skill.UPLOAD_NOTE)
         with zipfile.ZipFile(out / f"{CLEAN_NAME}.zip") as archive:
             names = set(archive.namelist())
         self.assertEqual({f"{CLEAN_NAME}/SKILL.md", f"{CLEAN_NAME}/scripts/run.py",
@@ -648,6 +654,28 @@ class PackageSkill(TempDirCase):
         self.assertEqual(1, code)
         self.assertIn("[M9]", output)
         self.assertIn("definitive Major", output)
+
+    def test_validates_against_the_portable_target(self):
+        # argument-hint is fine for Claude Code and Cowork (the plugin), but a claude.ai upload rejects it.
+        skill = self.make_packageable()
+        text = (skill / "SKILL.md").read_text(encoding="utf-8")
+        text = text.replace(f"name: {CLEAN_NAME}\n", f"name: {CLEAN_NAME}\nargument-hint: <file>\n", 1)
+        (skill / "SKILL.md").write_text(text, encoding="utf-8")
+        security_scan.create_security_marker(skill)
+        self.assertTrue(qv.validate_skill(skill)[0])
+        code, output = self.package(skill)
+        self.assertEqual(1, code, output)
+        self.assertIn(package_skill.UPLOAD_NOTE, output)
+        self.assertIn("[M9] major definitive SKILL.md:3 frontmatter key 'argument-hint' is unknown to the portable target",
+                      output)
+        self.assertIn(f"python scripts/quick_validate.py {skill.resolve()} --portable", output)
+        self.assertFalse((self.tmp / "dist").exists())
+
+    def test_m11_blocks_packaging(self):
+        skill = self.make_packageable(body=CLEAN_BODY.replace("4. Verify:", "4. Today is !`date`.\n5. Verify:"))
+        code, output = self.package(skill)
+        self.assertEqual(1, code, output)
+        self.assertIn("[M11] major definitive SKILL.md:", output)
 
     def test_environment_error_is_not_reported_as_a_major(self):
         skill = self.make_packageable()

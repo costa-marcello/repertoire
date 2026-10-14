@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """Package a validated, security-scanned skill into <skill-name>.zip.
 
-Packaging requires quick_validate.py to find no definitive Major and a
+The zip is a single-skill upload for claude.ai and the Claude API, never for
+Cowork, which installs the plugin (as Claude Code does). So packaging validates
+against the portable target (quick_validate.py --portable), which accepts only
+six frontmatter fields.
+
+Packaging requires quick_validate.py --portable to find no definitive Major and a
 .security-scan-passed marker whose content hash matches the skill. The zip holds
 the same files the hash covers: the top-level evals/, caches (__pycache__/,
 node_modules/, .venv/, venv/, *.pyc), .git/, the marker, .env files and folders
@@ -49,6 +54,7 @@ MARKER_HASH_RE = re.compile(r"Content hash:\s*([a-f0-9]{64})")  # 64 hex digits:
 PARTIAL_SUFFIX = ".zip.partial"  # the zip is built under this name and renamed only when complete
 ENV_ERROR_TAG = "[env]"  # quick_validate starts environment errors (PyYAML missing, unreadable file) with this
 DEFAULT_FILE_MODE = 0o666  # what open() creates before the umask; mkstemp would leave the zip owner-only (0600)
+UPLOAD_NOTE = "This zip is for uploads to claude.ai and the Claude API, not for Cowork, which installs the plugin."
 
 
 def validate_security_marker(skill_path: Path) -> tuple[bool, str]:
@@ -177,17 +183,18 @@ def package_skill(skill_path, output_dir=None) -> Path | None:
               "pass an output folder outside it, for example its parent", file=sys.stderr)
         return None
 
-    print("Step 1: validating the skill")
-    valid, message, warnings = validate_skill(skill_path)
+    print(UPLOAD_NOTE)
+    print("Step 1: validating the skill for the portable target")
+    valid, message, warnings = validate_skill(skill_path, portable=True)
     if not valid:
         if message.lstrip().startswith(ENV_ERROR_TAG):
             print("[FAIL] quick_validate could not run:")
             print(message)
             print("Fix the problem above, then run this script again.")
         else:
-            print("[FAIL] quick_validate found definitive Major findings:")
+            print("[FAIL] quick_validate found definitive Major findings for the portable target:")
             print(message)
-            print("Fix them, then run: python scripts/quick_validate.py " + str(skill_path))
+            print(f"Fix them, then run: python scripts/quick_validate.py {skill_path} --portable")
         return None
     print(f"[OK] {message}")
     for warning in warnings:
@@ -246,6 +253,8 @@ def build_parser() -> argparse.ArgumentParser:
         description="Package a validated, security-scanned skill into <skill-name>.zip.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
+            "The zip is for uploads to claude.ai and the Claude API, never for Cowork, which installs\n"
+            "the plugin. Packaging therefore validates against the portable target (six frontmatter fields).\n"
             "Run python scripts/security_scan.py <skill-dir> first; packaging needs its marker.\n"
             "Excluded from the zip: the top-level evals/, __pycache__/, node_modules/, .venv/, venv/,\n"
             ".git/, *.pyc, *.zip, .env files and folders (except .env.example), .DS_Store, Thumbs.db,\n"
