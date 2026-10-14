@@ -47,6 +47,7 @@ All notable changes to this project will be documented in this file.
 - Fixed the research script mangling subreddit names that start with "r" and treating unreadable API replies as successful searches
 - Fixed mermaid-diagrams examples that broke Mermaid syntax or the skill's own rules (swapped quadrant labels, a reversed dependency arrow, unquoted brackets, low-contrast text, removed `mmdc` flags)
 - Fixed frontend-design examples with click-swallowing overlays, empty alt text on a product image, and an endless pulse animation
+- Fixed package_skill.py crashing with a traceback, or exiting with an undocumented code 4, when a sibling script is missing or broken; it now exits 1 with a reinstall hint, and package_skill.py and security_scan.py print refusals and errors to stderr
 
 ## [0.9.0] - 2026-10-14
 
