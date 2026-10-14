@@ -15,13 +15,13 @@ The research skill's subagents search with your own SearXNG instance when one an
 
 Three pieces are involved:
 
-- a SearXNG instance with its JSON output turned on (Docker, port 8888 on your computer);
+- a SearXNG instance with its JSON output turned on, listening on port 8888 on your computer (Docker, below, or a native install);
 - the `mcp-searxng` MCP server (github.com/ihor-sokoliuk/mcp-searxng), which finds the instance through the `SEARXNG_URL` environment variable;
 - one way to run that server: a user-scope server in Claude Code, or the opt-in `repertoire-searxng` plugin, which also works in desktop Cowork.
 
 ## Run SearXNG in Docker
 
-You need Docker (Docker Desktop on Windows and macOS).
+Docker is the simplest route, and it needs Docker (Docker Desktop on Windows and macOS). A native install from source, as described in the SearXNG documentation (docs.searxng.org, "Installation"), works just as well: what matters is that `settings.yml` turns the JSON format on and the instance answers on the URL you give `SEARXNG_URL`.
 
 1. Create a folder for the configuration, such as `~/searxng`, and put this `settings.yml` in it:
 
@@ -66,7 +66,7 @@ Add `mcp-searxng` once, for all your projects (user scope). It needs Node.js 22 
 claude mcp add --scope user searxng -e SEARXNG_URL=http://localhost:8888 -- npx -y mcp-searxng@2.5.1
 ```
 
-On native Windows, `npx` needs the `cmd /c` wrapper:
+If the server fails to connect on native Windows, wrap `npx` in `cmd /c`:
 
 ```powershell
 claude mcp add --scope user searxng -e SEARXNG_URL=http://localhost:8888 -- cmd /c npx -y mcp-searxng@2.5.1
