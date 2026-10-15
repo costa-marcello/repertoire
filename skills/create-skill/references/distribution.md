@@ -46,7 +46,7 @@ Take the first case that applies.
 
 ## Packaging a zip
 
-Package only for a single-skill upload to claude.ai or the Claude API. Run `python scripts/package_skill.py <skill-dir> [output-dir]`, as step 9 of SKILL.md describes.
+Package only for a single-skill upload to claude.ai or the Claude API. Run `python ${CLAUDE_SKILL_DIR}/scripts/package_skill.py <skill-dir> [output-dir]`, as step 9 of SKILL.md describes.
 
 - **Portable rules.** It validates against the portable target and prints "This zip is for uploads to claude.ai and the Claude API, not for Cowork, which installs the plugin." A Claude Code-only field such as `argument-hint` is a definitive Major there, so it refuses such a skill, which ships through the plugin instead.
 - **Left out of the zip:** the top-level `evals/`, `.git/`, `__pycache__/`, `node_modules/`, `.venv/`, `venv/`, `.env` files and folders except `.env.example`, `*.pyc`, `*.zip`, OS junk files, and the scan marker.

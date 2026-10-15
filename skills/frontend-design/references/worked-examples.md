@@ -54,7 +54,7 @@ Full code for the four examples in SKILL.md. Each one follows the Gotchas there:
 }
 
 .card-title { font-family: "Playfair Display", Georgia, serif; letter-spacing: -0.01em; }
-.card-description { font-family: "Cormorant Garamond", Garamond, serif; color: rgb(245 240 232 / 0.7); }
+.card-description { font-family: "Cormorant Garamond", Garamond, serif; color: color-mix(in srgb, var(--cream) 70%, transparent); }
 .price { font-family: "Playfair Display", Georgia, serif; color: var(--gold); }
 
 .pricing-card::before,
@@ -135,6 +135,7 @@ The drop zone is a `<label>` for a real file input, so keyboard and screen reade
   --near-black: #0d0d0d;
   --electric-green: #00ff88; /* 14.49:1 on near-black */
   --amber: #ffaa00;          /* 10.18:1 on near-black */
+  --error-red: #ff4d4d;      /* error scanlines */
 }
 
 .upload-zone {
@@ -169,8 +170,8 @@ The drop zone is a `<label>` for a real file input, so keyboard and screen reade
     0deg,
     transparent,
     transparent 2px,
-    rgb(255 0 0 / 0.03) 2px,
-    rgb(255 0 0 / 0.03) 4px
+    color-mix(in srgb, var(--error-red) 3%, transparent) 2px,
+    color-mix(in srgb, var(--error-red) 3%, transparent) 4px
   );
   pointer-events: none;
 }

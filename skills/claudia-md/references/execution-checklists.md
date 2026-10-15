@@ -55,8 +55,8 @@ Rule quality dimensions:
 ```
 - [ ] Phase 1: Discovery complete
 - [ ] Phase 2: Quality assessment complete
-- [ ] Phase 3: Report presented to user
 - [ ] Phase 4: Issues detected (reasoning, vague, negative-only, conflicts, wrong imports)
+- [ ] Phase 3: Report presented to user, with the Phase 4 issues
 - [ ] Phase 5: Targeted updates proposed with diffs, user approved
 - [ ] Phase 7: Updates applied and each file re-read
 
@@ -77,6 +77,7 @@ Changes made:
 - [ ] Phase 6: Contradictions - Found: ___ | Resolved: ___
 - [ ] Phase 6: Keep vs Extract determined
 - [ ] Phase 6: Rule files planned, with a paths: glob for each topic-specific rule
+- [ ] Phase 6: Preview shown: each new or changed file, each rule to be removed
 - [ ] Phase 7: User approved, files written and re-read
 - [ ] Phase 7: Validation checklist from the Refactoring Complete template passed
 

@@ -8,20 +8,20 @@ Subagents searching community sources look for real human opinions, recommendati
 
 **Exclude** the sites the Python script covered (`SCRIPT_SOURCES`: reddit.com, x.com and twitter.com when both API keys work). The script has real engagement metrics (upvotes, likes, reposts) for them, so do not duplicate that work. Every site not in `SCRIPT_SOURCES` is in scope: when `reddit.com` is missing from it (web-only, x-only, or a Reddit error), Reddit threads are in scope for community subagents.
 
-### Tier 1 — High Signal (has voting/engagement)
+### High signal (has voting/engagement)
 - Hacker News (news.ycombinator.com)
 - Stack Overflow / Stack Exchange
 - Dev.to
 - Lobsters (lobste.rs)
 
-### Tier 2 — Moderate Signal (community-curated)
+### Moderate signal (community-curated)
 - Product Hunt (producthunt.com)
 - GitHub Discussions
 - Discourse forums (*.discourse.org, community.* domains)
 - Discord archives (indexed by search engines)
 - Slack community archives (when publicly indexed)
 
-### Tier 3 — Individual Signal (personal perspectives)
+### Individual signal (personal perspectives)
 - Personal developer blogs
 - YouTube comments and community posts
 - User review platforms (G2, Capterra, TrustRadius)
@@ -32,19 +32,19 @@ Subagents searching community sources look for real human opinions, recommendati
 
 Subagents searching official sources look for verified facts, announcements, documentation, and expert analysis.
 
-### Tier 1 — Primary Authority
+### Primary authority
 - Official project documentation and websites
 - GitHub repos: READMEs, changelogs, release notes, issues
 - Company engineering blogs (e.g., engineering.fb.com, blog.google)
 - Government domains (.gov, .gov.uk, .europa.eu)
 
-### Tier 2 — Peer-Reviewed / Institutional
+### Peer-reviewed / institutional
 - Academic papers (arXiv, Google Scholar, Semantic Scholar)
 - Industry reports (Gartner, Forrester, McKinsey, Deloitte)
 - Conference proceedings (NeurIPS, ICML, ACL, IEEE, ACM)
 - Standards bodies (W3C, IETF, ISO)
 
-### Tier 3 — Expert / Publication
+### Expert / publication
 - Expert blogs with established authority
 - Reputable tech publications (Ars Technica, Wired, MIT Tech Review, The Verge)
 - Industry-specific publications (InfoQ, The New Stack, Protocol)

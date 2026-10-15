@@ -20,7 +20,7 @@ Templates for CLAUDE.md structure. These are **examples**, not mandates — adap
 
 **Key principle:** Include reasoning ("why") with rules, and keep each CLAUDE.md under about 200 lines, the target in the Claude Code docs: every line loads in every session, and longer files reduce adherence.
 
-**Which root template:** default to [Project Root (Minimal)](#template-project-root-minimal); Update mode uses it for every new CLAUDE.md. Use [Project Root (Comprehensive)](#template-project-root-comprehensive) when the scan finds environment variables, a test setup, or code-style config worth recording. Use [Root CLAUDE.md (Research-Backed)](#template-root-claudemd-research-backed) when the user supplies hard rules and principles, or when Refactor rebuilds a root that already has them.
+**Which root template:** default to [Project Root (Minimal)](#template-project-root-minimal), in Update mode too. Use [Project Root (Comprehensive)](#template-project-root-comprehensive) instead when the scan finds environment variables, a test setup, or code-style config worth recording. Use [Root CLAUDE.md (Research-Backed)](#template-root-claudemd-research-backed) when the user supplies hard rules and principles, or when Refactor rebuilds a root that already has them.
 
 ---
 
@@ -230,7 +230,7 @@ When rules conflict, use this priority:
 
 ## Template: Project Root (Minimal)
 
-**Use when:** creating a new CLAUDE.md (the default, and what Update mode writes when none exists).
+**Use when:** creating a new CLAUDE.md, in Update mode too, unless the scan finds environment variables, a test setup, or code-style config worth recording (then use Comprehensive).
 
 ```markdown
 # <Project Name>
@@ -262,7 +262,7 @@ When rules conflict, use this priority:
 <!-- Add project-specific gotchas here -->
 ```
 
-Claude Code strips block-level HTML comments before loading a CLAUDE.md, so the placeholders cost no context.
+Claude Code strips block-level HTML comments before loading a CLAUDE.md (Claude Code memory docs, https://code.claude.com/docs/en/memory; recheck them when Claude Code changes), so the placeholders cost no context.
 
 ---
 
@@ -432,7 +432,7 @@ For auto-generated files. Budget: about 100 tokens for a minimal file (score 4-5
 ```
 
 **Generated file notes:**
-1. **Minimal by design:** Start small, expand manually as needed
+1. **Minimal by design:** Write only what the analysis found; the user extends the file later
 2. **One-sentence Context:** Avoid paragraphs — captures purpose, not background
 3. **2-5 Key Files:** Entry points and configs only, not exhaustive
 4. **Patterns with reasoning:** Brief "why" for each pattern (research-backed)

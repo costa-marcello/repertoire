@@ -171,7 +171,10 @@ def search_reddit(
         }
 
         try:
-            return http.post(OPENAI_RESPONSES_URL, payload, headers=headers, timeout=timeout)
+            # One attempt only: a timed-out call has already used its full
+            # timeout, and retrying it would push the run past the caller's
+            # shell time limit. A failed search leaves Reddit to the subagents.
+            return http.post(OPENAI_RESPONSES_URL, payload, headers=headers, timeout=timeout, retries=1)
         except http.HTTPError as e:
             last_error = e
             if _is_model_access_error(e):

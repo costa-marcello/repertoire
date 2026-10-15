@@ -12,7 +12,7 @@ Writes Mermaid diagrams that parse on the first try, and renders them to files w
 
 ## Skill folder
 
-Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file proves missing there. Then use the "Base directory for this skill" if it holds `assets/puppeteer-config.json`, else the folder two levels above the last match Glob lists for `**/mermaid-diagrams/assets/puppeteer-config.json` in `~/.claude`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, work from this file; for the Step 3 sandbox failure, write `{"args": ["--no-sandbox", "--disable-setuid-sandbox"]}` to a temporary `puppeteer-config.json` and pass that with `-p`.
+Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file is missing there. Then use the "Base directory for this skill" if it holds `assets/puppeteer-config.json`, else the folder two levels above the last match Glob lists for `**/mermaid-diagrams/assets/puppeteer-config.json` in `~/.claude`, skipping `.trash`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, work from this file; for the Step 3 sandbox failure, write `{"args": ["--no-sandbox", "--disable-setuid-sandbox"]}` to a temporary `puppeteer-config.json` and pass that with `-p`, and say the reference files were not read.
 
 ## Workflow
 
@@ -59,7 +59,7 @@ Check the diagram before output:
 
 1. The first line after any frontmatter is the type keyword with its exact case (`classDiagram`, not `classdiagram`).
 2. Every label passes the Step 1 table.
-3. The arrows match the type: `-->` in flowcharts and state diagrams, `->>` and `-->>` in sequence diagrams, `<|--`, `*--`, `o--`, `..>` in class diagrams, `||--o{` and similar in ER diagrams.
+3. Every arrow is one its diagram type defines, such as `-->` in flowcharts and state diagrams, `->>` and `-->>` in sequence diagrams, `<|--`, `*--`, `o--`, `..>` in class diagrams, and `||--o{` in ER diagrams. The type's reference lists the rest.
 4. Every `subgraph`, `alt`, `opt`, `loop`, `par`, `critical`, `break`, `rect`, and `box` block closes with its own `end`.
 5. Sequence participants whose names have spaces or punctuation get a short ID and an alias: `participant Auth as Authorization server`. Avoid `as`, `end`, and other keywords as IDs.
 6. The diagram has about 15 nodes or fewer. Split a bigger one into focused views linked from an overview, unless the user wants one large diagram (then see Layout under Configuration).
@@ -75,7 +75,7 @@ Rendering needs no display: mermaid-cli (`mmdc`) draws the diagram in a headless
 1. Save the diagram as a `.mmd` file named after its subject, such as `checkout-flow.mmd`: in Cowork, in the outputs folder; in a repository, next to the code it describes; for a check only, in a temporary folder. If a file of that name exists and is not the diagram you are updating, pick a new name instead of overwriting it.
 2. Run `mmdc -i checkout-flow.mmd -o checkout-flow.svg`. Use `.png` for slides and chat (add `-s 2` for a sharper image) and `.pdf` for print.
 3. Without `mmdc`, run `npx -y -p @mermaid-js/mermaid-cli mmdc -i checkout-flow.mmd -o checkout-flow.svg`. The first run downloads mermaid-cli from npm and a headless Chrome build for it (network; the browser is a large download). The render itself runs locally and uploads nothing.
-4. If Chrome fails to launch (often "No usable sandbox" when running as root, as in a container), add `-p ${CLAUDE_SKILL_DIR}/assets/puppeteer-config.json`, which turns off the browser sandbox for this local render. Add it only after that failure.
+4. If Chrome fails to launch (often "No usable sandbox" when running as root, as in a container), add `-p "${CLAUDE_SKILL_DIR}/assets/puppeteer-config.json"`, which turns off the browser sandbox for this local render. Add it only after that failure.
 5. If the command prints an error, take the message to Step 4. To check the layout, render a PNG too and read it as an image.
 6. When neither command can run (no Node.js or no network), output the code, say that it was not rendered here and why, and give the `npx` command from item 3 to run elsewhere. The code also renders on GitHub, on GitLab, and in VS Code with a Mermaid extension. Offer [mermaid.live](https://mermaid.live) only as a last resort, for a user with a browser who wants an image file.
 

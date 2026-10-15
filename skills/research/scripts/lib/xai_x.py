@@ -111,7 +111,10 @@ def search_x(
         ],
     }
 
-    return http.post(XAI_RESPONSES_URL, payload, headers=headers, timeout=timeout)
+    # One attempt only: a timed-out call has already used its full timeout,
+    # and retrying it would push the run past the caller's shell time limit.
+    # A failed search leaves X to the research subagents.
+    return http.post(XAI_RESPONSES_URL, payload, headers=headers, timeout=timeout, retries=1)
 
 
 def parse_x_response(response: Dict[str, Any]) -> List[Dict[str, Any]]:

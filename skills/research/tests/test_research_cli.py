@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from datetime import datetime
 from pathlib import Path
@@ -87,6 +88,32 @@ class TestWebOnlyRun(unittest.TestCase):
         self.assertIn("**Script covered:** none", stdout)
         self.assertIn(render.WEB_SEARCH_MARKER, stdout)
         self.assertIn("café ✓ topic", stdout)
+
+
+class TestEnrichDeadline(unittest.TestCase):
+    """Reddit enrichment stops at the deadline, so the run fits the skill's
+    Bash timeout; the threads not yet enriched are still returned."""
+
+    def setUp(self):
+        import research  # imported here: it is a script with import-time setup
+        self.research = research
+
+    def _run(self, deadline):
+        return self.research.run_research(
+            "test topic", "reddit", {}, {"openai": "m", "xai": "m"},
+            "2026-01-01", "2026-03-01", mock=True, deadline=deadline,
+        )
+
+    def test_no_deadline_enriches_every_thread(self):
+        reddit_items, _, _, _, _, enriched, _, _ = self._run(None)
+        self.assertTrue(reddit_items)
+        self.assertEqual(len(enriched), len(reddit_items))
+
+    def test_passed_deadline_skips_enrichment_but_keeps_threads(self):
+        reddit_items, _, _, _, _, enriched, reddit_error, _ = self._run(time.monotonic() - 1)
+        self.assertTrue(reddit_items)
+        self.assertEqual(enriched, [])
+        self.assertIsNone(reddit_error)
 
 
 if __name__ == "__main__":

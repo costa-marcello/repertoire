@@ -39,7 +39,7 @@ The default platform target, `claude-code`, means Claude Code and Cowork: the sk
 | m4 | Inconsistent terminology | Minor | One term per concept, everywhere. |
 | m9 | Long reference file without a table of contents | Minor | Give every reference over 100 lines a `## Contents` list near the top. |
 | m10 | Reference chains deeper than one level | Minor | Link every needed file directly from SKILL.md. |
-| m11 | Non-portable paths in Markdown | Minor | Forward slashes and skill-relative paths only. |
+| m11 | Non-portable paths in Markdown | Minor | Forward slashes, and no user-specific absolute paths. |
 | m12 | Loader hygiene problems | Minor | Use only known frontmatter keys, no `agent` without fork, no `claude`/`anthropic` in the name. |
 | m13 | Unclear script contract | Minor | Say "Run" or "Read" for each script, and name its requirements. |
 | m14 | MCP tool named without its server | Minor | Write `Server:tool_name` or `mcp__server__tool_name`. |
@@ -101,12 +101,12 @@ When forking, set `agent` only if the default `general-purpose` agent is wrong, 
 - **m4:** pick terms at the start (for example "subagent", "reference file") and grep for variants before finishing.
 - **m9:** add a `## Contents` list within the first 30 lines of any reference that grows past 100 lines.
 - **m10:** if a reference would point to another file for essential content, link that file from SKILL.md instead.
-- **m11:** never write backslash paths or a real user's home directory. Paths are relative to the skill directory (`scripts/x.py`); in Claude Code, `${CLAUDE_SKILL_DIR}/scripts/x.py` also works.
+- **m11:** never write backslash paths or a real user's home directory. Reach the skill's own files through `${CLAUDE_SKILL_DIR}/scripts/x.py` for the claude-code target, and through paths relative to the skill directory (`scripts/x.py`) for the portable target, both behind the skill-folder block.
 - **m12:**
   - Use only the 20 Claude Code frontmatter keys listed in `frontmatter_reference.md`, and set `agent` or `background` only together with `context: fork`.
   - Keep `description` plus `when_to_use` under 1536 characters.
   - Put teaching examples that contain `$ARGUMENTS` in `references/` (they would be substituted in SKILL.md).
-- **m13:** introduce each script with "Run `python scripts/x.py ...`" or "Read `scripts/x.py` for ...". List the packages it needs.
+- **m13:** introduce each script with "Run `python ${CLAUDE_SKILL_DIR}/scripts/x.py ...`" or "Read `${CLAUDE_SKILL_DIR}/scripts/x.py` for ..." (portable target: `scripts/x.py`). List the packages it needs.
 - **m14:** qualify MCP tools with their server name.
 - **m15:** write rules in normal case and give the reason. Reserve emphasis for the one rule whose violation causes real damage.
 

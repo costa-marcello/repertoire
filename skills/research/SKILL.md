@@ -28,7 +28,7 @@ Then offers follow-ups (no prompt offer: this is RECOMMENDATIONS with no target 
 </example>
 
 <example>
-Edge case: web-only mode (no API keys) in a cloud Cowork session.
+Edge case: web-only mode (no API keys) in a cloud Cowork session with no linked computer.
 The script prints "Mode: web-only" and "Script covered: none", so community subagents may search Reddit themselves.
 ToolSearch finds no SearXNG tool, so SEARCH_BACKEND is "WebSearch + WebFetch (fallback: no SearXNG tool)".
 The footer omits the Reddit/X lines, names the backend, and adds the API key hint. The report is still two-sided.
@@ -45,7 +45,7 @@ Meanwhile, C2 says "Tool A recommended (12 upvotes on HN)" but O1 says
 
 ## Lookback window
 
-The default lookback window is **60 days**, set once as `LOOKBACK_DAYS` in `scripts/lib/dates.py`. The script searches that window, and the subagents get `{DATE_FROM}` = today minus 60 days. Everywhere else in this skill, "the lookback window" means this setting.
+The default lookback window is **60 days**, set once as `LOOKBACK_DAYS` in `scripts/lib/dates.py`. The script drops Reddit and X results dated outside that window, and the subagents get `{DATE_FROM}` = today minus 60 days. Everywhere else in this skill, "the lookback window" means this setting. One narrower filter is deliberate: SearXNG has no range that matches the window, so NEWS searches there pass `time_range: month` to favour the latest news, while the subagents' date range stays `{DATE_FROM}` to today.
 
 ## Gotchas
 
@@ -57,7 +57,7 @@ The default lookback window is **60 days**, set once as `LOOKBACK_DAYS` in `scri
 
 ## Skill folder
 
-Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file proves missing there. Then use the "Base directory for this skill" if it holds `scripts/research.py`, else the folder two levels above the last match Glob lists for `**/research/scripts/research.py` in `~/.claude`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, run web-only: skip Phase 1, set `SCRIPT_SOURCES` to `none`, write the subagent prompts and the report from this file, and say in the footer that the skill's files were not found.
+Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file is missing there. Then use the "Base directory for this skill" if it holds `scripts/research.py`, else the folder two levels above the last match Glob lists for `**/research/scripts/research.py` in `~/.claude`, skipping `.trash`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, run web-only: skip Phase 1, set `SCRIPT_SOURCES` to `none`, write the subagent prompts and the report from this file, and say in the footer that the skill's files were not found.
 
 ## Parse User Intent
 
@@ -89,7 +89,7 @@ Build the `{MCP_TOOLS}` block from "Search Tool Block" in `references/subagent-p
 
 ## Phase 1: Run the Script (Reddit + X)
 
-The script adds Reddit and X data with real engagement metrics, which web search cannot provide. It needs Python 3.9 or later and only the standard library. Run it with a Bash timeout of 300000 ms, because each API call can take two minutes:
+The script adds Reddit and X data with real engagement metrics, which web search cannot provide. It needs Python 3.9 or later and only the standard library. Run it with a timeout of 600000 ms, the shell tool's maximum: one API call can take three minutes, and the script stops adding Reddit metrics in time to finish inside that limit:
 
 ```bash
 python "${CLAUDE_SKILL_DIR}/scripts/research.py" "{TOPIC}" --emit=compact
@@ -135,15 +135,15 @@ You are the research lead, not a dispatcher. Subagent output quality is bounded 
    - NEWS: `"announcement"`, `"reaction to"`, `"what happened with"`
    - PROMPTING: `"prompt for"`, `"technique"`, `"example of"`
    - GENERAL: `"how does X work"`, `"X explained"`
-4. **Route contradictions and Tier C-only evidence into Phase 4 weighting.** When an agent flags disagreement or only low-tier sources, note it and weight it lower in synthesis.
+4. **Route contradictions and Tier C-only evidence into Phase 4 weighting.** When an agent flags disagreement or reports only Tier C sources (the A/B/C credibility tiers in the agent templates), note it and weight it lower in synthesis.
 
 ## Phase 2: Subagent Dispatch
 
-Dispatch the exact agent count below. Each agent targets its own focus area; do not reduce the count or use generic agents, because the two-sided report needs every angle.
+Dispatch the exact agent count below. Each agent targets its own focus area; do not reduce the count or send every agent the same generic prompt, because the two-sided report needs every angle.
 
 ### Step 1: Read the prompt templates
 
-Read `references/subagent-prompts.md` before constructing any prompt. It holds the Search Tool Block, the Community Agent Template, the Official Agent Template, and the query tables. `references/source-categories.md` lists the source tiers each focus area draws on.
+Read `references/subagent-prompts.md` before constructing any prompt. It holds the Search Tool Block, the Community Agent Template, the Official Agent Template, and the query tables. `references/source-categories.md` lists the sites each focus area draws on.
 
 ### Step 2: Agent roles
 

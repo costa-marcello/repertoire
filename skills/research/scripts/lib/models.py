@@ -1,6 +1,7 @@
 """Model auto-selection for research skill."""
 
 import re
+import sys
 from typing import Dict, List, Optional, Tuple
 
 from . import cache, http
@@ -78,10 +79,12 @@ def select_openai_model(
     if policy == "pinned" and pin:
         return pin
 
-    # Check cache first
-    cached = cache.get_cached_model("openai")
-    if cached:
-        return cached
+    # Check cache first. A mock list (--mock or a test) never reads or
+    # writes the real cache.
+    if mock_models is None:
+        cached = cache.get_cached_model("openai")
+        if cached:
+            return cached
 
     # Fetch model list
     if mock_models is not None:
@@ -91,8 +94,12 @@ def select_openai_model(
             headers = {"Authorization": f"Bearer {api_key}"}
             response = http.get(OPENAI_MODELS_URL, headers=headers)
             models = response.get("data", [])
-        except http.HTTPError:
-            # Fall back to known models
+        except http.HTTPError as e:
+            # Fall back to known models, and say why (HTTP 401 means a bad key)
+            sys.stderr.write(
+                f"[MODELS] Could not list OpenAI models ({e}); using {OPENAI_FALLBACK_MODELS[0]}\n"
+            )
+            sys.stderr.flush()
             return OPENAI_FALLBACK_MODELS[0]
 
     # Filter to mainline models
@@ -112,7 +119,8 @@ def select_openai_model(
     selected = candidates[0]["id"]
 
     # Cache the selection
-    cache.set_cached_model("openai", selected)
+    if mock_models is None:
+        cache.set_cached_model("openai", selected)
 
     return selected
 
@@ -140,6 +148,10 @@ def select_xai_model(
     # Use alias system
     if policy in XAI_ALIASES:
         alias = XAI_ALIASES[policy]
+
+        # A mock list (--mock or a test) never reads or writes the real cache
+        if mock_models is not None:
+            return alias
 
         # Check cache first
         cached = cache.get_cached_model("xai")

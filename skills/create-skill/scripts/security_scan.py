@@ -490,7 +490,7 @@ def run_gitleaks(skill_path, gitleaks: str, omit=()) -> list[dict]:
         result = _run_gitleaks_once(_gitleaks_command(gitleaks, scan_root, str(report), use_dir), work)
         if _rejected_flag(result, IGNORE_ALLOW_FLAG):
             print(f"[WARN] this gitleaks does not accept {IGNORE_ALLOW_FLAG}, so inline gitleaks:allow "
-                  "comments were honoured; upgrade gitleaks to its latest release")
+                  "comments were honoured; upgrade gitleaks to its latest release", file=sys.stderr)
             result = _run_gitleaks_once(
                 _gitleaks_command(gitleaks, scan_root, str(report), use_dir, ignore_allow=False), work)
         if result.returncode == 0:
@@ -705,7 +705,8 @@ def _scan(args: argparse.Namespace) -> int:
 
     lookup = find_gitleaks(skill_path)
     for path in lookup.refused:
-        print(f"[WARN] ignored {path}: a gitleaks in the current folder or inside the scanned skill is never run")
+        print(f"[WARN] ignored {path}: a gitleaks in the current folder or inside the scanned skill is never run",
+              file=sys.stderr)
     if lookup.path is None:
         print_gitleaks_installation()
         return finish(EXIT_NO_GITLEAKS)

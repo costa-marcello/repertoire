@@ -33,7 +33,7 @@ Scan the project to build a picture of the current state. Check each source in o
 | `Justfile` | just | Recipe names |
 | `Taskfile.yml` | task | Task names |
 | `deno.json` | deno | `tasks` object |
-| `bun.lockb` | bun | Uses package.json scripts |
+| `bun.lock` or `bun.lockb` | bun | Uses package.json scripts |
 
 **Lockfile detection** (determines which package manager to recommend):
 
@@ -42,7 +42,7 @@ Scan the project to build a picture of the current state. Check each source in o
 | `package-lock.json` | npm |
 | `yarn.lock` | yarn |
 | `pnpm-lock.yaml` | pnpm |
-| `bun.lockb` | bun |
+| `bun.lock` or `bun.lockb` | bun |
 
 **Priority commands to extract:**
 
@@ -109,7 +109,7 @@ Identify entry points and important files:
 
 ## Phase U2: Existing CLAUDE.md Read
 
-Read the current `./CLAUDE.md` (or `./.claude/CLAUDE.md`) if it exists. Parse into sections by heading level. Also note whether `./AGENTS.md` exists: Claude Code reads it by default only while the project has no CLAUDE.md, so a new CLAUDE.md must import it (see Greenfield Mode).
+Read the current `./CLAUDE.md` (or `./.claude/CLAUDE.md`) if it exists. Parse into sections by heading level. Also note whether `./AGENTS.md` exists. By default, Claude Code reads it only while no CLAUDE.md or CLAUDE.local.md sits in the working directory or above it (Claude Code memory docs, https://code.claude.com/docs/en/memory; recheck them when Claude Code changes), so a new CLAUDE.md must import it (see Greenfield Mode).
 
 **Section classification:**
 
@@ -206,7 +206,7 @@ Apply approved changes using the Edit tool. Preserve:
 - User-authored reasoning and rules
 - Comments and formatting conventions
 
-If creating a new CLAUDE.md from scratch, start from *Project Root (Minimal)* in `references/templates.md` (switch to *Project Root (Comprehensive)* when the scan found environment variables, a test setup, or code-style config), and write it with the Write tool to `CLAUDE.md` at the project folder root (the connected folder in Cowork).
+If creating a new CLAUDE.md from scratch, start from *Project Root (Minimal)* in `references/templates.md` (switch to *Project Root (Comprehensive)* when the scan found environment variables, a test setup, or code-style config worth recording), and write it with the Write tool to `CLAUDE.md` at the project folder root (the connected folder in Cowork).
 
 Re-read each written file to confirm the change landed and that user-authored sections are intact. Finish by naming every file you changed or created, with its path from the project folder root.
 
@@ -214,10 +214,10 @@ Re-read each written file to confirm the change landed and that user-authored se
 
 ## Greenfield Mode (No Existing CLAUDE.md)
 
-When no CLAUDE.md exists, Update mode acts as an init:
+When no CLAUDE.md exists, Update mode acts as an init (steps 4 and 5 follow the memory docs cited in Phase U2):
 
 1. Run full codebase scan (Phase U1)
-2. Generate a complete CLAUDE.md from *Project Root (Minimal)* in `references/templates.md`, or *Project Root (Comprehensive)* when the scan found environment variables, a test setup, or code-style config
+2. Generate a complete CLAUDE.md from *Project Root (Minimal)* in `references/templates.md`, or *Project Root (Comprehensive)* when the scan found environment variables, a test setup, or code-style config worth recording
 3. Include: project description (from README or package.json), commands, architecture, key files
 4. Keep the template's `## Hard Rules` and `## Gotchas` placeholder sections and their comments asking for project-specific rules (Claude Code strips block-level HTML comments before loading, so the placeholders cost no context)
 5. If `./AGENTS.md` exists, make `@AGENTS.md` the first line and add only what AGENTS.md lacks. Without the import, Claude Code stops reading AGENTS.md as soon as the new CLAUDE.md exists

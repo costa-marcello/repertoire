@@ -21,7 +21,7 @@ Based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/). Use onl
 | **Deprecated** | Features marked for future removal | Old API versions, legacy methods |
 | **Removed** | Features deleted in this release | Dropped support, removed endpoints |
 | **Fixed** | Bug corrections | Resolved crashes, fixed edge cases |
-| **Security** | Vulnerability patches | CVE fixes, auth improvements |
+| **Security** | Vulnerability patches | CVE fixes, patched auth bypasses |
 
 ## Breaking Changes
 
@@ -44,6 +44,8 @@ Use /v2/users instead.
 ## Writing Style Guidelines
 
 ### Audience-Appropriate Language
+
+Default to end-user wording. Use developer wording when the people who use the release are developers: a library, an API, or a developer tool.
 
 **For developers (API changelogs):**
 ```markdown

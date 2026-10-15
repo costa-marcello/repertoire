@@ -105,6 +105,7 @@ stateDiagram-v2
         ValidateShipping --> join_state
 
         join_state --> ProcessOrder
+        ProcessOrder --> [*]
     }
 
     Checkout --> Complete : success
@@ -392,7 +393,7 @@ quadrantChart
 - Add `note right of StateName` to explain non-obvious transition guards.
 
 ### Git Graphs
-- Set `id:` on every commit to a short descriptive label (e.g., `id: "add auth"`).
+- Set `id:` on every `commit` line to a short descriptive label (e.g., `id: "add auth"`).
 - Tag release commits on main with `tag: "v1.0.0"`.
 - Name short-lived branches with the `type/name` convention (e.g., `feature/auth`, `hotfix/security`); long-lived ones keep plain names such as `develop`.
 

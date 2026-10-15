@@ -32,20 +32,20 @@ Run git through the Bash tool. The repository is the folder named in the argumen
 Find the last tag, the nearest tag reachable from HEAD:
 
 ```bash
-git describe --tags --abbrev=0
+git describe --tags --abbrev=0 --match "v[0-9]*" --match "[0-9]*"
 ```
 
-If it exits non-zero, there are no tags: the current version is `0.0.0`, and every `<last-tag>..HEAD` below becomes `HEAD` (the full history).
+The `--match` patterns skip tags that are not versions, such as `deploy-2026-01`. If it exits non-zero, there are no version tags: the current version is `0.0.0`, and every `<last-tag>..HEAD` below becomes `HEAD` (the full history).
 
-Scan the commits with `git log --pretty=format:"%h %s%n%b" <last-tag>..HEAD` and categorize each one with the [Commit Categorization](#commit-categorization) table. If there are no commits, or the table drops all of them, report "No release needed" with the commit counts and stop.
+Scan the commits with `git log --pretty=format:"%h %s%n%b" <last-tag>..HEAD` and categorize each one with the [Commit Categorization](#commit-categorization) table. If no commit is included and CHANGELOG.md has no entries under `## [Unreleased]`, report "No release needed" with the commit counts and stop.
 
-If the arguments hold a version, use it without its leading `v` and skip the bump table. Otherwise apply the highest-priority rule that matches an included commit:
+If the arguments hold a version, use it without its leading `v` and skip the bump table. Otherwise apply the highest-priority rule that matches an included commit or an Unreleased entry:
 
 | Priority | Signal | Bump |
 |----------|--------|------|
-| 1 | Breaking change: `!` after the type (`feat!:`, `fix(api)!:`) or a `BREAKING CHANGE:` footer | Major; Minor while the major version is 0 (1.0.0 only when passed as the version) |
-| 2 | An included commit that goes under Added | Minor |
-| 3 | Any other included commit | Patch |
+| 1 | Breaking change: `!` after the type (`feat!:`, `fix(api)!:`), a `BREAKING CHANGE:` footer, or a `**BREAKING**` Unreleased entry | Major; Minor while the major version is 0 (1.0.0 only when passed as the version) |
+| 2 | An included commit or Unreleased entry that goes under Added | Minor |
+| 3 | Any other included commit or Unreleased entry | Patch |
 
 Report the version before continuing:
 
@@ -62,7 +62,7 @@ Run `git tag -l vX.Y.Z`. If the tag already exists, or X.Y.Z is not higher than 
 
 ## Step 4: Draft the Bullets
 
-**Skill folder:** Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file proves missing there. Then use the "Base directory for this skill" if it holds `references/changelog_format.md`, else the folder two levels above the last match Glob lists for `**/changelog/references/changelog_format.md` in `~/.claude`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, write the bullets from the Commit Categorization table and the Output Format, and say in the report that the format reference was not found.
+**Skill folder:** Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file is missing there. Then use the "Base directory for this skill" if it holds `references/changelog_format.md`, else the folder two levels above the last match Glob lists for `**/changelog/references/changelog_format.md` in `~/.claude`, skipping `.trash`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, write the bullets from the Commit Categorization table and the Output Format, and say in the report that the format reference was not found.
 
 Read `${CLAUDE_SKILL_DIR}/references/changelog_format.md` before writing the first bullet. It holds the six sections and their order, the breaking-change bullet, the writing style, and a complete example.
 
@@ -74,8 +74,8 @@ Using the categories from Step 2, write one user-facing bullet per change in the
 2. If CHANGELOG.md exists, read it and preserve all existing content.
 3. Add `## [X.Y.Z] - YYYY-MM-DD` with today's date above the existing version sections, holding the Step 4 bullets.
 4. If an `## [Unreleased]` section exists, move its entries into the new section (keep every entry; merge one that repeats a commit-derived entry), then delete the empty Unreleased heading and its footer link.
-5. Add the new footer link above the older ones, copying the pattern of the existing links: `[X.Y.Z]: <base>/compare/<last-tag>...vX.Y.Z`, or `[X.Y.Z]: <base>/releases/tag/vX.Y.Z` for the first release. For a new file, `<base>` is `git remote get-url origin` as an https URL without `.git` (`git@github.com:owner/repo.git` becomes `https://github.com/owner/repo`). GitLab uses `<base>/-/compare/...` and `<base>/-/tags/vX.Y.Z`. Leave the links out when origin is missing or is not a GitHub or GitLab URL.
-6. **Verify:** re-read the new section. Every included commit and every entry moved from Unreleased appears in at least one bullet, no bullet comes from a dropped commit, and the `[Unreleased]` heading and its footer link are gone.
+5. Add the new footer link above the older ones, copying the pattern of the existing links: `[X.Y.Z]: <base>/compare/<last-tag>...vX.Y.Z`, or `[X.Y.Z]: <base>/releases/tag/vX.Y.Z` for the first release. For a new file, `<base>` is `git remote get-url origin` as an https URL without `.git` (`git@github.com:owner/repo.git` becomes `https://github.com/owner/repo`). GitLab uses `<base>/-/compare/...` and `<base>/-/tags/vX.Y.Z`. Leave the links out when origin is missing or is not a GitHub or GitLab URL, or when an existing CHANGELOG.md has no footer links.
+6. **Verify:** re-read the new section. Every included commit and every entry moved from Unreleased appears in at least one bullet, no bullet comes from a dropped commit, and the `[Unreleased]` heading and its footer link are gone. If a check fails, fix the section and re-read it until every check passes.
 
 ## Step 6: Commit, Tag, Push
 

@@ -140,7 +140,7 @@ def render_compact(report: schema.Report, limit: int = 15, missing_keys: str = "
         lines.append("")
         lines.append(f"**ERROR:** {report.reddit_error}")
         lines.append("")
-    elif report.mode in ("both", "reddit-only") and not report.reddit:
+    elif report.mode in ("both", "reddit-only", "all", "reddit-web") and not report.reddit:
         lines.append("### Reddit Threads")
         lines.append("")
         lines.append("*No relevant Reddit threads found for this topic.*")

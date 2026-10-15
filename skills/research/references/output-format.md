@@ -110,7 +110,7 @@ Use real numbers from the research. The `Search backend` line is always present:
 
 ```
 ---
-All agents reported back!
+{AGENTS_LINE}
 ├─ Reddit: {n} threads | {upvotes} upvotes | {comments} comments
 ├─ X: {n} posts | {likes} likes | {reposts} reposts
 ├─ Community web: {n} sources (HN, forums, blogs)
@@ -119,6 +119,8 @@ All agents reported back!
 ├─ Search backend: {SEARCH_BACKEND}
 └─ Cross-reference: {agree} aligned, {disagree} divergent, {gaps} gaps
 ```
+
+`{AGENTS_LINE}` is `All agents reported back!` when every agent reported, else it counts the failures, as in `7 of 8 agents reported back; 1 agent failed (C4)`.
 
 `{SEARCH_BACKEND}` reads like one of these:
 - `SearXNG (mcp__searxng__searxng_web_search)`
@@ -153,9 +155,8 @@ What tool will you use these prompts with?
 
 Options:
 1. [Most relevant tool based on research]
-2. Nano Banana Pro (image generation)
-3. ChatGPT / Claude (text/code)
-4. Other (tell me)
+2. [Second most relevant tool based on research]
+3. Other (tell me)
 ```
 
 **RECOMMENDATIONS, NEWS, or GENERAL with TARGET_TOOL unknown:** offer follow-ups, not a prompt:

@@ -112,7 +112,7 @@ Files used in the output and not read into context: templates, images, fonts, ic
 - secrets: read them from environment variables, not only from a home-directory dotfile (M11).
 
 **Use:**
-- paths relative to the skill directory, or `${CLAUDE_SKILL_DIR}/...` in Claude Code and Cowork, both behind the [skill-folder block](#skill-folder-fallback);
+- `${CLAUDE_SKILL_DIR}/...` for the claude-code target (Claude Code and Cowork), and paths relative to the skill directory for the portable target, both behind the [skill-folder block](#skill-folder-fallback);
 - generic placeholders (`<project-root>`, `<user>`, `your-company`);
 - forward slashes, on Windows too (m11). Fenced blocks tagged `powershell`, `ps1`, `cmd`, or `bat` are exempt.
 
@@ -121,7 +121,7 @@ Files used in the output and not read into context: templates, images, fonts, ic
 Claude Code fills in `${CLAUDE_SKILL_DIR}` when a skill loads. When a Cowork or claude.ai chat loads a skill and then moves to a cloud session, the skill can get a "Base directory for this skill" (and likely a `${CLAUDE_SKILL_DIR}`) that points at a folder that does not exist, such as `/mnt/skills/plugins/<plugin>:<skill>` ([claude-code#98790](https://github.com/anthropics/claude-code/issues/98790)), or a blank or unexpanded token; the plugin's files are still in the session, under `~/.claude/plugins/synced/`. So every skill that runs, reads, or copies a bundled file carries this block once in SKILL.md. Fill in the skill's name, a file two levels down that only this skill has (`scripts/<main>.py`, `references/<file>.md`, or `assets/<file>`), and what to do without the folder:
 
 ```markdown
-Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file proves missing there. Then use the "Base directory for this skill" if it holds `<marker>`, else the folder two levels above the last match Glob lists for `**/<name>/<marker>` in `~/.claude`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, <fallback>
+Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file is missing there. Then use the "Base directory for this skill" if it holds `<marker>`, else the folder two levels above the last match Glob lists for `**/<name>/<marker>` in `~/.claude`, skipping `.trash`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, <fallback>
 ```
 
 - **Where:** before the first step that uses a bundled file: a `## Skill folder` section, a `**Skill folder:**` bullet in an existing ground-rules list, or the opening paragraph of the first `## Step N` that needs it.

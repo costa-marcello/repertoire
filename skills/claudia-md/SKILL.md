@@ -1,15 +1,15 @@
 ---
 name: claudia-md
-description: Manages CLAUDE.md files. Audits, reviews, improves, refactors, updates, and generates subdirectory context. Discovers all CLAUDE.md files, evaluates quality against research-backed criteria, generates improvement reports, applies targeted updates, syncs CLAUDE.md with current codebase state, restructures using progressive disclosure, and creates contextual CLAUDE.md files for directories that benefit from instant context. Use when the user says "audit CLAUDE.md", "review my CLAUDE.md rules", "improve instructions", "organize Claude config", "update CLAUDE.md", "sync my CLAUDE.md rules", "init CLAUDE.md", "generate subdirectory context", or "CLAUDE.md maintenance".
+description: Manages CLAUDE.md files. Audits and reviews their quality against research-backed criteria, applies targeted improvements, syncs them with the current codebase, refactors bloated ones with progressive disclosure, and generates CLAUDE.md files for subdirectories that need their own context. Unlike the built-in /init, it previews every change, keeps user-authored rules, and imports an existing AGENTS.md. Use when the user says "audit CLAUDE.md", "review my CLAUDE.md rules", "improve my CLAUDE.md instructions", "organize my CLAUDE.md files", "update CLAUDE.md", "sync my CLAUDE.md rules", "init CLAUDE.md", "generate subdirectory context", or "CLAUDE.md maintenance".
 allowed-tools: Read, Glob, Grep, Edit, Write
 license: MIT
 ---
 
 <!-- v1.5.0 | 2026-10-14 -->
 
-# Claude MD
+# Claudia MD
 
-**Complete CLAUDE.md management:** Audit, Review, Improve, Refactor, Update, and Generate. Core insight: rules with reasoning outperform bare rules. Models generalize from "why" explanations.
+Core insight: rules with reasoning outperform bare rules. Models generalize from "why" explanations.
 
 ## Quick Reference
 
@@ -18,7 +18,7 @@ license: MIT
 | **Audit** | "Audit CLAUDE.md", "Check all my rule files" | Discovery + quality scores for all files |
 | **Review** | "Review my CLAUDE.md", "Check instruction quality" | Detailed quality report + improvement suggestions |
 | **Improve** | "Improve my CLAUDE.md rules", "Fix my CLAUDE.md" | Targeted updates with diffs |
-| **Refactor** | "Organize Claude config", "Split CLAUDE.md" | Restructured files with progressive disclosure |
+| **Refactor** | "Organize my CLAUDE.md files", "Split CLAUDE.md" | Restructured files with progressive disclosure |
 | **Update** | "Update CLAUDE.md", "Sync my CLAUDE.md rules", "Init CLAUDE.md" | CLAUDE.md synced with current codebase state |
 | **Generate** | "Generate subdirectory context", "Create package CLAUDE.md files" | New CLAUDE.md files for directories that need context |
 
@@ -35,7 +35,7 @@ license: MIT
 
 Every mode works on files in a folder, so it runs the same in Claude Code and Cowork.
 
-- **Skill folder:** Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file proves missing there. Then use the "Base directory for this skill" if it holds `references/quality-criteria.md`, else the folder two levels above the last match Glob lists for `**/claudia-md/references/quality-criteria.md` in `~/.claude`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, work from this file and say the reference files were not read.
+- **Skill folder:** Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file is missing there. Then use the "Base directory for this skill" if it holds `references/quality-criteria.md`, else the folder two levels above the last match Glob lists for `**/claudia-md/references/quality-criteria.md` in `~/.claude`, skipping `.trash`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, work from this file and say the reference files were not read.
 - **Project folder:** the current working directory in Claude Code; the connected folder in Cowork. If a Cowork session has no connected folder, ask the user to connect the folder that holds the CLAUDE.md. If they attach a single CLAUDE.md instead, work on it and save the result in the outputs folder.
 - **No git or terminal needed:** find and read files with Glob, Grep, and Read. A plain folder that is not a git repository is fine.
 - **User-wide file:** `~/.claude/CLAUDE.md` exists only in Claude Code. Cowork cannot read your computer's home-folder Claude config, so skip that file there, say so in the report, and offer to review it if the user pastes it or copies it into the connected folder.
@@ -51,7 +51,7 @@ Track progress with the mode's checklist in [references/execution-checklists.md]
 
 ### Phase 1: Discovery
 
-Find all CLAUDE.md files in the project folder with Glob, using the patterns `**/CLAUDE.md`, `**/CLAUDE.local.md`, `.claude/CLAUDE.md`, and `.claude/rules/**/*.md`, and note any `**/AGENTS.md`. Drop matches under `node_modules`, `dist`, `build`, `vendor`, and `.git`. Stop at 50 files and say so when there are more. When Audit already ran in the session, Generate reuses this list for its "Already has CLAUDE.md" signal.
+Find all CLAUDE.md files in the project folder with Glob, using the patterns `**/CLAUDE.md`, `**/CLAUDE.local.md`, `.claude/CLAUDE.md`, and `.claude/rules/**/*.md`, and note any `**/AGENTS.md`. Drop matches under `node_modules`, `dist`, `build`, `vendor`, and `.git`. In Claude Code, also read `~/.claude/CLAUDE.md` if it exists. Stop at 50 files and say so when there are more. When Audit already ran in the session, Generate reuses this list for its "Already has CLAUDE.md" signal.
 
 **File Types & Locations:**
 
@@ -64,13 +64,14 @@ Find all CLAUDE.md files in the project folder with Glob, using the patterns `**
 | Subdirectory | Any nested location | Feature/domain-specific context |
 | Rules directory | `./.claude/rules/**/*.md` | Topic rules, loaded without any import |
 | Reference docs | `./.claude/reference/*.md` | Large docs (a convention; NOT auto-loaded) |
-| AGENTS.md | `./AGENTS.md` | By default, read by Claude Code only while no CLAUDE.md exists |
+| AGENTS.md | `./AGENTS.md` | Shared with other coding agents |
 
 **How Claude Code loads these files** (source: the Claude Code memory docs at https://code.claude.com/docs/en/memory; recheck them when Claude Code changes, since this behavior varies between releases):
 - Every CLAUDE.md from the working directory up loads at launch. A subdirectory's CLAUDE.md loads when Claude first touches a file there, so it never imports its parent.
 - An `@path` import resolves relative to the file that contains it and loads at launch: it organizes a file but saves no context. So `@rules/x.md` in the root points to `./rules/`, not `.claude/rules/`.
 - `.claude/rules/` files load on their own, so CLAUDE.md never imports them. A rule with `paths:` frontmatter loads only when Claude touches a matching file.
 - The docs target under 200 lines per CLAUDE.md: longer files cost context in every session and reduce adherence.
+- By default, AGENTS.md loads only while no CLAUDE.md or CLAUDE.local.md sits in the working directory or above it. Once one does, only an `@AGENTS.md` import loads it.
 
 ### Phase 2: Quality Assessment
 
@@ -114,7 +115,7 @@ See [references/quality-criteria.md](references/quality-criteria.md) for the ful
 
 ### Phase 3: Quality Report Output
 
-Output the quality report before making any updates. In Review mode, run Phase 4 first so the report lists its issues.
+Output the quality report before making any updates. In Review and Improve mode, run Phase 4 first so the report lists its issues.
 
 **Report Format:**
 
@@ -141,7 +142,7 @@ Output the quality report before making any updates. In Review mode, run Phase 4
 **Recommended additions:** [list what should be added]
 ```
 
-### Phase 4: Issue Detection (Review Mode)
+### Phase 4: Issue Detection (Review and Improve)
 
 **Check rules and patterns for:** (not factual context sections)
 
@@ -278,13 +279,13 @@ project-root/
 
 ### Phase 7: Apply Updates
 
-After user approval, apply changes with the Edit tool (Write for new files). Preserve existing content structure. Then re-read each changed file to confirm the edits landed, and list the files with their paths (see Where It Works).
+After the user approves a preview of every new or changed file, listing each rule to be removed, apply changes with the Edit tool (Write for new files). Preserve existing content structure. Then re-read each changed file to confirm the edits landed, and list the files with their paths (see Where It Works).
 
 ### Mode: Update (Sync CLAUDE.md with Codebase)
 
 **Triggers:** "Update CLAUDE.md", "Sync my CLAUDE.md rules", "Init CLAUDE.md", "Refresh project context"
 
-Scans the codebase and updates CLAUDE.md to reflect the current project state. Creates a CLAUDE.md from scratch if none exists. Unlike Improve (which fixes quality issues), Update detects drift between the documented state and the actual codebase. Unlike the built-in `/init`, it previews every change, keeps user-authored rules, and imports an existing AGENTS.md.
+Scans the codebase and updates CLAUDE.md to reflect the current project state. Creates a CLAUDE.md from scratch if none exists. Unlike Improve (which fixes quality issues), Update detects drift between the documented state and the actual codebase.
 
 | Phase | Action | Detail |
 |-------|--------|--------|

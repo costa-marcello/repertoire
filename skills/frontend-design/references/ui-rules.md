@@ -1,4 +1,4 @@
-# UX Rules
+# UI and UX Rules
 
 ## Contents
 
@@ -62,10 +62,10 @@
 | **Line height** | 1.5-1.75 for body text | `line-height: 1` or 1.2 on body text | Text feels cramped, hard to read |
 | **Line length** | 65-75 characters per line | Full-width paragraphs | Eye-tracking fatigue |
 | **Font pairing** | Match heading and body font personalities | Playful heading + formal body | Visual discord |
-| **Text contrast, light mode** | `#0F172A` (slate-900, 17.9:1 on white) for body text | `#94A3B8` (slate-400, 2.6:1 on white) for body text | Fails contrast requirements |
-| **Muted text, light mode** | `#475569` (slate-600, 7.6:1 on white) or darker, for margin on tinted surfaces | slate-400 or lighter | Too light to read |
-| **Glass card, light mode** | `bg-white/80` or more opaque | `bg-white/10` | Content unreadable in light mode |
-| **Border visibility** | Card dividers `border-gray-200` in light mode; input borders at 3:1 (`border-gray-500`, 4.8:1 on white) | `border-white/10` in light mode | Borders disappear, and users can't find the input edges |
+| **Text contrast, light mode** | A `--text` token at 4.5:1 or more on its surface (for example `#0F172A`, 17.9:1 on white) | `#94A3B8` (slate-400, 2.6:1 on white) for body text | Fails contrast requirements |
+| **Muted text, light mode** | A `--muted` token at 4.5:1 or more on every surface it sits on (for example `#475569`, 7.6:1 on white, which leaves margin for tinted surfaces) | slate-400 or lighter | Too light to read |
+| **Glass card, light mode** | A surface token at 80% opacity or more: `color-mix(in srgb, var(--surface) 80%, transparent)` | A surface at 10% opacity | Content unreadable in light mode |
+| **Border visibility** | Card dividers from a `--border` token that shows in both modes; input borders from a token at 3:1 or more (for example `#6B7280`, 4.8:1 on white) | A white border at 10% opacity in light mode | Borders disappear, and users can't find the input edges |
 
 ## Priority 6: Animation (MEDIUM)
 

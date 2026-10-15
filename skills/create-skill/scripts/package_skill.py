@@ -212,7 +212,7 @@ def package_skill(skill_path, output_dir=None) -> Path | None:
         return None
     print(f"[OK] {message}")
     for warning in warnings:
-        print(f"[WARN] {warning}")
+        print(f"[WARN] {warning}", file=sys.stderr)
 
     print("Step 2: checking the security marker")
     marker_ok, marker_message = validate_security_marker(skill_path)
@@ -233,7 +233,7 @@ def package_skill(skill_path, output_dir=None) -> Path | None:
                 "(or drop its reference); then re-run the security scan and this script.")
         return None
     for note in notes:
-        print(f"[WARN] {note}; each user creates it, so it stays out of the zip")
+        print(f"[WARN] {note}; each user creates it, so it stays out of the zip", file=sys.stderr)
     print("[OK] no links, and every referenced bundled file ships")
 
     print("Step 4: creating the package")

@@ -7,7 +7,7 @@
 1. [tests/CLAUDE.md](#testsclaudemd)
 2. [src/components/CLAUDE.md](#srccomponentsclaudemd)
 3. [src/api/CLAUDE.md](#srcapiclaudemd)
-4. [When to Create Subdirectory Files](#when-to-create-subdirectory-files)
+4. [When to Hand-Craft Subdirectory Files](#when-to-hand-craft-subdirectory-files)
 5. [Auto-Generated Examples](#auto-generated-examples)
 6. [Generated vs Hand-Crafted](#generated-vs-hand-crafted)
 
@@ -95,7 +95,9 @@ Backend API routes using Express/Fastify. All routes require authentication.
 
 ---
 
-## When to Create Subdirectory Files
+## When to Hand-Craft Subdirectory Files
+
+Generate mode does not use this table. It creates a file only for a directory that scores 4 or more in Phase G2, and skips a directory that holds only tests.
 
 | Directory Pattern | Create If | Purpose |
 |-------------------|-----------|---------|

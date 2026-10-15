@@ -6,6 +6,7 @@
 2. [What's Next?](#whats-next)
 
 > Source: [makeareadme.com](https://www.makeareadme.com) by Danny Guo, condensed.
+> License: [MIT](https://github.com/dguo/make-a-readme/blob/main/LICENSE)
 
 ## Suggestions for a Good README
 

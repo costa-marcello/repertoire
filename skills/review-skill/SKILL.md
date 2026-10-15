@@ -1,13 +1,13 @@
 ---
 name: review-skill
-description: "Reviews skills for Claude Code and Cowork against Anthropic's skill guidance and the Repertoire rule catalog, assigns a letter grade, and fixes the findings. Use when the user asks to review, grade, audit, or fix a skill, check a SKILL.md before publishing, check that a skill runs in Cowork, or re-run a skill's evals to catch regressions."
+description: "Reviews skills for Claude Code and Cowork against Anthropic's skill guidance and the Repertoire rule catalog, assigns a letter grade, and fixes the findings. Use when the user asks to review, grade, audit, or fix a skill, check a SKILL.md before publishing, check that a skill runs in Cowork, or re-run a skill's evals to catch regressions. Writing a new skill belongs to create-skill."
 license: MIT
 argument-hint: "[skill-path] [mode]"
 ---
 
 # Review Skill
 
-Grades a skill against the rule catalog in `references/rules.md` and, depending on the mode, fixes what it finds. The catalog is the single source of truth for rule IDs, severities, counting, and grade bands; this file says how to run the review.
+Grades a skill against the rule catalog in `references/rules.md` and, depending on the mode, fixes what it finds.
 
 The target and mode: $ARGUMENTS
 
@@ -35,7 +35,7 @@ When mode keywords conflict, the higher row wins: report only > fix > review. `r
 - **Fork is opt-in.** A missing `context: fork` is never a finding, and no mode adds it. Inline is the default and is always valid.
 - **No marker files.** Run the security scan with `--no-marker` in every mode, so Review Only writes nothing into the target.
 - **Network use.** The review itself makes no network calls. A regression run executes the target's eval cases, so it reaches the network only when the target skill does.
-- **Skill folder:** Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file proves missing there. Then use the "Base directory for this skill" if it holds `references/rules.md`, else the folder two levels above the last match Glob lists for `**/review-skill/references/rules.md` in `~/.claude`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, say the rule catalog is missing and stop without grading.
+- **Skill folder:** Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file is missing there. Then use the "Base directory for this skill" if it holds `references/rules.md`, else the folder two levels above the last match Glob lists for `**/review-skill/references/rules.md` in `~/.claude`, skipping `.trash`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, say the rule catalog is missing and stop without grading.
 - **Shell snippets.** They are POSIX shell; on Windows, run them with the Bash tool (Git Bash). Every `<placeholder>` sits in single quotes, so a value with spaces or shell characters stays one inert word; write a single quote inside a value as `'\''`. When only PowerShell is available, the step 1 and step 2 commands run unchanged; use the PowerShell backup command in the fix loop, where a single quote inside a value is written `''`, and start no regression run, because its checks and workspace commands are POSIX shell.
 
 <instructions>
@@ -84,8 +84,8 @@ Read the results:
 
 - quick_validate prints `[ID] severity confidence file:line message` lines and a `RESULT` line. An `[F]` line is an F trigger. Exit 0 means no definitive Major or Minor, 1 a definitive Major, 4 definitive Minor only. Exit 2 is a usage error: correct the command and run it again.
 - quick_validate exit 3 is an environment or internal error, usually missing PyYAML (`python -m pip install pyyaml`). Apply the rules by hand and record "automated checks: not run (<reason>)".
-- security_scan prints `[M10] major check` and `[m11] minor check` lead lines, mapped to rules under "Validator contract" in rules.md, and ends with `RESULT secrets=<n> leads=<n>`. Treat exit 1 or 2 as secrets only when that line shows `secrets` above 0; otherwise record a scan error. Exit 3 means gitleaks is missing and exit 4 is a scan or usage error: record "secret scan not run (<reason>)" and look for secrets while reading the files (M10, heuristic).
-- If none of these folders has the validator, apply rules.md by hand and record "automated checks: not run (create-skill not found)". Offer the install steps in `references/setup.md`.
+- security_scan prints `[M10] major check` and `[m11] minor check` lead lines, mapped to rules under "Validator contract" in rules.md, and ends with `RESULT secrets=<n> leads=<n>`. Treat exit 1 or 2 as secrets only when that line shows `secrets` above 0; otherwise record a scan error. Exit 3 means gitleaks is missing and exit 4 is a scan or usage error: record "secret scan not run (<reason>)", confirm any leads it printed, and look for secrets while reading the files (M10, heuristic).
+- If none of these folders has the validator, apply rules.md by hand and record "automated checks: not run (create-skill not found)". Offer the install steps in `references/setup.md` for the user to run, as they download packages.
 
 ### 3. Rules, one by one
 

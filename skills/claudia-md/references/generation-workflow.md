@@ -363,7 +363,7 @@ This directory contains the authentication service for the application. It is re
 | Directory | Generate? | Focus On |
 |-----------|-----------|----------|
 | `src/{domain}/` | Yes for domains | Business logic, models |
-| `tests/` | Maybe | Only if non-obvious fixtures/patterns |
+| `tests/` | No | Covered by the root's testing conventions (see Extraction Fallback Guidance) |
 | `scripts/` | Yes if many | What each script does |
 | `migrations/` | No | Structure is framework standard |
 

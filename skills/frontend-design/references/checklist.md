@@ -7,7 +7,7 @@ Walk this list against the source code in step 3 of Pre-Delivery Verification. E
 - [ ] No emojis used as icons; icons come from one SVG set (the project's own, otherwise Lucide)
 - [ ] Brand logos come from the brand's official assets or Simple Icons, never redrawn from memory
 - [ ] Hover rules change only colour, shadow, transform, or opacity, so nothing shifts layout
-- [ ] Colours come from tokens, with no hex outside the token definitions; in Tailwind, tokens are registered in the theme and used as `bg-primary`, not `bg-[var(--primary)]`
+- [ ] Colours come from tokens, with no hex, `rgb()`, `hsl()`, or `oklch()` value outside the token definitions (tints and shadows use `color-mix()` on a token); in Tailwind, tokens are registered in the theme and used as `bg-primary`, not `bg-[var(--primary)]`
 - [ ] The display and body fonts are actually loaded, and each font stack ends with a fallback
 
 ## Interaction

@@ -2,6 +2,8 @@
 
 review-skill runs on its own, but its automated checks come from create-skill's scripts. Install both skills together so the validator is found next to this skill.
 
+Every install step below downloads packages. The review itself makes no network calls, so review-skill offers these steps and the user runs them.
+
 ## Install both skills
 
 The Repertoire plugin installs both, side by side, in Claude Code and in Cowork:
