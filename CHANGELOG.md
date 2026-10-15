@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.11.0] - 2026-10-15
 
 ### Changed
 - **BREAKING**: The `repertoire-searxng` plugin no longer has a SearXNG URL setting and always connects to `http://localhost:8888`, because desktop Cowork drops a plugin MCP server that uses plugin settings; in Claude Code, a SearXNG at another address works through the user-scope `mcp-searxng` server from the research skill's SearXNG guide, while Cowork needs SearXNG at `http://localhost:8888`
@@ -263,7 +263,7 @@ All notable changes to this project will be documented in this file.
 - Fixed script invocations and variable names after skill rename
 - Fixed review-skill over-specification and deduplicated steps
 
-[Unreleased]: https://github.com/costa-marcello/repertoire/compare/v0.10.1...HEAD
+[0.11.0]: https://github.com/costa-marcello/repertoire/compare/v0.10.1...v0.11.0
 [0.10.1]: https://github.com/costa-marcello/repertoire/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/costa-marcello/repertoire/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/costa-marcello/repertoire/compare/v0.8.0...v0.9.0
