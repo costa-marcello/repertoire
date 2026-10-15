@@ -52,7 +52,7 @@ Minimal file with one plugin that bundles several skills:
 }
 ```
 
-**A `"./"` plugin owns the whole repository.** Cowork skips it when any other `.claude-plugin/plugin.json` sits anywhere below the root, test fixtures included, and reports `found nested: '<path>/.claude-plugin/plugin.json'` (for example https://github.com/EveryInc/compound-engineering-plugin/issues/1156). `claude plugin validate` does not flag this. So never add a second plugin with its own `plugin.json` under a `"./"` plugin: give it a `strict: false` entry that is its own manifest, or its own repository. Have fixtures generate their `plugin.json` when they run.
+**A `"./"` plugin owns the whole repository.** Cowork skips it when any other `.claude-plugin/plugin.json` sits anywhere below the root, test fixtures included, and reports `found nested: '<path>/.claude-plugin/plugin.json'` (for example https://github.com/EveryInc/compound-engineering-plugin/issues/1156). `claude plugin validate` does not flag this. So never add a second plugin with its own `plugin.json` under a `"./"` plugin: give it a `strict: false` entry that is its own manifest, or its own repository. Cowork also lists every `SKILL.md` below the root as a skill, so a fixture skill under `evals/` shows up next to the real ones. Have fixtures generate their `plugin.json` and `SKILL.md` files when they run.
 
 ## Adding a skill
 

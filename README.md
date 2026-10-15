@@ -66,8 +66,10 @@ The research skill uses a [SearXNG](https://docs.searxng.org/) instance when one
 
 1. Run SearXNG with its JSON output turned on, with Docker or a native install. [skills/research/references/searxng-setup.md](skills/research/references/searxng-setup.md) has the Docker steps; any install with JSON output works.
 2. Connect it:
-   - **Claude Code:** add the `mcp-searxng` server to your user config (same reference), or install the companion plugin with `/plugin install repertoire-searxng@repertoire`.
-   - **Cowork:** enable **repertoire-searxng** from the same marketplace. It can only help in desktop sessions, because cloud sessions can't run local servers or reach your machine, and Cowork always uses `http://localhost:8888`. Wherever SearXNG isn't reachable, research falls back to web search.
+   - **Claude Code:** add the `mcp-searxng` server to your user config (same reference), which takes any address, or install the companion plugin with `/plugin install repertoire-searxng@repertoire`.
+   - **Cowork:** enable **repertoire-searxng** from the same marketplace. It can only help in desktop sessions, because cloud sessions can't run local servers or reach your machine.
+
+   The companion plugin always connects to `http://localhost:8888`, so in Cowork SearXNG must run there; only Claude Code can use another address, through the user config. Wherever SearXNG isn't reachable, research falls back to web search.
 
 ### Document skills
 
@@ -219,7 +221,7 @@ plugins/
   repertoire-searxng/    # Optional plugin: the SearXNG MCP server (README only)
 ```
 
-The `repertoire` plugin's folder is the whole repository, and Cowork skips a plugin whose folder holds another `.claude-plugin/plugin.json`. So the repository keeps exactly one, at the root: `repertoire-searxng` is defined in its marketplace entry, and test fixtures generate their manifests when they run.
+The `repertoire` plugin's folder is the whole repository, and Cowork skips a plugin whose folder holds another `.claude-plugin/plugin.json`. So the repository keeps exactly one, at the root: `repertoire-searxng` is defined in its marketplace entry, and test fixtures generate their manifests when they run. Cowork also lists every `SKILL.md` it finds as a skill, so the only ones in the repository are `skills/<name>/SKILL.md`.
 
 Each skill lives in its own directory under `skills/`. The `SKILL.md` file contains YAML frontmatter (name, description, and optional fields such as `argument-hint`) followed by the prompt content. Supporting materials go in `references/`, scripts in `scripts/`, templates in `assets/`, and test cases in `evals/`.
 

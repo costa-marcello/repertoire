@@ -29,18 +29,15 @@ ALLOWED_PLUGIN_FILES = {".claude-plugin/plugin.json", ".claude-plugin/marketplac
 
 # Fields that add components. The repertoire entry leaves them to plugin.json;
 # the strict:false searxng entry is its own manifest and may carry these.
+# No userConfig: desktop Cowork drops a plugin MCP server that references
+# ${user_config.*} ("user_config is not supported on the desktop host bridge").
 COMPONENT_FIELDS = {
     "skills", "commands", "agents", "hooks", "mcpServers", "lspServers",
     "outputStyles", "themes", "workflows", "experimental", "monitors",
     "userConfig", "channels", "settings", "types",
 }
-INLINE_FIELDS = {"mcpServers", "userConfig"}
-USER_CONFIG_KEYS = {
-    "type", "title", "description", "required", "default", "options",
-    "multiple", "sensitive", "min", "max",
-}
+INLINE_FIELDS = {"mcpServers"}
 EXACT_PIN = re.compile(r"^mcp-searxng@\d+\.\d+\.\d+$")
-USER_CONFIG_REF = re.compile(r"\$\{user_config\.([A-Za-z_][A-Za-z0-9_]*)\}")
 
 # Cowork refuses a plugin above these limits.
 MAX_FILES = 5000
@@ -193,28 +190,21 @@ class ManifestTests(unittest.TestCase):
         self.assertTrue(data.get("description"))
         self.assertTrue(data.get("author", {}).get("name"))
 
-        option = data["userConfig"]["searxng_url"]
-        self.assertLessEqual(option.keys(), USER_CONFIG_KEYS)
-        self.assertEqual(option["type"], "string")
-        self.assertTrue(option.get("title"))
-        self.assertTrue(option.get("description"))
-        self.assertEqual(option.get("default"), "http://localhost:8888")
-
         server = data["mcpServers"]["searxng"]
         self.assertEqual(server["command"], "npx")
         self.assertEqual(server["args"][0], "-y")
         packages = [a for a in server["args"] if a.startswith("mcp-searxng")]
         self.assertEqual(len(packages), 1, server["args"])
         self.assertRegex(packages[0], EXACT_PIN, "pin an exact version, not a range or latest")
-        self.assertEqual(server["env"]["SEARXNG_URL"], "${user_config.searxng_url}")
+        self.assertEqual(server["env"]["SEARXNG_URL"], "http://localhost:8888")
 
-    def test_user_config_references_are_declared(self):
+    def test_no_plugin_settings(self):
+        # Desktop Cowork drops an MCP server whose config uses plugin settings.
         for name, data in (("repertoire", manifest(ROOT_PLUGIN)),
                            ("repertoire-searxng", marketplace_entry("repertoire-searxng"))):
-            declared = set(data.get("userConfig", {}))
-            used = set(USER_CONFIG_REF.findall(json.dumps(data)))
             with self.subTest(plugin=name):
-                self.assertLessEqual(used, declared)
+                self.assertNotIn("userConfig", data)
+                self.assertNotIn("${user_config.", json.dumps(data))
 
     def test_searxng_plugin_has_readme(self):
         text = (SEARXNG_PLUGIN / "README.md").read_text(encoding="utf-8").casefold()
@@ -254,6 +244,17 @@ class LayoutTests(unittest.TestCase):
             if ".claude-plugin" in rel.split("/")[:-1] and rel not in ALLOWED_PLUGIN_FILES
         )
         self.assertEqual(nested, [], f"nested plugin files found by {method}")
+
+    def test_skill_files_only_in_skill_folders(self):
+        # Cowork lists every SKILL.md inside the plugin as a skill, so a
+        # fixture skill under evals/ would show up next to the real ones.
+        files, method = shipped_files()
+        stray = sorted(
+            rel for rel in (f.relative_to(REPO).as_posix() for f in files)
+            if rel.rsplit("/", 1)[-1].casefold() == "skill.md"
+            and not re.fullmatch(r"skills/[^/]+/SKILL\.md", rel)
+        )
+        self.assertEqual(stray, [], f"SKILL.md files outside skills/<name>/ found by {method}")
 
     def test_plugin_stays_within_cowork_limits(self):
         files, method = shipped_files()

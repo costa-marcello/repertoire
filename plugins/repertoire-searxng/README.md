@@ -30,7 +30,7 @@ In Claude Code, after adding the marketplace with `/plugin marketplace add costa
 
 In Cowork, open Customize > Plugins and add `repertoire-searxng` from the `repertoire` marketplace.
 
-When you enable the plugin, Claude Code asks for **SearXNG URL**. The default, `http://localhost:8888`, fits a SearXNG instance on the same computer on port 8888. To change it later, run `/config` in Claude Code. Cowork doesn't ask for plugin settings and always uses the default.
+The plugin always connects to `http://localhost:8888`, a SearXNG instance on the same computer on port 8888, and has no settings: desktop Cowork drops a plugin MCP server that uses plugin settings. If your SearXNG runs somewhere else, then in Claude Code skip this plugin and add the user-scope server from `references/searxng-setup.md`, which takes any `SEARXNG_URL`; Cowork can't use that server, so there SearXNG must run at `http://localhost:8888`. The plugin starts only the connector; it doesn't install or run SearXNG.
 
 ## Where it works
 
