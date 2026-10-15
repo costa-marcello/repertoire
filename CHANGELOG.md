@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+- **BREAKING**: The `repertoire-searxng` plugin no longer has a SearXNG URL setting and always connects to `http://localhost:8888`, because desktop Cowork drops a plugin MCP server that uses plugin settings; for a SearXNG at another address, use the user-scope `mcp-searxng` server from the research skill's SearXNG guide
+- The SearXNG docs now say plainly that the plugin starts only the connector, and that SearXNG itself must already be running
+
+### Fixed
+- Fixed desktop Cowork not starting the SearXNG server: it dropped the server because the server used the URL setting
+- Fixed Cowork listing a `csv-summary` skill: it was a create-skill test fixture, and create-skill's test fixtures are now generated when the tests run
+
 ## [0.10.1] - 2026-10-15
 
 ### Changed
@@ -253,6 +263,7 @@ All notable changes to this project will be documented in this file.
 - Fixed script invocations and variable names after skill rename
 - Fixed review-skill over-specification and deduplicated steps
 
+[Unreleased]: https://github.com/costa-marcello/repertoire/compare/v0.10.1...HEAD
 [0.10.1]: https://github.com/costa-marcello/repertoire/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/costa-marcello/repertoire/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/costa-marcello/repertoire/compare/v0.8.0...v0.9.0

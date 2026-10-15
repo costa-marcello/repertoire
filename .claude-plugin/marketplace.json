@@ -27,14 +27,6 @@
         "mcp",
         "research"
       ],
-      "userConfig": {
-        "searxng_url": {
-          "type": "string",
-          "title": "SearXNG URL",
-          "description": "Address of your SearXNG instance, with the JSON format enabled. Keep the default if SearXNG runs on this computer on port 8888.",
-          "default": "http://localhost:8888"
-        }
-      },
       "mcpServers": {
         "searxng": {
           "command": "npx",
@@ -43,7 +35,7 @@
             "mcp-searxng@2.5.1"
           ],
           "env": {
-            "SEARXNG_URL": "${user_config.searxng_url}"
+            "SEARXNG_URL": "http://localhost:8888"
           }
         }
       }

@@ -76,13 +76,13 @@ Run `claude mcp list` to see that `searxng` connects. Its tools are `mcp__searxn
 
 ## Or install the repertoire-searxng plugin
 
-The Repertoire marketplace has an opt-in plugin, `repertoire-searxng`, that runs the same server (`mcp-searxng@2.5.1`). It has one setting, `searxng_url`, which defaults to `http://localhost:8888`. Its tools carry the plugin prefix, for example `mcp__plugin_repertoire-searxng_searxng__searxng_web_search`.
+The Repertoire marketplace has an opt-in plugin, `repertoire-searxng`, that runs the same server (`mcp-searxng@2.5.1`). It always connects to `http://localhost:8888` and has no settings, because desktop Cowork drops a plugin server that uses plugin settings. For an instance at another address, use the user-scope server above instead. The plugin starts only the connector: SearXNG itself must already be running. Its tools carry the plugin prefix, for example `mcp__plugin_repertoire-searxng_searxng__searxng_web_search`.
 
 - **Claude Code:** `/plugin install repertoire-searxng@repertoire`. Use either the plugin or the user-scope server above; when both are present, the skill uses the user-scope server first.
-- **Desktop Cowork:** Customize > Plugins, enable `repertoire-searxng`. Cowork doesn't ask for plugin settings, so the server always uses the default `http://localhost:8888`; run SearXNG there to use it from Cowork.
+- **Desktop Cowork:** Customize > Plugins, enable `repertoire-searxng`. The server runs on your computer, so it reaches SearXNG at `http://localhost:8888`.
 - **Cloud Cowork sessions** can't run local MCP servers, so there the skill always uses WebSearch and WebFetch. Nothing needs to be configured for that.
 
-If desktop Cowork shows the plugin but the skill still reports the fallback, the server may not reach `localhost:8888` from where Cowork runs it. Cowork can't change `searxng_url`, so keep the fallback there; a different address works only in Claude Code.
+If desktop Cowork shows the plugin but the skill still reports the fallback, check that SearXNG answers at `http://localhost:8888` (the JSON check above) and that Node.js 22 or later is installed, because the server starts through `npx`.
 
 ## Troubleshooting
 
@@ -91,4 +91,4 @@ If desktop Cowork shows the plugin but the skill still reports the fallback, the
 | `403 Forbidden` from the JSON check | `json` is missing from `search.formats`. Add it, then `docker restart searxng`. |
 | Connection refused | The container isn't running. Check `docker ps` and `docker logs searxng`. |
 | Report footer says `WebSearch + WebFetch (fallback: no SearXNG tool)` | No server is connected in this session. Check `claude mcp list`, or enable the plugin. |
-| Report footer says `fallback: SearXNG not reachable` | The server runs but can't reach the instance. Check `SEARXNG_URL` or `searxng_url`, and the JSON check above. |
+| Report footer says `fallback: SearXNG not reachable` | The server runs but can't reach the instance. Check `SEARXNG_URL` (user-scope server) or that SearXNG runs at `http://localhost:8888` (plugin), and the JSON check above. |
