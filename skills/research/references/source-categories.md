@@ -6,7 +6,7 @@
 
 Subagents searching community sources look for real human opinions, recommendations, debates, and experience reports.
 
-**Exclude** the sites the Python script covered (`SCRIPT_SOURCES`: reddit.com, x.com and twitter.com when both API keys work). The script has real engagement metrics (upvotes, likes, reposts) for them, so do not duplicate that work. Every site not in `SCRIPT_SOURCES` is in scope: when `reddit.com` is missing from it (web-only, x-only, or a Reddit error), Reddit threads are in scope for community subagents.
+**Exclude** the sites the Python script covered (`SCRIPT_SOURCES`: reddit.com, x.com and twitter.com when both API keys work). The script has real engagement metrics (upvotes, likes, reposts) for them, so do not duplicate that work. Every site not in `SCRIPT_SOURCES` is in scope: when `reddit.com` is missing from it (web-only, x-only, or a Reddit error), Reddit threads are in scope for community subagents. Parallel Search and Keenable can read them; the built-in WebSearch and WebFetch cannot, so with that backend Reddit goes under Gaps.
 
 ### High signal (has voting/engagement)
 - Hacker News (news.ycombinator.com)

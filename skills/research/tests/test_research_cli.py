@@ -51,7 +51,8 @@ class TestWebSearchBlock(unittest.TestCase):
         self.assertIn(render.WEB_SEARCH_MARKER, block)
         self.assertIn("Script covered: none", block)
         self.assertIn("subagents", block)
-        self.assertIn("SearXNG", block)
+        self.assertIn("Parallel Search", block)
+        self.assertIn("Keenable", block)
         self.assertIn("WebSearch and WebFetch", block)
         self.assertNotIn("Use your WebSearch tool", block)
 

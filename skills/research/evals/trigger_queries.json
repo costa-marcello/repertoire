@@ -8,6 +8,6 @@
   {"query": "summarize the attached PDF report on AI adoption trends", "should_trigger": false},
   {"query": "write a Midjourney prompt for a cyberpunk city at night", "should_trigger": false},
   {"query": "look up the current price of a Raspberry Pi 5", "should_trigger": false},
-  {"query": "set up the SearXNG Docker container on my machine", "should_trigger": false},
+  {"query": "add the Keenable MCP server to Claude Code with my API key", "should_trigger": false},
   {"query": "is there a skill that can make diagrams? install it if there is", "should_trigger": false}
 ]

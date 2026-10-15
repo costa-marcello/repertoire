@@ -4,32 +4,32 @@
     {
       "id": 1,
       "prompt": "/research what's new with the Bun JavaScript runtime --quick",
-      "expected_output": "Precondition: a SearXNG MCP server is connected (the user-scope searxng server or the repertoire-searxng plugin) and its instance answers. A NEWS report at quick depth: the skill checks SearXNG with ToolSearch and searxng_instance_info before anything else, runs the script from the skill folder, dispatches 6 subagents in one message through the Agent tool with the fully qualified SearXNG tools, and the stats footer says the search backend was SearXNG.",
+      "expected_output": "Precondition: Parallel Search is connected (a claude.ai or Cowork connector, or a Claude Code server added with claude mcp add) and answers. A NEWS report at quick depth: the skill looks for Parallel Search and Keenable with ToolSearch, makes one test call to Parallel's web_search before anything else, runs the script from the skill folder, dispatches 6 subagents in one message through the Agent tool with Parallel's tools under the exact names ToolSearch returned, and the stats footer says the search backend was Parallel Search.",
       "files": [],
       "expectations": [
-        "ToolSearch is run with the query 'searxng' before any subagent is dispatched",
-        "mcp__searxng__searxng_instance_info or mcp__plugin_repertoire-searxng_searxng__searxng_instance_info is called before any search tool",
+        "ToolSearch is run for Parallel Search ('parallel web_search') and for Keenable ('keenable search_web_pages') before any subagent is dispatched",
+        "One test call to Parallel's web_search, under the full mcp__<server>__web_search name ToolSearch returned and with the run's session_id, is made before any subagent is dispatched, and Keenable is not tested once Parallel Search answers",
         "The script is run from the skill's own folder (the resolved ${CLAUDE_SKILL_DIR}/scripts/research.py) with --quick, never through a ~/.claude/skills/research or .claude/skills/research path",
         "Exactly 6 subagents (C1-C3 and O1-O3) are dispatched in a single message through the Agent tool, and no Task or TaskOutput tool is called",
-        "Every subagent prompt names the SearXNG tools with their server prefix (mcp__searxng__ or mcp__plugin_repertoire-searxng_searxng__), including web_url_read and searxng_search_suggestions",
-        "QUERY_TYPE is NEWS, and the NEWS subagents are told to pass time_range month",
+        "Every subagent prompt names Parallel's web_search and web_fetch with the same full mcp__ prefix ToolSearch returned, tells the agent to pass objective and search_queries (site: operators kept in the queries) and the same session_id the test call used on every call, and carries the switch rule (at most 2-3 calls in flight, one retry after about 5 seconds on a per-second rate limit, a move to the next backend after a second rate-limit reply, an out-of-credits reply, an hourly cap or a second error, and a note saying so)",
+        "QUERY_TYPE is NEWS, and the subagents are told to check each result's date against DATE_FROM, because Parallel Search has no date filter",
         "The report has the community section, the official section, and a cross-reference table with 3-5 rows marked Aligned, Divergent, or Gap",
-        "The stats footer has a line 'Search backend: SearXNG (...)' naming the fully qualified searxng_web_search tool",
+        "The stats footer has a line 'Search backend: Parallel Search (...)', with any subagent that switched backends named in its fallback part",
         "The report ends with the follow-up invitation (NEWS with no target tool), not a prompt offer or a target-tool question, and then waits for the user"
       ]
     },
     {
       "id": 2,
       "prompt": "/research best open-source vector databases for RAG",
-      "expected_output": "Precondition: no SearXNG tool is available in the session (no searxng server and no repertoire-searxng plugin, as in a cloud Cowork session with no linked computer), or its instance is stopped. A RECOMMENDATIONS report at default depth whose subagents use WebSearch and WebFetch, and whose footer names that fallback, its reason, and the SearXNG setup reference.",
+      "expected_output": "Precondition: neither Parallel Search nor Keenable is connected in the session (no connector and no Claude Code server for either). A RECOMMENDATIONS report at default depth whose subagents use WebSearch and WebFetch, and whose footer names that backend, why the others were skipped, and the search setup reference.",
       "files": [],
       "expectations": [
-        "ToolSearch is run with the query 'searxng' before any subagent is dispatched",
-        "No SearXNG search tool (mcp__searxng__searxng_web_search or mcp__plugin_repertoire-searxng_searxng__searxng_web_search) is called",
+        "ToolSearch is run for Parallel Search ('parallel web_search') and for Keenable ('keenable search_web_pages') before any subagent is dispatched",
+        "No MCP search or fetch tool is called; the web sources come from WebSearch and WebFetch",
         "Exactly 8 subagents (C1-C4 and O1-O4) are dispatched in a single message through the Agent tool",
-        "Every subagent prompt carries the WebSearch + WebFetch search block with the recorded reason, and none lists SearXNG tools",
-        "The stats footer has a line 'Search backend: WebSearch + WebFetch (fallback: no SearXNG tool)' or '(fallback: SearXNG not reachable)'",
-        "A line under the footer points to references/searxng-setup.md",
+        "Every subagent prompt carries only the WebSearch + WebFetch search block, with the recorded reason, site restrictions passed as allowed_domains rather than site: in the query, and the note that Reddit and X are out of reach; it has no switch rule, no fallback block, and no Parallel Search or Keenable tool",
+        "The stats footer has a line 'Search backend: WebSearch + WebFetch (skipped Parallel Search: not connected, Keenable: not connected; ...)'",
+        "A line under the footer points to references/search-setup.md",
         "The community section is a 'Most Mentioned' list of specific database names with mention counts and sources",
         "The report ends with the follow-up invitation (RECOMMENDATIONS with no target tool), not a prompt offer or a target-tool question"
       ]
@@ -37,13 +37,13 @@
     {
       "id": 3,
       "prompt": "/research how are teams adopting the Model Context Protocol in production",
-      "expected_output": "Precondition: OPENAI_API_KEY and XAI_API_KEY are unset and no ~/.config/research/.env exists. The script runs web-only without network calls; the skill continues without warning, lets the subagents cover the web (Reddit included, since the script covered nothing), and the footer drops the Reddit and X lines, keeps the search backend line, and gives the environment-variable hint.",
+      "expected_output": "Precondition: OPENAI_API_KEY and XAI_API_KEY are unset and no ~/.config/research/.env exists. The script runs web-only without network calls; the skill continues without warning, lets the subagents cover the web (since the script covered nothing, Reddit is included when the backend is Parallel Search or Keenable, and listed under Gaps with WebSearch + WebFetch), and the footer drops the Reddit and X lines, keeps the search backend line, and gives the environment-variable hint.",
       "files": [],
       "expectations": [
         "The script output shows 'Mode: web-only' and 'Script covered: none', and the skill continues to Phase 2 without stopping or warning",
         "The skill does not run a separate web search of its own in response to the '### WEBSEARCH REQUIRED ###' block; web sources come from the subagents",
-        "The community subagent prompts say the script covered no sites, so Reddit threads are in scope",
-        "The stats footer has no Reddit line and no X line, and still has a 'Search backend:' line naming SearXNG or WebSearch + WebFetch",
+        "The community subagent prompts say the script covered no sites, so Reddit threads are in scope when the backend can read them (Parallel Search or Keenable), and go under Gaps with WebSearch + WebFetch",
+        "The stats footer has no Reddit line and no X line, and still has a 'Search backend:' line naming Parallel Search, Keenable, or WebSearch + WebFetch",
         "The footer hint names OPENAI_API_KEY and XAI_API_KEY as environment variables and describes ~/.config/research/.env as a Claude Code convenience that Cowork lacks",
         "No API key value appears anywhere in the output"
       ]
@@ -51,14 +51,16 @@
     {
       "id": 4,
       "prompt": "/research what are people saying about the Zed editor lately --quick",
-      "expected_output": "Precondition: only XAI_API_KEY is set (OPENAI_API_KEY unset, no ~/.config/research/.env). The script runs in x-only mode and covers X only, so Reddit is left to the community subagents. The footer keeps the X line, drops the Reddit line, and keeps the search backend line.",
+      "expected_output": "Precondition: only XAI_API_KEY is set (OPENAI_API_KEY unset, no ~/.config/research/.env), and Keenable is connected while Parallel Search is not. The script runs in x-only mode and covers X only, so Reddit is left to the community subagents, which search with Keenable. The footer keeps the X line, drops the Reddit line, and names Keenable as the search backend with Parallel Search skipped.",
       "files": [],
       "expectations": [
         "The script output shows 'Mode: x-only' and 'Script covered: x.com, twitter.com', and the skill continues to Phase 2 without stopping",
-        "The C2 subagent prompt puts Reddit in scope, because reddit.com is not in SCRIPT_SOURCES",
+        "A test call to Keenable's search_web_pages, under the full mcp__<server>__search_web_pages name ToolSearch returned, is made before any subagent is dispatched",
+        "Every subagent prompt names Keenable's search_web_pages and fetch_page_content with the full prefix ToolSearch returned, passes published_after with DATE_FROM, and lists WebSearch + WebFetch as the fallback after the switch rule",
+        "The C2 subagent prompt puts Reddit in scope, because reddit.com is not in SCRIPT_SOURCES and Keenable can read Reddit",
         "No subagent prompt asks for x.com or twitter.com to be searched",
         "Exactly 6 subagents (C1-C3 and O1-O3) are dispatched in a single message through the Agent tool",
-        "The stats footer has an X line and a 'Search backend:' line, and no Reddit line",
+        "The stats footer has an X line, no Reddit line, and a line 'Search backend: Keenable (skipped Parallel Search: not connected; ...)'",
         "No API key value appears anywhere in the output"
       ]
     }

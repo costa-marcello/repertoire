@@ -1,6 +1,6 @@
-"""Checks the plugin packaging: the marketplace, the repertoire manifest, the
-inline repertoire-searxng entry, the skills the repertoire plugin ships, and
-Cowork's plugin limits.
+"""Checks the plugin packaging: the marketplace and its single repertoire
+plugin, the repertoire manifest, the skills the plugin ships, and Cowork's
+plugin limits.
 
 Run from the repository root:
     python -B -m unittest discover -s tests/plugin
@@ -19,16 +19,13 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 MARKETPLACE = REPO / ".claude-plugin" / "marketplace.json"
 ROOT_PLUGIN = REPO
-SEARXNG_PLUGIN = REPO / "plugins" / "repertoire-searxng"
-PLUGIN_ROOTS = (ROOT_PLUGIN, SEARXNG_PLUGIN)
 
 # The repertoire plugin's folder is the whole repository, and Cowork skips a
 # plugin whose folder holds another .claude-plugin/plugin.json. These are the
 # only .claude-plugin files the repository may contain.
 ALLOWED_PLUGIN_FILES = {".claude-plugin/plugin.json", ".claude-plugin/marketplace.json"}
 
-# Fields that add components. The repertoire entry leaves them to plugin.json;
-# the strict:false searxng entry is its own manifest and may carry these.
+# Fields that add components. The repertoire entry leaves them to plugin.json.
 # No userConfig: desktop Cowork drops a plugin MCP server that references
 # ${user_config.*} ("user_config is not supported on the desktop host bridge").
 COMPONENT_FIELDS = {
@@ -36,8 +33,6 @@ COMPONENT_FIELDS = {
     "outputStyles", "themes", "workflows", "experimental", "monitors",
     "userConfig", "channels", "settings", "types",
 }
-INLINE_FIELDS = {"mcpServers"}
-EXACT_PIN = re.compile(r"^mcp-searxng@\d+\.\d+\.\d+$")
 
 # Cowork refuses a plugin above these limits.
 MAX_FILES = 5000
@@ -66,13 +61,6 @@ def keys_anywhere(value) -> set[str]:
         for item in value:
             found |= keys_anywhere(item)
     return found
-
-
-def marketplace_entry(name: str) -> dict:
-    entries = [p for p in load_json(MARKETPLACE)["plugins"] if p.get("name") == name]
-    if len(entries) != 1:
-        raise AssertionError(f"marketplace.json has {len(entries)} entries named {name}")
-    return entries[0]
 
 
 def frontmatter_name(skill_md: Path) -> str | None:
@@ -131,8 +119,9 @@ class MarketplaceTests(unittest.TestCase):
         self.assertTrue(self.data.get("owner", {}).get("name"))
         self.assertTrue(self.data.get("description"))
         self.assertIsInstance(self.data.get("plugins"), list)
-        self.assertEqual([p.get("name") for p in self.data["plugins"]],
-                         ["repertoire", "repertoire-searxng"])
+        # The "./" repertoire plugin is the whole repository, so a second
+        # plugin here would sit inside it, which Cowork does not load.
+        self.assertEqual([p.get("name") for p in self.data["plugins"]], ["repertoire"])
 
     def test_entries_point_at_existing_plugins_with_matching_names(self):
         for entry in self.data["plugins"]:
@@ -146,23 +135,16 @@ class MarketplaceTests(unittest.TestCase):
                 self.assertTrue(root.is_dir(), f"{source} does not exist")
                 self.assertTrue(root == REPO or root.is_relative_to(REPO))
                 self.assertTrue(entry.get("description"))
-                if entry.get("strict") is False:
-                    # The entry is the manifest; a plugin.json here would nest
-                    # inside the repertoire plugin.
-                    self.assertFalse((root / ".claude-plugin").exists())
-                else:
-                    self.assertTrue((root / ".claude-plugin" / "plugin.json").is_file())
-                    self.assertEqual(entry["name"], manifest(root)["name"])
+                self.assertTrue((root / ".claude-plugin" / "plugin.json").is_file())
+                self.assertEqual(entry["name"], manifest(root)["name"])
 
-    def test_repertoire_entry_declares_no_components_and_leaves_strict_unset(self):
-        entry = marketplace_entry("repertoire")
-        self.assertFalse(COMPONENT_FIELDS & entry.keys(), "component fields belong in plugin.json")
-        self.assertNotIn("strict", entry)
-
-    def test_searxng_entry_is_an_inline_manifest(self):
-        entry = marketplace_entry("repertoire-searxng")
-        self.assertIs(entry.get("strict"), False)
-        self.assertLessEqual(COMPONENT_FIELDS & entry.keys(), INLINE_FIELDS)
+    def test_entries_declare_no_components_and_leave_strict_unset(self):
+        # claude.ai does not accept a strict:false entry that only defines an
+        # MCP server, so components stay in plugin.json.
+        for entry in self.data["plugins"]:
+            with self.subTest(entry=entry.get("name")):
+                self.assertFalse(COMPONENT_FIELDS & entry.keys(), "component fields belong in plugin.json")
+                self.assertNotIn("strict", entry)
 
 
 class ManifestTests(unittest.TestCase):
@@ -184,43 +166,23 @@ class ManifestTests(unittest.TestCase):
         # skills/ is scanned by default; a "skills" key would add a second scan.
         self.assertFalse(COMPONENT_FIELDS & data.keys())
 
-    def test_searxng_manifest(self):
-        data = marketplace_entry("repertoire-searxng")
-        self.assertEqual(data["name"], "repertoire-searxng")
-        self.assertTrue(data.get("description"))
-        self.assertTrue(data.get("author", {}).get("name"))
-
-        server = data["mcpServers"]["searxng"]
-        self.assertEqual(server["command"], "npx")
-        self.assertEqual(server["args"][0], "-y")
-        packages = [a for a in server["args"] if a.startswith("mcp-searxng")]
-        self.assertEqual(len(packages), 1, server["args"])
-        self.assertRegex(packages[0], EXACT_PIN, "pin an exact version, not a range or latest")
-        self.assertEqual(server["env"]["SEARXNG_URL"], "http://localhost:8888")
-
     def test_no_plugin_settings(self):
         # Desktop Cowork drops an MCP server whose config uses plugin settings.
-        for name, data in (("repertoire", manifest(ROOT_PLUGIN)),
-                           ("repertoire-searxng", marketplace_entry("repertoire-searxng"))):
-            with self.subTest(plugin=name):
-                self.assertNotIn("userConfig", data)
+        for name, data in (("plugin.json", manifest(ROOT_PLUGIN)),
+                           ("marketplace.json", load_json(MARKETPLACE))):
+            with self.subTest(file=name):
+                self.assertNotIn("userConfig", keys_anywhere(data))
                 self.assertNotIn("${user_config.", json.dumps(data))
-
-    def test_searxng_plugin_has_readme(self):
-        text = (SEARXNG_PLUGIN / "README.md").read_text(encoding="utf-8").casefold()
-        for phrase in ("json", "searxng-setup.md", "cloud cowork", "user-scope"):
-            self.assertIn(phrase, text)
 
 
 class LayoutTests(unittest.TestCase):
-    def test_no_bin_hooks_or_mcp_json_at_plugin_roots(self):
-        # Cowork refuses a plugin with a top-level bin/; the MCP server is
-        # declared inline in the searxng marketplace entry only.
-        for root in PLUGIN_ROOTS:
-            with self.subTest(plugin=root.name):
-                self.assertFalse((root / "bin").exists())
-                self.assertFalse((root / ".mcp.json").exists())
-                self.assertFalse((root / "hooks").exists())
+    def test_no_bin_hooks_or_mcp_json_at_plugin_root(self):
+        # Cowork refuses a plugin with a top-level bin/. A root .mcp.json would
+        # also be this repository's project MCP config, and hooks/ would run
+        # in every session that loads the plugin.
+        self.assertFalse((ROOT_PLUGIN / "bin").exists())
+        self.assertFalse((ROOT_PLUGIN / ".mcp.json").exists())
+        self.assertFalse((ROOT_PLUGIN / "hooks").exists())
 
     def test_every_skill_has_matching_name_and_readme_row(self):
         readme = (REPO / "README.md").read_text(encoding="utf-8")
@@ -276,7 +238,6 @@ class ClaudeValidateTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_validate_marketplace_and_root_plugin(self):
-        # Also schema-checks the inline repertoire-searxng entry.
         self.validate(".")
 
 

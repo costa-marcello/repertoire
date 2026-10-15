@@ -4,9 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Added Parallel Search and Keenable to the research skill: it searches with Parallel Search first, then Keenable, then Claude's built-in web search, tests a backend with one call before choosing it, retries once after a rate limit and moves a subagent to the next backend when the limit persists or the credits run out, and names the backend in the report footer. Both are remote connectors you add yourself (Customize > Connectors in Claude and Cowork, or `claude mcp add` in Claude Code), so they also work in cloud sessions, and unlike the built-in search they can read Reddit threads. The research skill's `references/search-setup.md` explains how to connect them and their limits
+
 ### Changed
+- **BREAKING**: Removed the `repertoire-searxng` plugin and the research skill's SearXNG support, because Cowork could not install the plugin. If you installed it, uninstall it from `/plugin` in Claude Code or from Customize > Plugins in Cowork, and connect Parallel Search or Keenable instead; without either, research uses the built-in web search
 - create-skill now tells authors to add a "skill folder" step to every skill that bundles files, and review-skill notes a missing one as advisory under M11, with no grade change
-- The SearXNG docs now say that Cowork sessions on or linked to your computer can use the `repertoire-searxng` plugin, because the Claude desktop app starts its server there; only a cloud session with no linked computer can't
+- create-skill's marketplace guide no longer suggests a `strict: false` entry for a second plugin next to a `"./"` plugin: claude.ai and Cowork don't offer such an entry when it only defines an MCP server. It suggests a separate repository, or a folder for each plugin instead of `"./"`
 
 ### Fixed
 - Fixed skills failing in Cowork when a skill is loaded before the chat moves to a cloud session (for example `/repertoire:research` as the first message): the session hands the skill a folder that doesn't exist, so it couldn't run its scripts or read its references. Every Repertoire skill now finds its own folder, and says what it skipped when it can't

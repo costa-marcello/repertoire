@@ -3,42 +3,12 @@
   "owner": {
     "name": "Costa Marcello"
   },
-  "description": "Repertoire: skills for Claude Code and Cowork, plus an opt-in SearXNG search server for the research skill.",
+  "description": "Repertoire: skills for Claude Code and Cowork.",
   "plugins": [
     {
       "name": "repertoire",
       "source": "./",
       "description": "Skills for Claude Code and Cowork: create and review skills, research a topic with parallel subagents, write changelogs, READMEs and CLAUDE.md files, draw Mermaid diagrams, design frontends, and find more skills."
-    },
-    {
-      "name": "repertoire-searxng",
-      "source": "./plugins/repertoire-searxng",
-      "strict": false,
-      "description": "Adds the SearXNG MCP server (mcp-searxng) so the research skill can search the web through your own SearXNG instance. Needs SearXNG already running at http://localhost:8888 with the JSON format enabled; the plugin starts only the connector. Runs in Claude Code, and in Cowork sessions that run on or are linked to the computer where SearXNG runs.",
-      "author": {
-        "name": "Costa Marcello"
-      },
-      "homepage": "https://github.com/costa-marcello/repertoire/tree/main/plugins/repertoire-searxng",
-      "repository": "https://github.com/costa-marcello/repertoire",
-      "license": "MIT",
-      "keywords": [
-        "searxng",
-        "search",
-        "mcp",
-        "research"
-      ],
-      "mcpServers": {
-        "searxng": {
-          "command": "npx",
-          "args": [
-            "-y",
-            "mcp-searxng@2.5.1"
-          ],
-          "env": {
-            "SEARXNG_URL": "http://localhost:8888"
-          }
-        }
-      }
     }
   ]
 }
