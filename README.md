@@ -67,7 +67,7 @@ The research skill uses a [SearXNG](https://docs.searxng.org/) instance when one
 1. Run SearXNG with its JSON output turned on, with Docker or a native install. [skills/research/references/searxng-setup.md](skills/research/references/searxng-setup.md) has the Docker steps; any install with JSON output works.
 2. Connect it:
    - **Claude Code:** add the `mcp-searxng` server to your user config (same reference), or install the companion plugin with `/plugin install repertoire-searxng@repertoire`.
-   - **Cowork:** enable **repertoire-searxng** from the same marketplace. It can only help in desktop sessions, because cloud sessions can't run local servers or reach your machine. Wherever SearXNG isn't reachable, research falls back to web search.
+   - **Cowork:** enable **repertoire-searxng** from the same marketplace. It can only help in desktop sessions, because cloud sessions can't run local servers or reach your machine, and Cowork always uses `http://localhost:8888`. Wherever SearXNG isn't reachable, research falls back to web search.
 
 ### Document skills
 
