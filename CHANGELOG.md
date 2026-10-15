@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.12.0] - 2026-10-15
 
 ### Added
 - Added Parallel Search and Keenable to the research skill: it searches with Parallel Search first, then Keenable, then Claude's built-in web search, tests a backend with one call before choosing it, retries once after a rate limit and moves a subagent to the next backend when the limit persists or the credits run out, and names the backend in the report footer. Both are remote connectors you add yourself (Customize > Connectors in Claude and Cowork, or `claude mcp add` in Claude Code), so they also work in cloud sessions, and unlike the built-in search they can read Reddit threads. The research skill's `references/search-setup.md` explains how to connect them and their limits
@@ -277,7 +277,7 @@ All notable changes to this project will be documented in this file.
 - Fixed script invocations and variable names after skill rename
 - Fixed review-skill over-specification and deduplicated steps
 
-[Unreleased]: https://github.com/costa-marcello/repertoire/compare/v0.11.0...HEAD
+[0.12.0]: https://github.com/costa-marcello/repertoire/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/costa-marcello/repertoire/compare/v0.10.1...v0.11.0
 [0.10.1]: https://github.com/costa-marcello/repertoire/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/costa-marcello/repertoire/compare/v0.9.0...v0.10.0
