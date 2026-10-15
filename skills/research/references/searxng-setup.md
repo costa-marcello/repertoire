@@ -76,7 +76,7 @@ Run `claude mcp list` to see that `searxng` connects. Its tools are `mcp__searxn
 
 ## Or install the repertoire-searxng plugin
 
-The Repertoire marketplace has an opt-in plugin, `repertoire-searxng`, that runs the same server (`mcp-searxng@2.5.1`). It always connects to `http://localhost:8888` and has no settings, because desktop Cowork drops a plugin server that uses plugin settings. For an instance at another address, use the user-scope server above instead. The plugin starts only the connector: SearXNG itself must already be running. Its tools carry the plugin prefix, for example `mcp__plugin_repertoire-searxng_searxng__searxng_web_search`.
+The Repertoire marketplace has an opt-in plugin, `repertoire-searxng`, that runs the same server (`mcp-searxng@2.5.1`). It always connects to `http://localhost:8888` and has no settings, because desktop Cowork drops a plugin server that uses plugin settings. In Claude Code, an instance at another address works through the user-scope server above; Cowork can't use that server, so there SearXNG must run at `http://localhost:8888`. The plugin starts only the connector: SearXNG itself must already be running. Its tools carry the plugin prefix, for example `mcp__plugin_repertoire-searxng_searxng__searxng_web_search`.
 
 - **Claude Code:** `/plugin install repertoire-searxng@repertoire`. Use either the plugin or the user-scope server above; when both are present, the skill uses the user-scope server first.
 - **Desktop Cowork:** Customize > Plugins, enable `repertoire-searxng`. The server runs on your computer, so it reaches SearXNG at `http://localhost:8888`.

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Changed
-- **BREAKING**: The `repertoire-searxng` plugin no longer has a SearXNG URL setting and always connects to `http://localhost:8888`, because desktop Cowork drops a plugin MCP server that uses plugin settings; for a SearXNG at another address, use the user-scope `mcp-searxng` server from the research skill's SearXNG guide
+- **BREAKING**: The `repertoire-searxng` plugin no longer has a SearXNG URL setting and always connects to `http://localhost:8888`, because desktop Cowork drops a plugin MCP server that uses plugin settings; in Claude Code, a SearXNG at another address works through the user-scope `mcp-searxng` server from the research skill's SearXNG guide, while Cowork needs SearXNG at `http://localhost:8888`
 - The SearXNG docs now say plainly that the plugin starts only the connector, and that SearXNG itself must already be running
 
 ### Fixed
