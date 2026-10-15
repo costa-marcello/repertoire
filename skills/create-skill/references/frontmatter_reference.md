@@ -104,7 +104,7 @@ On invocation, Claude Code substitutes these tokens everywhere in SKILL.md, incl
 | `$name` | A named argument declared in `arguments`; empty when its position has no argument |
 | `${CLAUDE_SESSION_ID}` | The current session ID |
 | `${CLAUDE_EFFORT}` | The current effort level |
-| `${CLAUDE_SKILL_DIR}` | The directory that contains SKILL.md, wherever it is installed (also substituted in Cowork) |
+| `${CLAUDE_SKILL_DIR}` | The directory that contains SKILL.md, wherever it is installed. Cowork substitutes it too, but a skill loaded before a chat moves to a cloud session can get a missing folder: see "Skill folder fallback" in `bundled_resources.md` |
 | `${CLAUDE_PROJECT_DIR}` | The project root |
 | `${CLAUDE_PLUGIN_ROOT}`, `${CLAUDE_PLUGIN_DATA}` | The plugin directory and its data directory (plugin skills only) |
 
@@ -116,7 +116,7 @@ Rules:
 
 ## Referencing bundled scripts
 
-- **Claude Code and Cowork:** write `${CLAUDE_SKILL_DIR}/scripts/extract.py`. It resolves to the skill's directory, whatever the working directory is, through a plugin cache or a linked checkout alike.
+- **Claude Code and Cowork:** write `${CLAUDE_SKILL_DIR}/scripts/extract.py`. It resolves to the skill's directory, whatever the working directory is, through a plugin cache or a linked checkout alike. Put the skill-folder block from `bundled_resources.md` above the first such path, for sessions that hand over a missing folder.
 - **Portable target:** write paths relative to the skill directory (`scripts/extract.py`), and Claude resolves them against the skill's location.
 - **Inside scripts:** find bundled files from the script's own location, `Path(__file__).resolve().parent`.
 - **Plugin skills:** `${CLAUDE_PLUGIN_ROOT}` points at the plugin root, for files shared by several skills in the plugin, and `${CLAUDE_SKILL_DIR}/../<other-skill>/` reaches a sibling skill.

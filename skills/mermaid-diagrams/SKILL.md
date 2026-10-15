@@ -10,6 +10,10 @@ Writes Mermaid diagrams that parse on the first try, and renders them to files w
 
 <instructions>
 
+## Skill folder
+
+Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file proves missing there. Then use the "Base directory for this skill" if it holds `assets/puppeteer-config.json`, else the folder two levels above the last match Glob lists for `**/mermaid-diagrams/assets/puppeteer-config.json` in `~/.claude`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, work from this file; for the Step 3 sandbox failure, write `{"args": ["--no-sandbox", "--disable-setuid-sandbox"]}` to a temporary `puppeteer-config.json` and pass that with `-p`.
+
 ## Workflow
 
 1. **Pick the type** from the table below. Default to a flowchart when the intent is unclear, because it covers the widest range of requests.

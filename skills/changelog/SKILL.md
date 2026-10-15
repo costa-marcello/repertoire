@@ -62,6 +62,8 @@ Run `git tag -l vX.Y.Z`. If the tag already exists, or X.Y.Z is not higher than 
 
 ## Step 4: Draft the Bullets
 
+**Skill folder:** Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file proves missing there. Then use the "Base directory for this skill" if it holds `references/changelog_format.md`, else the folder two levels above the last match Glob lists for `**/changelog/references/changelog_format.md` in `~/.claude`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, write the bullets from the Commit Categorization table and the Output Format, and say in the report that the format reference was not found.
+
 Read `${CLAUDE_SKILL_DIR}/references/changelog_format.md` before writing the first bullet. It holds the six sections and their order, the breaking-change bullet, the writing style, and a complete example.
 
 Using the categories from Step 2, write one user-facing bullet per change in the section the table gives it. Commits that make one change share a bullet.

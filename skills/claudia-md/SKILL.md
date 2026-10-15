@@ -35,9 +35,10 @@ license: MIT
 
 Every mode works on files in a folder, so it runs the same in Claude Code and Cowork.
 
+- **Skill folder:** Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file proves missing there. Then use the "Base directory for this skill" if it holds `references/quality-criteria.md`, else the folder two levels above the last match Glob lists for `**/claudia-md/references/quality-criteria.md` in `~/.claude`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, work from this file and say the reference files were not read.
 - **Project folder:** the current working directory in Claude Code; the connected folder in Cowork. If a Cowork session has no connected folder, ask the user to connect the folder that holds the CLAUDE.md. If they attach a single CLAUDE.md instead, work on it and save the result in the outputs folder.
 - **No git or terminal needed:** find and read files with Glob, Grep, and Read. A plain folder that is not a git repository is fine.
-- **User-wide file:** `~/.claude/CLAUDE.md` exists only in Claude Code. Cowork cannot read the home folder's Claude config, so skip that file there, say so in the report, and offer to review it if the user pastes it or copies it into the connected folder.
+- **User-wide file:** `~/.claude/CLAUDE.md` exists only in Claude Code. Cowork cannot read your computer's home-folder Claude config, so skip that file there, say so in the report, and offer to review it if the user pastes it or copies it into the connected folder.
 - **Say where files went:** after writing, list every file created or changed with its path from the project folder root, and in Cowork say that it is in the connected folder (or the outputs folder).
 
 ---
@@ -109,7 +110,7 @@ See [references/quality-criteria.md](references/quality-criteria.md) for the ful
 ```
 </example>
 
-**Rule Quality Dimensions (for Review mode):** 6 dimensions, total /13: Reasoning, Specificity, and Positive framing (0-3 each), Examples and Structure (0-2 each), and Conflicts (-1 per conflict, down to -3). Only rules/patterns/conventions get scored; factual sections (Context, Key Files, Architecture, Commands) are excluded. Full scoring table and "what needs reasoning vs what doesn't" examples in [references/quality-criteria.md](references/quality-criteria.md).
+**Rule Quality Dimensions (for Review mode):** 6 dimensions, total /13: Reasoning, Specificity, and Positive framing (0-3 each), Examples and Structure (0-2 each), and Conflicts (-1 per conflict, down to -3). Only rules/patterns/conventions get scored; factual sections (Context, Key Files, Architecture, Commands) are excluded.
 
 ### Phase 3: Quality Report Output
 

@@ -18,6 +18,10 @@ Skip for backend logic, database work, auth flows, DevOps, algorithms, CLI tools
 
 <instructions>
 
+## Skill folder
+
+Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file proves missing there. Then use the "Base directory for this skill" if it holds `scripts/contrast.py`, else the folder two levels above the last match Glob lists for `**/frontend-design/scripts/contrast.py` in `~/.claude`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, work from this file, compute each contrast ratio with the WCAG luminance formula instead of the script, and say in the delivery note that the reference files were not read.
+
 ## Design Thinking
 
 Before coding, understand the context and commit to one bold aesthetic direction.

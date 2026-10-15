@@ -21,6 +21,10 @@ If the request line above has text, extract the task type (creating, adding, upd
 
 **Where the README goes:** write `README.md` in the root folder of the project it describes, the folder that holds its manifest (such as `package.json` or `pyproject.toml`). By default that is the working directory in Claude Code or the connected folder in Cowork; when the user names a subfolder (`packages/cli/`), it goes there. With no project folder (for example, a Cowork session with nothing connected), save it in the outputs folder. Always say where the file went.
 
+## Skill folder
+
+Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file proves missing there. Then use the "Base directory for this skill" if it holds `references/section-checklist.md`, else the folder two levels above the last match Glob lists for `**/readme-md/references/section-checklist.md` in `~/.claude`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, draft from the section lists in this file and say the templates were not found.
+
 ## Gotchas
 
 - Use only the commands, flags, versions, file paths, and license found in the project's files. Never invent a flag or a requirement; when the files don't say, ask the user or leave it out.

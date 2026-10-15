@@ -14,7 +14,7 @@
       "name": "repertoire-searxng",
       "source": "./plugins/repertoire-searxng",
       "strict": false,
-      "description": "Adds the SearXNG MCP server (mcp-searxng) so the research skill can search the web through your own SearXNG instance. Needs SearXNG already running at http://localhost:8888 with the JSON format enabled; the plugin starts only the connector. Runs in Claude Code and desktop Cowork, not in cloud Cowork sessions.",
+      "description": "Adds the SearXNG MCP server (mcp-searxng) so the research skill can search the web through your own SearXNG instance. Needs SearXNG already running at http://localhost:8888 with the JSON format enabled; the plugin starts only the connector. Runs in Claude Code, and in Cowork sessions that run on or are linked to the computer where SearXNG runs.",
       "author": {
         "name": "Costa Marcello"
       },

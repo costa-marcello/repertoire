@@ -87,9 +87,9 @@ When forking, set `agent` only if the default `general-purpose` agent is wrong, 
 - **M10:** keep secrets in environment variables. When a script uses the network, say so in SKILL.md and give the purpose. Never instruct the model to reveal its hidden reasoning.
 - **M11:** write every skill so it also runs in Cowork:
   - Keep dynamic context injection (`` !`cmd` `` or a fence opened with three backticks and `!`) out of SKILL.md, code fences included; write "Run `cmd`" as a step instead.
-  - Reach the skill's own files through `${CLAUDE_SKILL_DIR}/...` in Markdown and through `Path(__file__).resolve().parent` in scripts, never through `~/.claude/skills/<own-name>/` or `.claude/skills/<own-name>/`.
+  - Reach the skill's own files through `${CLAUDE_SKILL_DIR}/...` in Markdown and through `Path(__file__).resolve().parent` in scripts, never through `~/.claude/skills/<own-name>/` or `.claude/skills/<own-name>/`. A skill with bundled files puts the skill-folder block from `bundled_resources.md` before the first one it uses; its Glob for the skill's own file is a search, not an install location.
   - Write results to files (in Cowork, the outputs folder) instead of opening a window or browser.
-  - Give every local service (a stdio MCP server, `localhost`) a stated fallback, since cloud Cowork sessions cannot reach them, and do not shell out to `claude -p`.
+  - Give every local service (a stdio MCP server, `localhost`) a stated fallback, since a cloud Cowork session with no linked computer cannot reach them, and do not shell out to `claude -p`.
   - Read secrets from environment variables, not only from a home-directory dotfile.
 - **M12:** keep `evals/evals.json` true to the skill. After any change, run the evals again (review-skill's `regression` mode), and fix the skill, or a wrong expectation, until no case fails twice.
 

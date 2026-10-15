@@ -21,7 +21,7 @@
     {
       "id": 2,
       "prompt": "/research best open-source vector databases for RAG",
-      "expected_output": "Precondition: no SearXNG tool is available in the session (no searxng server and no repertoire-searxng plugin, as in a cloud Cowork session), or its instance is stopped. A RECOMMENDATIONS report at default depth whose subagents use WebSearch and WebFetch, and whose footer names that fallback, its reason, and the SearXNG setup reference.",
+      "expected_output": "Precondition: no SearXNG tool is available in the session (no searxng server and no repertoire-searxng plugin, as in a cloud Cowork session with no linked computer), or its instance is stopped. A RECOMMENDATIONS report at default depth whose subagents use WebSearch and WebFetch, and whose footer names that fallback, its reason, and the SearXNG setup reference.",
       "files": [],
       "expectations": [
         "ToolSearch is run with the query 'searxng' before any subagent is dispatched",

@@ -30,15 +30,15 @@ In Claude Code, after adding the marketplace with `/plugin marketplace add costa
 
 In Cowork, open Customize > Plugins and add `repertoire-searxng` from the `repertoire` marketplace.
 
-The plugin always connects to `http://localhost:8888`, a SearXNG instance on the same computer on port 8888, and has no settings: desktop Cowork drops a plugin MCP server that uses plugin settings. If your SearXNG runs somewhere else, then in Claude Code skip this plugin and add the user-scope server from `references/searxng-setup.md`, which takes any `SEARXNG_URL`; Cowork can't use that server, so there SearXNG must run at `http://localhost:8888`. The plugin starts only the connector; it doesn't install or run SearXNG.
+The plugin always connects to `http://localhost:8888`, a SearXNG instance on the same computer on port 8888, and has no settings: the Claude desktop app drops a plugin MCP server that uses plugin settings. If your SearXNG runs somewhere else, then in Claude Code skip this plugin and add the user-scope server from `references/searxng-setup.md`, which takes any `SEARXNG_URL`; Cowork can't use that server, so there SearXNG must run at `http://localhost:8888`. The plugin starts only the connector; it doesn't install or run SearXNG.
 
 ## Where it works
 
 | Where | Works? |
 |-------|--------|
 | Claude Code | Yes |
-| Desktop Cowork | Yes |
-| Cloud Cowork sessions | No: they run no local stdio MCP servers and cannot reach `localhost` on your computer |
+| Cowork, in a session on or linked to your computer | Yes: the Claude desktop app starts the server on your computer |
+| Cloud Cowork sessions with no linked computer | No: nothing starts the server or reaches `localhost` on your computer |
 
 Without the server, the research skill still runs and falls back to the built-in web search tools.
 

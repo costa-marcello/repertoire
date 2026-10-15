@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+- create-skill now tells authors to add a "skill folder" step to every skill that bundles files, and review-skill notes a missing one as advisory under M11, with no grade change
+- The SearXNG docs now say that Cowork sessions on or linked to your computer can use the `repertoire-searxng` plugin, because the Claude desktop app starts its server there; only a cloud session with no linked computer can't
+
+### Fixed
+- Fixed skills failing in Cowork when a skill is loaded before the chat moves to a cloud session (for example `/repertoire:research` as the first message): the session hands the skill a folder that doesn't exist, so it couldn't run its scripts or read its references. Every Repertoire skill now finds its own folder, and says what it skipped when it can't
+- Fixed review-skill not finding create-skill's validator, and create-skill not finding review-skill, in those sessions
+
 ## [0.11.0] - 2026-10-15
 
 ### Changed
@@ -263,6 +273,7 @@ All notable changes to this project will be documented in this file.
 - Fixed script invocations and variable names after skill rename
 - Fixed review-skill over-specification and deduplicated steps
 
+[Unreleased]: https://github.com/costa-marcello/repertoire/compare/v0.11.0...HEAD
 [0.11.0]: https://github.com/costa-marcello/repertoire/compare/v0.10.1...v0.11.0
 [0.10.1]: https://github.com/costa-marcello/repertoire/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/costa-marcello/repertoire/compare/v0.9.0...v0.10.0

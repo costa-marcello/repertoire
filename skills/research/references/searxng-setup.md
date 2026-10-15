@@ -17,7 +17,7 @@ Three pieces are involved:
 
 - a SearXNG instance with its JSON output turned on, listening on port 8888 on your computer (Docker, below, or a native install);
 - the `mcp-searxng` MCP server (github.com/ihor-sokoliuk/mcp-searxng), which finds the instance through the `SEARXNG_URL` environment variable;
-- one way to run that server: a user-scope server in Claude Code, or the opt-in `repertoire-searxng` plugin, which also works in desktop Cowork.
+- one way to run that server: a user-scope server in Claude Code, or the opt-in `repertoire-searxng` plugin, which also works in Cowork sessions on or linked to your computer.
 
 ## Run SearXNG in Docker
 
@@ -76,13 +76,13 @@ Run `claude mcp list` to see that `searxng` connects. Its tools are `mcp__searxn
 
 ## Or install the repertoire-searxng plugin
 
-The Repertoire marketplace has an opt-in plugin, `repertoire-searxng`, that runs the same server (`mcp-searxng@2.5.1`). It always connects to `http://localhost:8888` and has no settings, because desktop Cowork drops a plugin server that uses plugin settings. In Claude Code, an instance at another address works through the user-scope server above; Cowork can't use that server, so there SearXNG must run at `http://localhost:8888`. The plugin starts only the connector: SearXNG itself must already be running. Its tools carry the plugin prefix, for example `mcp__plugin_repertoire-searxng_searxng__searxng_web_search`.
+The Repertoire marketplace has an opt-in plugin, `repertoire-searxng`, that runs the same server (`mcp-searxng@2.5.1`). It always connects to `http://localhost:8888` and has no settings, because the Claude desktop app drops a plugin server that uses plugin settings. In Claude Code, an instance at another address works through the user-scope server above; Cowork can't use that server, so there SearXNG must run at `http://localhost:8888`. The plugin starts only the connector: SearXNG itself must already be running. Its tools carry the plugin prefix, for example `mcp__plugin_repertoire-searxng_searxng__searxng_web_search`.
 
 - **Claude Code:** `/plugin install repertoire-searxng@repertoire`. Use either the plugin or the user-scope server above; when both are present, the skill uses the user-scope server first.
-- **Desktop Cowork:** Customize > Plugins, enable `repertoire-searxng`. The server runs on your computer, so it reaches SearXNG at `http://localhost:8888`.
-- **Cloud Cowork sessions** can't run local MCP servers, so there the skill always uses WebSearch and WebFetch. Nothing needs to be configured for that.
+- **Cowork:** Customize > Plugins, install `repertoire-searxng`. In a session that runs on or is linked to your computer, the desktop app starts the server there, so it reaches SearXNG at `http://localhost:8888`.
+- **Cloud Cowork sessions with no linked computer** have nothing to start the server, so there the skill uses WebSearch and WebFetch. Nothing needs to be configured for that.
 
-If desktop Cowork shows the plugin but the skill still reports the fallback, check that SearXNG answers at `http://localhost:8888` (the JSON check above) and that Node.js 22 or later is installed, because the server starts through `npx`.
+If Cowork shows the plugin but the skill still reports the fallback, check that SearXNG answers at `http://localhost:8888` (the JSON check above) and that Node.js 22 or later is installed, because the server starts through `npx`.
 
 ## Troubleshooting
 

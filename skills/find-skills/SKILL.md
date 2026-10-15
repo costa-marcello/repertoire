@@ -13,6 +13,10 @@ If that line is empty or still shows an unfilled placeholder, take the query fro
 
 <instructions>
 
+## Skill folder
+
+Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file proves missing there. Then use the "Base directory for this skill" if it holds `references/registry-commands.md`, else the folder two levels above the last match Glob lists for `**/find-skills/references/registry-commands.md` in `~/.claude`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, use the commands in this file and say the reference was not read.
+
 ## Step 1: Know Where the Skill Will Run
 
 The install route depends on the product, because a skill only works where that product loads it.
