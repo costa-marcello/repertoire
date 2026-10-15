@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+- The `repertoire-searxng` plugin is now defined in its marketplace entry instead of its own `plugin.json`; Claude Code users who installed it pick this up with `/plugin marketplace update repertoire`, and the saved SearXNG URL is kept
+- create-skill's marketplace guide warns that a `"./"` plugin must not contain another `.claude-plugin/plugin.json`
+
+### Fixed
+- Fixed Cowork and claude.ai listing only `repertoire-searxng` from the marketplace: the main `repertoire` plugin was skipped because its folder, the whole repository, held two other `plugin.json` files (the SearXNG plugin's and a create-skill test fixture's, which is now generated when the test runs)
+- Fixed the SearXNG docs telling desktop Cowork users to change `searxng_url`; Cowork doesn't ask for plugin settings and always uses `http://localhost:8888`
+
 ## [0.10.0] - 2026-10-14
 
 ### Added
@@ -243,6 +253,7 @@ All notable changes to this project will be documented in this file.
 - Fixed script invocations and variable names after skill rename
 - Fixed review-skill over-specification and deduplicated steps
 
+[Unreleased]: https://github.com/costa-marcello/repertoire/compare/v0.10.0...HEAD
 [0.10.0]: https://github.com/costa-marcello/repertoire/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/costa-marcello/repertoire/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/costa-marcello/repertoire/compare/v0.7.0...v0.8.0

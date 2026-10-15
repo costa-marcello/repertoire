@@ -13,7 +13,7 @@ One MCP server, `searxng`, started with `npx -y mcp-searxng@2.5.1`. Its tools sh
 | `searxng_instance_info` | Reports the instance's settings |
 | `searxng_search_suggestions` | Returns search suggestions for a query |
 
-The plugin has no skills, hooks or scripts of its own.
+The plugin has no skills, hooks or scripts of its own. Its manifest is the `repertoire-searxng` entry in the repository's `.claude-plugin/marketplace.json` (`"strict": false`), so this folder holds only this README. A `.claude-plugin/` folder here would make Cowork skip the main `repertoire` plugin, whose folder is the whole repository.
 
 ## What you need
 
@@ -30,7 +30,7 @@ In Claude Code, after adding the marketplace with `/plugin marketplace add costa
 
 In Cowork, open Customize > Plugins and add `repertoire-searxng` from the `repertoire` marketplace.
 
-When you enable the plugin, Claude Code asks for **SearXNG URL**. The default, `http://localhost:8888`, fits a SearXNG instance on the same computer on port 8888. To change it later, run `/config` in Claude Code.
+When you enable the plugin, Claude Code asks for **SearXNG URL**. The default, `http://localhost:8888`, fits a SearXNG instance on the same computer on port 8888. To change it later, run `/config` in Claude Code. Cowork doesn't ask for plugin settings and always uses the default.
 
 ## Where it works
 

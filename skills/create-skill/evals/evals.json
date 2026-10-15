@@ -3,11 +3,10 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "/create-skill pr-description Write pull request descriptions from the current branch's diff against main: a two-line summary, the changes grouped by top-level directory, and a testing section. It's for our team-tools plugin repo (team-tools/).",
+      "prompt": "Set-up: run `python -B make_team_tools.py` in the folder that holds it. It creates team-tools/, our team's plugin repository. Then: /create-skill pr-description Write pull request descriptions from the current branch's diff against main: a two-line summary, the changes grouped by top-level directory, and a testing section. It's for our team-tools plugin repo (team-tools/).",
       "expected_output": "A new skill at skills/pr-description/ in a copy of the team-tools plugin repository, with SKILL.md and evals/, built after a baseline run, validated with quick_validate.py and the Cowork check, reviewed by a fresh review-skill subagent, and reported with per-case results and a note to run the repository's link script once.",
       "files": [
-        "evals/files/team-tools/.claude-plugin/plugin.json",
-        "evals/files/team-tools/scripts/link_user_skills.py"
+        "evals/files/make_team_tools.py"
       ],
       "expectations": [
         "Writes evals.json with at least 3 eval cases and trigger_queries.json with 10 queries in a workspace outside the skill directory",
