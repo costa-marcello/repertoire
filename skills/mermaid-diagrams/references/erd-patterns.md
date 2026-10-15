@@ -22,8 +22,6 @@ erDiagram
     TAG ||--o{ POST_TAG : applied_to
     POST }o--|| CATEGORY : "belongs to"
     USER ||--o{ LIKE : gives
-    POST ||--o{ LIKE : receives
-    COMMENT ||--o{ LIKE : receives
 
     USER {
         bigint id PK "AUTO_INCREMENT"
@@ -40,7 +38,7 @@ erDiagram
     POST {
         bigint id PK "AUTO_INCREMENT"
         bigint user_id FK "NOT NULL"
-        bigint category_id FK
+        bigint category_id FK "NOT NULL"
         varchar title "NOT NULL"
         varchar slug UK "NOT NULL"
         text content "NOT NULL"
@@ -57,7 +55,7 @@ erDiagram
         bigint id PK "AUTO_INCREMENT"
         bigint user_id FK "NOT NULL"
         bigint post_id FK "NOT NULL"
-        bigint parent_comment_id FK "NULL"
+        bigint parent_comment_id FK "NULLABLE"
         text content "NOT NULL"
         varchar status "DEFAULT 'pending'"
         timestamp created_at "DEFAULT NOW()"
@@ -85,8 +83,8 @@ erDiagram
     LIKE {
         bigint id PK "AUTO_INCREMENT"
         bigint user_id FK "NOT NULL"
-        varchar likeable_type "NOT NULL"
-        bigint likeable_id "NOT NULL"
+        varchar likeable_type "NOT NULL, POST or COMMENT"
+        bigint likeable_id "NOT NULL, id in that table"
         timestamp created_at "DEFAULT NOW()"
     }
 ```
@@ -109,6 +107,7 @@ erDiagram
     USER ||--o{ NOTIFICATION : receives
     POST ||--o{ POST_MEDIA : contains
     USER }o--o{ GROUP : "member of"
+    USER ||--o{ GROUP : creates
     USER ||--o{ MESSAGE : sends
     USER ||--o{ MESSAGE : receives
 
@@ -219,7 +218,7 @@ erDiagram
 ### Self-Referencing (Hierarchical)
 ```mermaid
 erDiagram
-    CATEGORY ||--o{ CATEGORY : "parent of"
+    CATEGORY |o--o{ CATEGORY : "parent of"
 
     CATEGORY {
         uuid id PK

@@ -58,6 +58,21 @@
         "No M12 finding appears, and every finding carries a rule ID that exists in rules.md, a file:line, and quoted evidence",
         "word-count/SKILL.md and word-count/evals/evals.json are unchanged, and no .security-scan-passed file exists in word-count/"
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "I want to upload this skill to claude.ai on its own. Save it as unit-convert/SKILL.md in a scratch folder (not in git), then run /review-skill on it with portable.\n\n---\nname: unit-convert\ndescription: \"Converts lengths, weights, and temperatures between metric and imperial units and shows the formula used. Use when the user asks to convert a measurement.\"\nargument-hint: \"[value] [from-unit] [to-unit]\"\n---\n\n# Unit Convert\n\nConvert the value with the exact factor (1 in = 2.54 cm, 1 lb = 0.45359237 kg, F = C x 9/5 + 32), round the result to 2 decimals, and show the formula used.\n",
+      "expected_output": "Review + Auto-Fix (the default mode) graded for the portable platform target: quick_validate runs with --portable, and the full report comes first, with M9 for the argument-hint key at SKILL.md:4 and a before grade of C. The folder is outside any git repository, so a backup is copied to a mktemp folder and its path is reported. The fix removes argument-hint, the validator is re-run with --portable, and the summary gives the before and after grades. No regression run starts, because the folder is not in the user's own repository.",
+      "files": [],
+      "expectations": [
+        "The report's Graded for row names the portable platform target, and quick_validate is run with --portable",
+        "The full report, with its grade and findings, is presented before any file in unit-convert/ changes",
+        "An M9 finding cites SKILL.md:4 and quotes the argument-hint key",
+        "A backup copy is made before any edit, the copy is checked to contain SKILL.md, and its printed path is told to the user",
+        "argument-hint is removed from the frontmatter, and quick_validate is run again with --portable after the fix",
+        "The fix summary gives a before grade that matches the counted Major and Minor IDs, with M9 among them, and the after grade",
+        "No regression run starts, and the fix summary says it did not run because the folder is not in the user's own repository"
+      ]
     }
   ]
 }

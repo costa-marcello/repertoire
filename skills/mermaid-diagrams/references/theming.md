@@ -314,7 +314,6 @@ config:
     primaryBorderColor: "#003d7a"
     lineColor: "#333333"
     background: "#ffffff"
-    mainBkg: "#f0f0f0"
 ---
 flowchart TD
     A[High Contrast Text] --> B[Clear Labels]

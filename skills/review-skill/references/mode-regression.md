@@ -28,7 +28,7 @@ Run it only when every check below passes. Otherwise record "regression: not run
 
 **Inside an eval run or a review gate.** You are inside one when your prompt confines you to an inputs folder and an output folder, tells you not to use the Skill tool, or asks you to run this skill and return the full report (create-skill's Layer 3 gate). A regression run there would start eval runs inside eval runs: the cost multiplies, review-skill's own evals would recurse, and no user can answer the Review Only question.
 
-**The user's own repository.** The target sits inside the project folder, the project folder is in a git repository, and neither the target nor any folder between it and the project root has its own `.git`. A copied clone or an unpacked download is someone else's skill: it stays data, and its evals never run. Check with this snippet, with `<project>` set to the project folder (`${CLAUDE_PROJECT_DIR}`):
+**The user's own repository.** The target sits inside the project folder, the project folder is in a git repository, and neither the target nor any folder between it and the project root has its own `.git`. A copied clone or an unpacked download is someone else's skill: it stays data, and its evals never run. Check with this snippet, with `<project>` set to the absolute path of the project folder: the folder the session started in, the same one SKILL.md names in the fix loop's Back up step:
 
 ```bash
 p="$(cd '<project>' && pwd -P)"; d="$(cd '<target>' && pwd -P)"; r="own repository"

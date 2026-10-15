@@ -20,9 +20,9 @@ Read the user input as `[skill-name] [what it should do]`:
 
 ## Ground rules
 
-- **Edit at the source location, never in `~/.claude/plugins/cache/`.** The cache is overwritten on every plugin refresh. If the path contains `/plugins/cache/`, find the source repository or ask the user where it lives.
-- **Python and script paths:** run `python` (`python3` only where `python` is missing; on Windows it is often the Microsoft Store stub). Script paths are relative to this skill's directory, `${CLAUDE_SKILL_DIR}` in Claude Code and Cowork: `scripts/quick_validate.py` means `${CLAUDE_SKILL_DIR}/scripts/quick_validate.py`.
-- **Requirements:** Python 3.10 or later (older versions skip quick_validate's m13 import check); PyYAML for quick_validate and package_skill (`python -m pip install pyyaml`); gitleaks for security_scan. Ask the user before installing anything.
+- **Edit at the source location, never in `~/.claude/plugins/cache/`,** which every plugin refresh overwrites. If the path contains `/plugins/cache/`, find the source repository or ask the user where it lives.
+- **Skill folder:** Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file is missing there. Then use the "Base directory for this skill" if it holds `scripts/quick_validate.py`, else the folder two levels above the last match Glob lists for `**/create-skill/scripts/quick_validate.py` in `~/.claude`, skipping `.trash`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, say the scripts and references were not found and follow this file alone.
+- **Requirements:** `python` 3.10 or later (`python3` only where `python` is missing; on Windows it is often the Microsoft Store stub; older versions skip quick_validate's m13 import check); PyYAML for quick_validate and package_skill (`python -m pip install pyyaml`); gitleaks for security_scan. Ask the user before installing anything.
 - **No user to reply** (`claude -p`, or running as a subagent): when the input gives a name and purpose, state the plan and the defaults you chose, then continue. Each question takes its stated default; a question with none, or a step that stops to ask, ends the run with the step 10 report. Never install anything then; report the missing tool.
 - **Refused writes:** when a write into a skills folder is refused, ask the user to allow it or to choose another location; never work around the permission. With no user to reply, report the refusal and stop.
 - **Workspace:** keep eval drafts, snapshots, and run outputs in `<skill-name>-workspace/` in the session scratchpad or the system temp directory, outside every skill directory: stray files in a skill's root are an S4 finding, and a draft in the baseline's reach spoils it.
@@ -31,7 +31,7 @@ Read the user input as `[skill-name] [what it should do]`:
 
 <instructions>
 
-Copy this checklist into the todo list or the reply, and tick items as they complete:
+Copy this checklist into the todo list or the reply; tick items as they complete:
 
 ```text
 Skill progress:
@@ -65,7 +65,7 @@ Read `references/evals_guide.md` for formats, prompts, isolation, and grading.
 
 1. In the workspace, write `evals/evals.json` (3 realistic eval cases) and `evals/trigger_queries.json` (10 trigger queries: 5 that should trigger, 5 near-misses that should not). For a `disable-model-invocation: true` skill, mark all 10 `should_trigger: false` and skip the trigger check, because Claude never sees its description.
 2. Run the baseline before step 4, so no draft exists for it to pick up: one fresh general-purpose subagent per eval case, all in the same turn, with the baseline prompt from `references/evals_guide.md`, which never mentions a skill. For an update, the baseline follows the snapshot.
-3. **Isolate every eval subagent** (here and in step 6), because it acts in the user's real environment and cannot ask anyone: only an inputs folder and an output folder (never one holding `evals.json`), a local bare repository as any remote, and `would_run.txt` for any command that pushes, publishes, posts, or sends.
+3. **Isolate every eval subagent** (here and in step 6), because it acts in the user's real environment and cannot ask anyone: only an inputs and an output folder (never one holding `evals.json`), a local bare repository as any remote, and `would_run.txt` for any command that pushes, publishes, posts, or sends.
 4. Record what each baseline run got wrong, skipped, or worked out from scratch. That list is what the skill teaches; leave out what the baseline already does well.
 5. If the baseline meets every expectation, the skill may add little or the cases are too easy: ask the user whether to continue (the default) or harden them.
 6. **Without subagents:** skip the baseline; run the cases yourself in step 6.
@@ -82,10 +82,10 @@ Read `references/authoring_rules.md` now if it is not loaded, and `references/bu
 
 ### Step 4: Initialize the skill directory
 
-Skip this step for updates. Run the command below, listing only the resource directories the plan needs, and add `--fork` only when the fork decision test passed:
+Skip this step for updates. Run this, listing only the resource directories the plan needs, and add `--fork` only when the fork decision test passed:
 
 ```bash
-python scripts/init_skill.py <skill-name> --path <parent-dir> --resources scripts,references
+python ${CLAUDE_SKILL_DIR}/scripts/init_skill.py <skill-name> --path <parent-dir> --resources scripts,references
 ```
 
 It creates `<parent-dir>/<skill-name>/` with a SKILL.md template, `evals/` skeletons, and the listed empty resource directories; on exit 1 it leaves nothing behind. Copy the workspace's `evals.json` and `trigger_queries.json` over the skeletons in `<skill-dir>/evals/`.
@@ -96,7 +96,7 @@ Read `references/anthropic_guidance.md` for the description and body.
 
 1. **Description first:** what the skill does, then "Use when..." with the triggers, key use case first. A third-person verb opening, no "I" or "you"; a little pushy (Claude under-triggers skills), never all-caps; at most 1,024 characters, no angle brackets.
 2. **Lead with what matters:** after compaction, Claude Code re-attaches only the first 5,000 tokens of an invoked skill. Explain why instead of shouting, give a default instead of a menu, and spend words on what the baseline got wrong.
-3. **Directives, scripts, paths:** a command, a check, or "Default to X; use Y when Z" (the M7 weak verbs fail review); "Run ..." or "Read ... for ..." for each script, with the packages it needs; the skill's own files through the `CLAUDE_SKILL_DIR` substitution or forward-slash paths relative to the skill directory, never an install location (syntax in `references/frontmatter_reference.md`).
+3. **Directives, scripts, paths:** a command, a check, or "Default to X; use Y when Z" (the M7 weak verbs fail review); "Run ..." or "Read ... for ..." for each script, with the packages it needs; own files through `${CLAUDE_SKILL_DIR}/...` (portable target: relative paths) plus the skill-folder block (`references/bundled_resources.md`), never an install location.
 4. **Keep out of SKILL.md** (see `references/frontmatter_reference.md`): teaching examples with argument-substitution tokens, which are substituted on invocation, and dynamic context injection, which Cowork replaces with a placeholder.
 5. **Structure:** the workflow in one `<instructions>` block and 3 to 5 short `<example>` blocks; SKILL.md under 400 lines and 20,000 characters; detail in `references/`, each file linked from SKILL.md with when to read it, and a `## Contents` list in any reference over 100 lines.
 6. Replace every TODO placeholder, and delete any resource directory the skill does not use.
@@ -104,27 +104,27 @@ Read `references/anthropic_guidance.md` for the description and body.
 
 ### Step 6: Validate
 
-A pass runs all three layers. Fix what they find, then start the next pass. Stop after 3 passes.
+A pass runs all three layers. Fix what they find, then start the next pass.
 
 **Layer 1: quick_validate and the Cowork check.** Run:
 
 ```bash
-python scripts/quick_validate.py <skill-dir>   # append --portable for the portable target
+python ${CLAUDE_SKILL_DIR}/scripts/quick_validate.py <skill-dir>  # add --portable for the portable target
 ```
 
 On exit 1, fix each `major` line, `[F]` lines (F triggers) first; on 4, each `minor` line; on 2, check the path argument; on 3, install PyYAML (ask first) or fix the unreadable file, otherwise report the error. Exit 0 (no definitive Major or Minor) is not enough: the `RESULT` line must also show `style=0`. Each `check` line is a lead: read the cited line, then fix it or dismiss it with a reason.
 
-Then run the Cowork check (M11 "Breaks in Cowork", both targets; the M11 entry in `references/authoring_rules.md` has the details). The default target keeps every Claude Code field. quick_validate catches the definitive cases; read the skill for the rest:
+Then run the Cowork check (M11, both targets): read the skill for what quick_validate misses:
 - **No display:** results go to files (in Cowork, the outputs folder), never a window or browser.
-- **Own files** through the `CLAUDE_SKILL_DIR` substitution (scripts: `Path(__file__)`), never an install location.
+- **Own files** through `CLAUDE_SKILL_DIR` and the skill-folder block (scripts: `Path(__file__)`), never an install location.
 - **No dynamic context injection** in SKILL.md, code fences included.
 - **Local services** (a stdio MCP server, `localhost`) have a stated fallback; no `claude -p`.
 - **Secrets** from environment variables, not only a home-directory dotfile.
 
 **Layer 2: eval runs.** Dispatch one fresh with-skill subagent per eval case, all in the same turn, with the with-skill prompt from `references/evals_guide.md` (a copy of the skill without `evals/`, isolated as in step 2). Grade each expectation against the baseline, and read the transcripts too: wasted steps point to instructions to cut.
 
-**Layer 3: review-skill gate.** Dispatch a fresh subagent each pass with: `Invoke repertoire:review-skill, or review-skill if that name is unknown, with "<absolute-skill-dir>" report only, and return the full report.` Append `portable` for the portable target. The gate is report-only, never a regression run, so M12 "Fails its own evals" never runs inside it.
-- If it cannot invoke review-skill, it reads review-skill's SKILL.md from the first of `${CLAUDE_SKILL_DIR}/../review-skill/` and `review-skill/` under `.claude/skills/`, `.agents/skills/`, `~/.claude/skills/`, or `~/.agents/skills/`, and follows its report-only mode.
+**Layer 3: review-skill gate.** Dispatch a fresh subagent each pass with: `Invoke repertoire:review-skill, or review-skill if that name is unknown, with "<absolute-skill-dir>" report only, and return the full report.` Append `portable` for the portable target. The gate is report-only, so M12 "Fails its own evals" never runs inside it.
+- Add to that prompt: if it cannot invoke review-skill, read review-skill's SKILL.md from the first of `${CLAUDE_SKILL_DIR}/../review-skill/`, `review-skill/` under `.claude/skills/`, `.agents/skills/`, or `~/.agents/skills/`, or the last match Glob lists for `**/*review-skill/SKILL.md` in `~/.claude` or `/mnt/skills`, and follow its report-only mode.
 - If review-skill is unavailable, apply `references/authoring_rules.md` yourself, rule by rule with quoted evidence, and say the gate did not run.
 
 **Updates: regression run.** Once a pass is clean, invoke `repertoire:review-skill` (or `review-skill`) from this conversation, never a subagent, with `"<absolute-skill-dir>" report only regression`. It asks the user (default: yes), then re-runs each case in the skill's `evals/evals.json` and repeats a failing case once; you make the fixes. Without review-skill, follow "Regression runs" in `references/evals_guide.md`. A case that fails twice blocks finishing: fix the skill, or a wrong expectation (say why), and run it again. Inside an eval run (a subagent confined to an inputs and an output folder), skip it and say so.
@@ -137,7 +137,7 @@ When the skill came from a business or internal project and will be shared, ask 
 
 ### Step 8: Security scan
 
-Run `python scripts/security_scan.py <skill-dir> --verbose --no-marker`; `--verbose` adds pattern checks for dangerous code and network calls.
+Run `python ${CLAUDE_SKILL_DIR}/scripts/security_scan.py <skill-dir> --verbose --no-marker`; `--verbose` adds pattern checks for dangerous code and network calls.
 
 - **Exit 1 or 2 with `secrets` above 0:** each secret is M10; move it to an environment variable and scan again. On any other exit 1, 2, or 4, read the error and fix the cause.
 - **Exit 3 (no gitleaks):** relay the install instructions it prints and ask whether to install; if the user declines, report that the scan did not run.
@@ -146,13 +146,13 @@ Run `python scripts/security_scan.py <skill-dir> --verbose --no-marker`; `--verb
 
 ### Step 9: Package and update the marketplace
 
-Default: skip packaging. A zip is for claude.ai and the Claude API, not Cowork, which installs the plugin. For such an upload ("Packaging a zip" in `references/distribution.md`), run `python scripts/package_skill.py <skill-dir> [output-dir]`. It refuses whatever fails the portable target, such as `argument-hint` (such a skill ships through the plugin), and a missing or stale scan marker (run step 8 again).
+Default: skip packaging. A zip is for claude.ai and the Claude API, not Cowork, which installs the plugin. For such an upload ("Packaging a zip" in `references/distribution.md`), run `python ${CLAUDE_SKILL_DIR}/scripts/package_skill.py <skill-dir> [output-dir]`. It refuses what fails the portable target, such as `argument-hint`, and a missing or stale scan marker (run step 8 again).
 
 Update the marketplace only when `.claude-plugin/marketplace.json` exists at the repository root: follow `references/marketplace_update.md`, then run `claude plugin validate .`, or its by-hand check where the `claude` CLI is missing. For a plugin, tell the user to push the change ("Shipping a change" in `references/distribution.md`).
 
 ### Step 10: Iterate and report
 
-Run at most 2 rounds of items 1 to 3. If failures remain after round 2, stop, list them, and ask the user whether to continue.
+Run at most 2 rounds of items 1 to 3; if failures remain, stop, list them, and ask the user whether to continue.
 
 1. **Claude A / Claude B:** a fresh instance (Claude B) uses the skill on real tasks while this session (Claude A) edits it; note where B hesitates or skips a file or section.
 2. **Models:** run the with-skill evals on Haiku, Sonnet, and Opus (the Agent tool's model setting).
@@ -191,7 +191,7 @@ Run at most 2 rounds of items 1 to 3. If failures remain after round 2, stop, li
 ## Reference files
 
 | File | When to read it |
-|------|-----------------|
+|---|---|
 | `references/authoring_rules.md` | Before step 3, for step 6's Cowork check, and while fixing: graded rules, fork decision test |
 | `references/anthropic_guidance.md` | Before step 5: descriptions, conciseness, freedom levels |
 | `references/frontmatter_reference.md` | When choosing frontmatter fields or substitutions |
@@ -200,4 +200,4 @@ Run at most 2 rounds of items 1 to 3. If failures remain after round 2, stop, li
 | `references/worked_examples.md` | For end-to-end walkthroughs |
 | `references/distribution.md` | In step 1 for Cowork or a plugin repository, and in step 9 |
 | `references/sanitization_checklist.md` | In step 7 |
-| `references/marketplace_update.md` | In step 9, only when `.claude-plugin/marketplace.json` exists |
+| `references/marketplace_update.md` | In step 9, when `.claude-plugin/marketplace.json` exists |

@@ -50,8 +50,9 @@ def web_search_block(report: schema.Report, topic: str, from_date: str, to_date:
         f"Script covered: {sites}",
         "",
         "Web coverage comes from the research skill's community and official",
-        "subagents (SKILL.md, Phase 2): SearXNG when it is reachable, otherwise",
-        "WebSearch and WebFetch. Do not run a separate search for this block.",
+        "subagents (SKILL.md, Phase 2): Parallel Search or Keenable when",
+        "connected, otherwise WebSearch and WebFetch. Do not run a separate",
+        "search for this block.",
         "Subagents skip only the sites listed under 'Script covered'.",
         "Rank web results below comparable Reddit/X items, which carry",
         "engagement metrics.",
@@ -140,7 +141,7 @@ def render_compact(report: schema.Report, limit: int = 15, missing_keys: str = "
         lines.append("")
         lines.append(f"**ERROR:** {report.reddit_error}")
         lines.append("")
-    elif report.mode in ("both", "reddit-only") and not report.reddit:
+    elif report.mode in ("both", "reddit-only", "all", "reddit-web") and not report.reddit:
         lines.append("### Reddit Threads")
         lines.append("")
         lines.append("*No relevant Reddit threads found for this topic.*")

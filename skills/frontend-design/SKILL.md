@@ -18,6 +18,10 @@ Skip for backend logic, database work, auth flows, DevOps, algorithms, CLI tools
 
 <instructions>
 
+## Skill folder
+
+Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file is missing there. Then use the "Base directory for this skill" if it holds `scripts/contrast.py`, else the folder two levels above the last match Glob lists for `**/frontend-design/scripts/contrast.py` in `~/.claude`, skipping `.trash`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, work from this file, compute each contrast ratio with the WCAG luminance formula instead of the script, and say in the delivery note that the reference files were not read.
+
 ## Design Thinking
 
 Before coding, understand the context and commit to one bold aesthetic direction.
@@ -48,7 +52,7 @@ Frontend Design Progress:
 - [ ] Tone: _____
 - [ ] Differentiator: _____
 - [ ] Typography: display + body font, loaded, with a fallback stack (not Roboto, Arial, a system stack, or Inter outside data dashboards)
-- [ ] Colour: 3-5 colour tokens (CSS custom properties on the web, the theme in native stacks), no hex outside the token definitions
+- [ ] Colour: 3-5 colour tokens (CSS custom properties on the web, the theme in native stacks), no hex, rgb(), hsl(), or oklch() outside the token definitions (tints use color-mix() on a token)
 - [ ] Motion: entry animation + 1-2 hover/scroll interactions, all reduced under prefers-reduced-motion
 - [ ] Layout: grid/flexbox structure with intentional spacing
 - [ ] Polish: every interactive element has :hover and :focus-visible states (pressed and focused styles in native stacks)
@@ -62,7 +66,7 @@ Then build working code that is production-ready (no stubs, broken states, or "t
 Verify from code and files, not by opening a browser, because Cowork and other headless sessions have no display. Fix each failure and re-run its check until it passes:
 
 1. Run the project's own checks when they exist (`npm run build`, `npm run lint`, `npx tsc --noEmit`).
-2. Check contrast with the bundled script, which needs only Python 3 and no network: `python "${CLAUDE_SKILL_DIR}/scripts/contrast.py" '#1a1a1a' '#f5f0e8' [FG BG ...]` (use `python3` where `python` is missing). Pass every text/background hex pair, in each theme the design ships; give translucent text its CSS alpha after a slash (`f5f0e8/0.7`). Quote each colour or drop the `#`, because shells treat an unquoted `#` as a comment. Body text needs 4.5:1; add `--min 3` for large text (24px, or 18.66px bold), focus rings, and input borders. The script exits 1 when a pair fails.
+2. Check contrast with the bundled script, which needs only Python 3 and no network: `python "${CLAUDE_SKILL_DIR}/scripts/contrast.py" '#1a1a1a' '#f5f0e8' [FG BG ...]` (use `python3` where `python` is missing). Pass every text/background pair, in each theme the design ships, as hex, `rgb()`, `hsl()`, or `oklch()`, as the source writes it; give translucent hex text its CSS alpha after a slash (`f5f0e8/0.7`). Quote every colour, because shells treat an unquoted `#` as a comment and split a function at its spaces. Body text needs 4.5:1; add `--min 3` for large text (24px, or 18.66px bold), focus rings, and input borders. The script exits 1 when a pair fails.
 3. Walk `references/checklist.md` against the source: breakpoints, `:focus-visible` rules, reduced motion, alt text, layout shift.
 4. Only when the project already has Playwright, render screenshots to PNG files and read them, for example `npx playwright screenshot --viewport-size=375,812 --color-scheme=dark <url> mobile-dark.png`. In Cowork, save them in the outputs folder. Do not install a browser just for this check.
 5. Deliver a standalone page as a file (in Cowork, in the outputs folder) and give its path. Say a page was viewed only when a screenshot was actually taken.
@@ -93,7 +97,7 @@ Commit to a cohesive palette held in CSS custom properties. A dominant colour wi
 
 ### Motion
 
-Default to CSS transitions and keyframes. In React, use Motion only when it is already installed and the effect needs exit animations, gestures, layout animations, or coordinated timelines; in Vue and Svelte, use their built-in transitions first.
+Default to CSS transitions and keyframes. In React, use the Motion library (`motion` package) only when it is already installed and the effect needs exit animations, gestures, layout animations, or coordinated timelines; in Vue and Svelte, use their built-in transitions first.
 
 Spend motion on high-impact moments: one orchestrated page load with staggered reveals (`animation-delay`) delights more than scattered micro-interactions. Prefer `transform` and `opacity`, and never animate layout properties (`width`, `height`, `margin`, `top`), because they recalculate layout on every frame. Durations: `references/ui-rules.md` (Priority 6). Priorities, triggers, reduced motion, and the library ladder: `references/animation-patterns.md`.
 
@@ -166,14 +170,14 @@ Each example shows the filled-in checklist and the key implementation moves. The
 - [x] Tone: Industrial/utilitarian with brutalist accents
 - [x] Differentiator: Terminal-style feedback with a typing animation
 - [x] Typography: JetBrains Mono (monospace throughout)
-- [x] Colour: Near-black (#0d0d0d), electric green (#00ff88), amber warnings (#ffaa00)
+- [x] Colour: Near-black (#0d0d0d), electric green (#00ff88), amber warnings (#ffaa00), error red (#ff4d4d) for scanlines
 - [x] Motion: Glitch effect on error, smooth progress bar, both off under reduced motion
 - [x] Layout: Centred card with generous padding and sharp corners
 ```
 
 **Key implementation:**
 - Monospace everywhere, so even labels read like code.
-- The drop zone has a dashed electric-green border with ASCII-art corners.
+- The drop zone has a dashed electric-green border and a shell-style `>` prompt.
 - Validation prints as terminal output with a typing effect.
 - Errors add a red scanline overlay through a `::after` on the positioned drop zone.
 

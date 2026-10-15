@@ -152,7 +152,7 @@ Look for date-conditional logic, "currently" or "at the time of writing", and pi
 
 ## 9. Runs in Cowork (M11)
 
-The default platform target, `claude-code`, covers Claude Code and Cowork, and the portable platform target shares the same limits, so this lens applies to every review. Cowork runs the Claude Code engine with the plugin's skills, inside a desktop VM or a cloud container. It has no display, never reads `~/.claude/skills`, and does not run dynamic context injection; cloud sessions also cannot reach local stdio MCP servers or `localhost`.
+The default platform target, `claude-code`, covers Claude Code and Cowork, and the portable platform target shares the same limits, so this lens applies to every review. Cowork runs the Claude Code engine with the plugin's skills, inside a desktop VM or a cloud container. It has no display, never reads `~/.claude/skills`, and does not run dynamic context injection; a cloud session with no linked computer also cannot reach local stdio MCP servers or `localhost`.
 
 Check SKILL.md, every Markdown file under `references/`, and every bundled script. Skip `<example>` blocks for the path check.
 
@@ -164,8 +164,9 @@ Check SKILL.md, every Markdown file under `references/`, and every bundled scrip
 | Local services | A step that depends on a local stdio MCP server or a `localhost` service and states no fallback | heuristic |
 | `claude -p` | A step or script that shells out to `claude -p` | heuristic |
 | Dotfile-only secrets | Secrets read only from a home-directory dotfile (such as `~/.config/<tool>/.env`), with no environment variable route | heuristic |
+| Skill-folder fallback | SKILL.md runs, reads, or copies bundled files with no skill-folder block (`${CLAUDE_SKILL_DIR}`, then the base directory, then a Glob for the skill's own file), so a session that hands over a missing folder fails | advisory, not graded |
 
-quick_validate prints the definitive checks as `[M11] major definitive` lines, and a script that imports `webbrowser` as an `[M11] major check` line; confirm each by reading the cited line. Paths to other skills' files under `~/.claude/skills/` are not M11; they fall under m11's exemption.
+quick_validate prints the definitive checks as `[M11] major definitive` lines, and a script that imports `webbrowser` as an `[M11] major check` line; confirm each by reading the cited line. Paths to other skills' files under `~/.claude/skills/` are not M11; they fall under m11's exemption. Neither is the skill-folder search, a Glob or `find` for `**/<own-name>/<file>` in `~/.claude` or `/mnt/skills`.
 
 Fails, in a skill named `report`:
 
@@ -179,7 +180,7 @@ Passes:
 Run `python ${CLAUDE_SKILL_DIR}/scripts/report.py <input>`, and write the result to `report.md` (in Cowork, the outputs folder).
 ```
 
-The fixes: reach bundled files through `${CLAUDE_SKILL_DIR}` in Markdown and through `Path(__file__).resolve().parent` in scripts; turn injection into an explicit step ("Run `git status`"); write results to files instead of opening them; state the fallback for each local service; read secrets from environment variables.
+The fixes: reach bundled files through `${CLAUDE_SKILL_DIR}` in Markdown, behind the skill-folder block, and through `Path(__file__).resolve().parent` in scripts; turn injection into an explicit step ("Run `git status`"); write results to files instead of opening them; state the fallback for each local service; read secrets from environment variables.
 
 ## 10. Newer guidance (advisory unless a rule applies)
 

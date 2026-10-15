@@ -138,7 +138,8 @@ flowchart LR
         Checkout --> Install[Install dependencies]
         Install --> Lint[Run linters]
         Lint --> Test[Run tests]
-        Test --> Build[Build application]
+        Test --> TestsPass{Tests passed?}
+        TestsPass -->|Yes| Build[Build application]
     end
 
     subgraph QA
@@ -158,7 +159,7 @@ flowchart LR
     ManualQA -->|Rejected| FixIssues[Fix issues]
     FixIssues --> Development
 
-    Test -->|Failed| NotifyDev[Notify developer]
+    TestsPass -->|No| NotifyDev[Notify developer]
     NotifyDev --> FixIssues
 ```
 

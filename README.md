@@ -60,16 +60,14 @@ In the Claude desktop app, open **Customize > Plugins > Add marketplace**, enter
 
 These accept single-skill zip uploads with a smaller set of frontmatter fields. Scan the skill with `python skills/create-skill/scripts/security_scan.py skills/<skill>` (it needs [gitleaks](https://github.com/gitleaks/gitleaks)), then build the zip with `python skills/create-skill/scripts/package_skill.py skills/<skill>`. The packager checks the upload rules first and tells you what blocks an upload. Skills that use Claude Code-only fields, such as `argument-hint`, can't be zipped this way; use them through the plugin in Claude Code or Cowork.
 
-### Web search through SearXNG (optional)
+### Better web search for research (optional)
 
-The research skill uses a [SearXNG](https://docs.searxng.org/) instance when one is reachable, and Claude's built-in web search otherwise. Its report says which one it used.
+The research skill searches with [Parallel Search](https://docs.parallel.ai/integrations/mcp/search-mcp) first, then [Keenable](https://docs.keenable.ai/mcp-server), and with Claude's built-in web search when neither is connected. Both are remote MCP servers, so they work the same in Claude Code, in Cowork, and in cloud sessions, and unlike the built-in search they can read Reddit threads. The report footer says which one a run used.
 
-1. Run SearXNG with its JSON output turned on, with Docker or a native install. [skills/research/references/searxng-setup.md](skills/research/references/searxng-setup.md) has the Docker steps; any install with JSON output works.
-2. Connect it:
-   - **Claude Code:** add the `mcp-searxng` server to your user config (same reference), which takes any address, or install the companion plugin with `/plugin install repertoire-searxng@repertoire`.
-   - **Cowork:** enable **repertoire-searxng** from the same marketplace. It can only help in desktop sessions, because cloud sessions can't run local servers or reach your machine.
+- **Claude and Cowork:** open **Customize > Connectors > Add custom connector** and add `https://search.parallel.ai/mcp` (no account needed) and `https://api.keenable.ai/mcp-oauth` (sign in to a free Keenable account, 100,000 requests a month). Connectors on your claude.ai account also load in Claude Code when it is signed in with that claude.ai subscription.
+- **Claude Code only:** `claude mcp add --scope user --transport http parallel-search https://search.parallel.ai/mcp`, and the same with `keenable` and `https://api.keenable.ai/mcp`.
 
-   The companion plugin always connects to `http://localhost:8888`, so in Cowork SearXNG must run there; only Claude Code can use another address, through the user config. Wherever SearXNG isn't reachable, research falls back to web search.
+[skills/research/references/search-setup.md](skills/research/references/search-setup.md) has the details, the limits of each, and troubleshooting.
 
 ### Document skills
 
@@ -132,7 +130,7 @@ A single skill that turns Claude into a research orchestrator: it fans out paral
 <td><strong>research</strong></td>
 <td>
 
-Dispatches 6-10 parallel subagents to research any topic over the last 60 days. Covers community sources (Reddit, X, Hacker News, Lobsters, developer forums, blogs) and official sources (documentation, academic papers, industry publications) in a single run. Produces a two-sided report with community findings, official findings, a cross-reference table showing where they agree and disagree, and real engagement statistics. Supports three depth levels (quick, default, deep) and four query types (prompting, recommendations, news, general). After research, it generates tailored prompts in whatever format the research recommends.
+Dispatches 6-10 parallel subagents to research any topic over the last 60 days. Covers community sources (Reddit, X, Hacker News, Lobsters, developer forums, blogs) and official sources (documentation, academic papers, industry publications) in a single run. Produces a two-sided report with community findings, official findings, a cross-reference table showing where they agree and disagree, and real engagement statistics. Searches with Parallel Search or Keenable when you connect them, and with Claude's built-in web search otherwise. Supports three depth levels (quick, default, deep) and four query types (prompting, recommendations, news, general). After research, it generates tailored prompts in whatever format the research recommends.
 
 </td>
 <td><code>/repertoire:research</code> + topic<br/><code>/repertoire:research best practices for RAG pipelines</code><br/><code>/repertoire:research what's new with React 19</code><br/><code>/repertoire:research Claude Code tips and tricks</code></td>
@@ -202,7 +200,7 @@ Discovers and installs skills from two registries: the open agent skills ecosyst
 
 ```
 .claude-plugin/
-  marketplace.json       # The marketplace: lists repertoire, defines repertoire-searxng inline
+  marketplace.json       # The marketplace: lists the repertoire plugin
   plugin.json            # The repertoire plugin itself, the repo's only plugin.json
 skills/
   changelog/
@@ -217,11 +215,9 @@ skills/
   research/
     SKILL.md
     scripts/             # Helper scripts bundled with the skill
-plugins/
-  repertoire-searxng/    # Optional plugin: the SearXNG MCP server (README only)
 ```
 
-The `repertoire` plugin's folder is the whole repository, and Cowork skips a plugin whose folder holds another `.claude-plugin/plugin.json`. So the repository keeps exactly one, at the root: `repertoire-searxng` is defined in its marketplace entry, and test fixtures generate their manifests when they run. Cowork also lists every `SKILL.md` it finds as a skill, so the only ones in the repository are `skills/<name>/SKILL.md`.
+The `repertoire` plugin's folder is the whole repository, and Cowork skips a plugin whose folder holds another `.claude-plugin/plugin.json`. So the repository keeps exactly one, at the root, and test fixtures generate their manifests when they run. Cowork also lists every `SKILL.md` it finds as a skill, so the only ones in the repository are `skills/<name>/SKILL.md`.
 
 Each skill lives in its own directory under `skills/`. The `SKILL.md` file contains YAML frontmatter (name, description, and optional fields such as `argument-hint`) followed by the prompt content. Supporting materials go in `references/`, scripts in `scripts/`, templates in `assets/`, and test cases in `evals/`.
 
@@ -242,8 +238,8 @@ The `references/` pattern is what keeps skills fast. The SKILL.md stays under 50
 
 - **Claude Code** or **Cowork**
 - **Python 3** for the skills that bundle scripts (research, create-skill, and review-skill, which runs create-skill's validator); create-skill's validator also needs PyYAML (`python -m pip install pyyaml`)
-- **Node.js 22.20+** only for `npx skills add` and the optional SearXNG server (`mcp-searxng` needs 22 or later)
-- Optionally, your own **SearXNG** instance (with Docker or a native install) for the research skill
+- **Node.js 22.20+** only for `npx skills add`
+- Optionally, a **Parallel Search** or **Keenable** connector for better web search in the research skill
 
 ---
 

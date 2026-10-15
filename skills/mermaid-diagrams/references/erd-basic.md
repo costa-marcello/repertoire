@@ -139,7 +139,7 @@ erDiagram
 
     ADDRESS {
         uuid id PK
-        uuid customer_id FK
+        uuid customer_id FK "NOT NULL"
         varchar street "NOT NULL"
         varchar city "NOT NULL"
         varchar state
@@ -173,7 +173,7 @@ erDiagram
         varchar name "NOT NULL"
         text description
         decimal price "NOT NULL"
-        uuid category_id FK
+        uuid category_id FK "NOT NULL"
         boolean is_active "DEFAULT TRUE"
         timestamp created_at "DEFAULT NOW()"
     }

@@ -2,6 +2,8 @@
 
 review-skill runs on its own, but its automated checks come from create-skill's scripts. Install both skills together so the validator is found next to this skill.
 
+Every install step below downloads packages. The review itself makes no network calls, so review-skill offers these steps and the user runs them.
+
 ## Install both skills
 
 The Repertoire plugin installs both, side by side, in Claude Code and in Cowork:
@@ -19,13 +21,14 @@ npx skills add costa-marcello/repertoire -s create-skill -s review-skill
 
 SKILL.md step 2 takes the first of these folders that contains `quick_validate.py`:
 
-1. `${CLAUDE_SKILL_DIR}/../create-skill/scripts/`, the create-skill beside review-skill. Claude Code and Cowork substitute `${CLAUDE_SKILL_DIR}`, and the path also resolves inside the plugin cache and through a linked repository checkout, so a plugin install always finds it here.
+1. `${CLAUDE_SKILL_DIR}/../create-skill/scripts/`, the create-skill beside review-skill. The path resolves inside the plugin cache and through a linked repository checkout. When a session hands over a `${CLAUDE_SKILL_DIR}` that is blank or points at a missing folder, the Skill folder ground rule finds review-skill's folder first.
 2. `.claude/skills/create-skill/scripts/` in the project
 3. `.agents/skills/create-skill/scripts/` in the project
 4. `~/.claude/skills/create-skill/scripts/`
 5. `~/.agents/skills/create-skill/scripts/`
+6. The folder of the last match Glob lists for `**/*create-skill/scripts/quick_validate.py` in `~/.claude`, then `/mnt/skills`, outside the target. It finds the plugin copy a cloud session syncs, and the `*` also matches a `repertoire:create-skill` folder.
 
-These folders locate create-skill only. review-skill reads its own files relative to its folder (`${CLAUDE_SKILL_DIR}`), never through an install location, because plugin installs and Cowork keep it elsewhere (M11).
+These folders locate create-skill only. review-skill reads its own files relative to its folder (`${CLAUDE_SKILL_DIR}`, or the one its Skill folder ground rule finds), never through an install location, because plugin installs and Cowork keep it elsewhere (M11).
 
 Check an install by listing the folder that was found:
 

@@ -65,7 +65,7 @@ Every web stack below styles through one of these.
 ## shadcn/ui
 
 - **Tokens:** CSS variables in `globals.css` (`--background`, `--foreground`, `--primary`, `--muted-foreground`, `--ring`, and more), with a `.dark` block; Tailwind maps them to `bg-primary` and similar. Restyle by changing these values or passing `className` to the primitives; edit `components/ui/*` only for a project-wide change.
-- **Colour format:** older setups store bare HSL channels (`222 47% 11%`), newer ones `oklch(...)`. Keep the file's format, and convert to hex to run the contrast check.
+- **Colour format:** older setups store bare HSL channels (`222 47% 11%`), newer ones `oklch(...)`. Keep the file's format. `scripts/contrast.py` reads `oklch(...)` as written; wrap bare channels as `hsl(222 47% 11%)` before passing them.
 - **Trap:** swapping a primitive for a raw `<div>` or `<button>` drops its focus ring, keyboard handling, and ARIA. Wrap and style the primitive instead.
 
 ## SwiftUI

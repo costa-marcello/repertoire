@@ -160,9 +160,9 @@ The Claude platform has no built-in eval runner. `evals_guide.md` describes the 
   - Subagents do not inherit the parent's invoked skills, but they can invoke project, user, and plugin skills through the Skill tool. A subagent definition's `skills:` field preloads full skill content.
 - **Fork.** `context: fork` semantics are in `frontmatter_reference.md`, and the fork decision test is in `authoring_rules.md`.
 - **Cowork.** It runs the Claude Code engine with the installed plugins' skills, in a desktop VM or a cloud container.
-  - Subagents (the Agent tool), hooks, scripts, and network access within the egress rules work, and `${CLAUDE_SKILL_DIR}` is substituted.
+  - Subagents (the Agent tool), hooks, scripts, and network access within the egress rules work. `${CLAUDE_SKILL_DIR}` is substituted when the skill loads inside the session; a skill loaded before the chat moves to a cloud session can get a folder that does not exist, so a skill with bundled files carries the skill-folder block (`bundled_resources.md`).
   - It never reads `~/.claude/skills`, has no display or browser, and desktop Cowork replaces dynamic context injection with a placeholder.
-  - Local stdio MCP servers run only in desktop Cowork, never in cloud sessions, so a skill that uses one states a fallback.
+  - Local stdio MCP servers run only on a computer: in desktop Cowork, or started by the desktop app for a cloud session linked to that computer. A cloud session with no linked computer has none, so a skill that uses one states a fallback.
   - These limits are M11 "Breaks in Cowork"; create-skill's step 6 checks them.
 - **Diagnostics.** `/skill-doctor` reports each skill's context cost and usage; it is not a linter.
 - **Testing.** Test with and without the skill, each in a fresh session.
@@ -182,7 +182,7 @@ The Claude platform has no built-in eval runner. `evals_guide.md` describes the 
 | Undocumented constants | Comment the reason for each value |
 | Assuming tools are installed | List requirements and install commands |
 | Opening a window or browser to show results | Write files (in Cowork, to the outputs folder) |
-| Reaching the skill's own files through an install location | `${CLAUDE_SKILL_DIR}/...`, which works wherever the skill is installed |
+| Reaching the skill's own files through an install location | `${CLAUDE_SKILL_DIR}/...` behind the skill-folder block, which finds the folder wherever the skill is installed |
 
 ## Security review
 

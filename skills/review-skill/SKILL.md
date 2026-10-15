@@ -1,13 +1,13 @@
 ---
 name: review-skill
-description: "Reviews skills for Claude Code and Cowork against Anthropic's skill guidance and the Repertoire rule catalog, assigns a letter grade, and fixes the findings. Use when the user asks to review, grade, audit, or fix a skill, check a SKILL.md before publishing, check that a skill runs in Cowork, or re-run a skill's evals to catch regressions."
+description: "Reviews skills for Claude Code and Cowork against Anthropic's skill guidance and the Repertoire rule catalog, assigns a letter grade, and fixes the findings. Use when the user asks to review, grade, audit, or fix a skill, check a SKILL.md before publishing, check that a skill runs in Cowork, or re-run a skill's evals to catch regressions. Writing a new skill belongs to create-skill."
 license: MIT
 argument-hint: "[skill-path] [mode]"
 ---
 
 # Review Skill
 
-Grades a skill against the rule catalog in `references/rules.md` and, depending on the mode, fixes what it finds. The catalog is the single source of truth for rule IDs, severities, counting, and grade bands; this file says how to run the review.
+Grades a skill against the rule catalog in `references/rules.md` and, depending on the mode, fixes what it finds.
 
 The target and mode: $ARGUMENTS
 
@@ -35,6 +35,7 @@ When mode keywords conflict, the higher row wins: report only > fix > review. `r
 - **Fork is opt-in.** A missing `context: fork` is never a finding, and no mode adds it. Inline is the default and is always valid.
 - **No marker files.** Run the security scan with `--no-marker` in every mode, so Review Only writes nothing into the target.
 - **Network use.** The review itself makes no network calls. A regression run executes the target's eval cases, so it reaches the network only when the target skill does.
+- **Skill folder:** Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file is missing there. Then use the "Base directory for this skill" if it holds `references/rules.md`, else the folder two levels above the last match Glob lists for `**/review-skill/references/rules.md` in `~/.claude`, skipping `.trash`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, say the rule catalog is missing and stop without grading.
 - **Shell snippets.** They are POSIX shell; on Windows, run them with the Bash tool (Git Bash). Every `<placeholder>` sits in single quotes, so a value with spaces or shell characters stays one inert word; write a single quote inside a value as `'\''`. When only PowerShell is available, the step 1 and step 2 commands run unchanged; use the PowerShell backup command in the fix loop, where a single quote inside a value is written `''`, and start no regression run, because its checks and workspace commands are POSIX shell.
 
 <instructions>
@@ -65,11 +66,12 @@ Review progress:
 
 Locate create-skill's scripts folder, taking the first of these that contains `quick_validate.py`:
 
-1. `${CLAUDE_SKILL_DIR}/../create-skill/scripts/`, the create-skill beside this skill. It also resolves inside the plugin cache and through a linked repository checkout.
+1. `${CLAUDE_SKILL_DIR}/../create-skill/scripts/`, the create-skill beside this skill
 2. `.claude/skills/create-skill/scripts/` in the project
 3. `.agents/skills/create-skill/scripts/` in the project
 4. `~/.claude/skills/create-skill/scripts/`
 5. `~/.agents/skills/create-skill/scripts/`
+6. The folder of the last match Glob lists for `**/*create-skill/scripts/quick_validate.py` in `~/.claude`, then `/mnt/skills`, outside the target
 
 Run both scripts with that folder's absolute path as `<dir>`, because the single quotes stop the shell from expanding `~` or a variable. Use `python`, or `python3` where `python` is not on the path:
 
@@ -82,8 +84,8 @@ Read the results:
 
 - quick_validate prints `[ID] severity confidence file:line message` lines and a `RESULT` line. An `[F]` line is an F trigger. Exit 0 means no definitive Major or Minor, 1 a definitive Major, 4 definitive Minor only. Exit 2 is a usage error: correct the command and run it again.
 - quick_validate exit 3 is an environment or internal error, usually missing PyYAML (`python -m pip install pyyaml`). Apply the rules by hand and record "automated checks: not run (<reason>)".
-- security_scan prints `[M10] major check` and `[m11] minor check` lead lines, mapped to rules under "Validator contract" in rules.md, and ends with `RESULT secrets=<n> leads=<n>`. Treat exit 1 or 2 as secrets only when that line shows `secrets` above 0; otherwise record a scan error. Exit 3 means gitleaks is missing and exit 4 is a scan or usage error: record "secret scan not run (<reason>)" and look for secrets while reading the files (M10, heuristic).
-- If none of the five folders has the validator, apply rules.md by hand and record "automated checks: not run (create-skill not found)". Offer the install steps in `references/setup.md`.
+- security_scan prints `[M10] major check` and `[m11] minor check` lead lines, mapped to rules under "Validator contract" in rules.md, and ends with `RESULT secrets=<n> leads=<n>`. Treat exit 1 or 2 as secrets only when that line shows `secrets` above 0; otherwise record a scan error. Exit 3 means gitleaks is missing and exit 4 is a scan or usage error: record "secret scan not run (<reason>)", confirm any leads it printed, and look for secrets while reading the files (M10, heuristic).
+- If none of these folders has the validator, apply rules.md by hand and record "automated checks: not run (create-skill not found)". Offer the install steps in `references/setup.md` for the user to run, as they download packages.
 
 ### 3. Rules, one by one
 
@@ -98,7 +100,7 @@ Read `references/rules.md` in full, then walk its rule index from M1 to S7:
 ### 4. Lenses, bundled files, evals, triggers
 
 - **Content lenses:** apply the nine lenses in `references/content-quality-checklist.md`.
-- **Cowork (M11):** lens 9 of that file, applied to SKILL.md, every reference, and every script. Look for dynamic context injection in SKILL.md, the skill's own files reached through an install location, a step that needs a display or a browser, a local stdio MCP server or `localhost` service with no stated fallback, a `claude -p` call, and secrets read only from a home-directory dotfile. M11 applies to both platform targets.
+- **Cowork (M11):** lens 9 of that file, applied to SKILL.md, every reference, and every script. Look for dynamic context injection in SKILL.md, the skill's own files reached through an install location, a step that needs a display or a browser, a local stdio MCP server or `localhost` service with no stated fallback, a `claude -p` call, and secrets read only from a home-directory dotfile.
 - **Deep-review lenses:** apply `references/research-backed-criteria.md`. Lenses only find issues: each issue maps to a rule ID or goes under advisory notes.
 - **Scripts:** read every bundled script against `references/script-quality.md` (M6, m13), and check that SKILL.md says whether to run or read each one.
 - **Workflows:** check every destructive or 5+ step workflow against `references/feedback-loops.md` (M4).

@@ -1,11 +1,12 @@
 """Web result helpers for research skill.
 
 This module makes no network calls. In the research skill, web coverage
-comes from the community and official subagents, which search with SearXNG
-when it is reachable and with the built-in WebSearch and WebFetch tools
-otherwise (see SKILL.md). research.py does not feed web results through
-this module; it is a library for callers that already hold web results
-(title, url, snippet) and want them normalized, date-checked and scored:
+comes from the community and official subagents, which search with Parallel
+Search or Keenable when connected and with the built-in WebSearch and
+WebFetch tools otherwise (see SKILL.md). research.py does not feed web
+results through this module; it is a library for callers that already hold
+web results (title, url, snippet) and want them normalized, date-checked
+and scored:
 
 1. parse_websearch_results() drops Reddit/X URLs and out-of-window dates
 2. normalize_websearch_items() turns the dicts into WebSearchItem objects
@@ -266,7 +267,7 @@ def parse_websearch_results(
 ) -> List[Dict[str, Any]]:
     """Parse web search results into normalized format.
 
-    Accepts results from any web search backend (SearXNG or WebSearch).
+    Accepts results from any web search backend (Parallel Search, Keenable or WebSearch).
     Each result should have: title, url, snippet, and optionally date/relevance.
 
     Uses "Date Detective" approach:

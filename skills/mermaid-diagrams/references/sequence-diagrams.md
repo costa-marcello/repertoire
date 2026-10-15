@@ -419,7 +419,7 @@ sequenceDiagram
     Gateway->>+OrderService: Create order
 
     OrderService->>+InventoryService: Check stock
-    InventoryService-->>-OrderService: Stock available
+    InventoryService-->>-OrderService: Stock level
 
     break Insufficient stock
         OrderService-->>Gateway: 400 Out of stock
@@ -441,7 +441,7 @@ sequenceDiagram
         end
 
         OrderService-->>-Gateway: 201 Created
-        Gateway-->>User: Order confirmed
+        Gateway-->>-User: Order confirmed
     else Payment failed
         PaymentService-->>OrderService: Payment declined
         OrderService->>OrderService: Release reservation

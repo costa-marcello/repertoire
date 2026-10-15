@@ -72,7 +72,7 @@ classDiagram
 <example name="Composition">
 
 ### Composition (`*--`)
-Strong ownership - child cannot exist without parent. When parent is deleted, children are deleted.
+Use it when the child is deleted with its parent.
 
 ```mermaid
 classDiagram
@@ -85,7 +85,7 @@ classDiagram
 <example name="Aggregation">
 
 ### Aggregation (`o--`)
-Weaker ownership - child can exist independently. Represents "has-a" relationship.
+Use it when the child can outlive its parent.
 
 ```mermaid
 classDiagram
@@ -98,7 +98,7 @@ classDiagram
 <example name="Inheritance">
 
 ### Inheritance (`<|--`)
-"Is-a" relationship. Child class inherits from parent class.
+The triangle points at the parent class.
 
 ```mermaid
 classDiagram

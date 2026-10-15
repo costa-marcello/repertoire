@@ -2,14 +2,32 @@
 
 ## Contents
 
-1. [Report Template](#report-template)
-2. [Official Section Template](#official-section-template)
-3. [Cross-Reference Table](#cross-reference-table)
-4. [Stats Footer](#stats-footer)
-5. [Invitation](#invitation)
+1. [Source Weighting](#source-weighting)
+2. [Report Template](#report-template)
+3. [Official Section Template](#official-section-template)
+4. [Cross-Reference Table](#cross-reference-table)
+5. [Stats Footer](#stats-footer)
+6. [Invitation](#invitation)
 
 <!-- Template for the two-sided research report produced by the research skill.
      The footer after a generated prompt lives in prompt-generation.md. -->
+
+## Source Weighting
+
+Phase 4 of SKILL.md weights the sources this way in the synthesis:
+
+| Source | Weight | Why |
+|--------|--------|-----|
+| Reddit (from script) | HIGHEST | Real upvotes + comments = proven engagement |
+| X (from script) | HIGHEST | Real likes + reposts = proven engagement |
+| HN / Lobsters | HIGH | Voting system = community curation |
+| Official docs | HIGH | Authoritative, primary source |
+| Academic papers | HIGH | Peer-reviewed |
+| Industry publications | MEDIUM | Expert but potentially biased |
+| Expert blogs | MEDIUM-LOW | Individual perspective |
+| Misc community | MEDIUM-LOW | Volume varies |
+
+Reddit threads that a subagent found, because the script did not cover Reddit, lack the script's verified metrics; weight them as misc community.
 
 ## Report Template
 
@@ -106,11 +124,11 @@ Status definitions:
 
 ## Stats Footer
 
-Use real numbers from the research. The `Search backend` line is always present: it names `SEARCH_BACKEND` from SKILL.md, and any agent that switched to the fallback mid-run.
+Use real numbers from the research. The `Search backend` line is always present: it names `SEARCH_BACKEND` from SKILL.md, the backends skipped before it, and any agent that switched to a fallback mid-run.
 
 ```
 ---
-All agents reported back!
+{AGENTS_LINE}
 ├─ Reddit: {n} threads | {upvotes} upvotes | {comments} comments
 ├─ X: {n} posts | {likes} likes | {reposts} reposts
 ├─ Community web: {n} sources (HN, forums, blogs)
@@ -120,13 +138,16 @@ All agents reported back!
 └─ Cross-reference: {agree} aligned, {disagree} divergent, {gaps} gaps
 ```
 
-`{SEARCH_BACKEND}` reads like one of these:
-- `SearXNG (mcp__searxng__searxng_web_search)`
-- `SearXNG (mcp__plugin_repertoire-searxng_searxng__searxng_web_search); C3 fell back to WebSearch after two errors`
-- `WebSearch + WebFetch (fallback: no SearXNG tool)`
-- `WebSearch + WebFetch (fallback: SearXNG not reachable)`
+`{AGENTS_LINE}` is `All agents reported back!` when every agent reported, else it counts the failures, as in `7 of 8 agents reported back; 1 agent failed (C4)`.
 
-When the fallback was used, add one line under the footer: `SearXNG setup: see references/searxng-setup.md in the research skill.`
+`{SEARCH_BACKEND}` reads `<backend> (skipped <backend>: <reason>, ...; fallback: <switches, or none>)`. The `skipped` part lists each earlier backend in the chain with its reason (`not connected`, `rate-limited`, `out of credits`, or `error`), and is left out when Parallel Search answered. For example:
+- `Parallel Search (fallback: none)`
+- `Parallel Search (fallback: C3 and O2 switched to Keenable after rate limits)`
+- `Keenable (skipped Parallel Search: not connected; fallback: none)`
+- `Keenable (skipped Parallel Search: rate-limited; fallback: O2 switched to WebSearch + WebFetch)`
+- `WebSearch + WebFetch (skipped Parallel Search: rate-limited, Keenable: not connected; fallback: none)`
+
+When the run used WebSearch + WebFetch, as the backend or as any agent's fallback, add one line under the footer: `Better search, Reddit included: connect Parallel Search or Keenable, see references/search-setup.md in the research skill.`
 
 Drop the Reddit line when the script did not cover Reddit, and the X line when it did not cover X. **Web-only mode** (no Reddit/X API keys) drops both and adds:
 ```
@@ -153,9 +174,8 @@ What tool will you use these prompts with?
 
 Options:
 1. [Most relevant tool based on research]
-2. Nano Banana Pro (image generation)
-3. ChatGPT / Claude (text/code)
-4. Other (tell me)
+2. [Second most relevant tool based on research]
+3. Other (tell me)
 ```
 
 **RECOMMENDATIONS, NEWS, or GENERAL with TARGET_TOOL unknown:** offer follow-ups, not a prompt:

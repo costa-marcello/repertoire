@@ -285,7 +285,8 @@ def main(argv: list[str] | None = None) -> int:
         return EXIT_FAILED
 
     if any(word in args.name for word in RESERVED_NAME_WORDS):
-        print("[WARN] The name contains 'claude' or 'anthropic', which blocks upload to claude.ai and the API (m12).")
+        print("[WARN] The name contains 'claude' or 'anthropic', which blocks upload to claude.ai and the API (m12).",
+              file=sys.stderr)
     print(f"\n[OK] Skill '{args.name}' initialized at {skill_dir}")
     print("\nNext steps:")
     print("  1. Replace every [TODO placeholder in SKILL.md, starting with the description.")

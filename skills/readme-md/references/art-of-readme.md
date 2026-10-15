@@ -3,7 +3,7 @@
 > Source: [hackergrrl/art-of-readme](https://github.com/hackergrrl/art-of-readme)
 > License: [Creative Commons Attribution](https://creativecommons.org/licenses/by/2.0/)
 
-Distilled principles from the original article. Read the full source for history, examples, and community context.
+Distilled principles from the original article. The source link above holds the full article, with its history and examples, for human readers; this summary is all the skill needs.
 
 ---
 

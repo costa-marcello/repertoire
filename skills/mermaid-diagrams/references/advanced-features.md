@@ -257,7 +257,7 @@ mmdc -i diagram.mmd -o diagram.svg -t dark
 mmdc -i README.md -o README.rendered.md
 ```
 
-Size flags differ between mermaid-cli versions (`-w` and `-H` in older releases, `--size` in newer ones). Run `mmdc -h` and use the flags it lists.
+`-w` and `-H` set the width and height of the page the diagram is drawn on. Flags change between mermaid-cli versions, so run `mmdc -h` and use the flags it lists.
 
 ## Large Diagrams
 

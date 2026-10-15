@@ -94,7 +94,7 @@ Generic placeholders such as `username`, `<user>`, and `your-company` are the in
 **How to replace:**
 - Generic paths: `project-docs/meeting-minutes`
 - Placeholder paths: `<project-root>/docs/`
-- Paths relative to the skill directory
+- The skill's own files: `${CLAUDE_SKILL_DIR}/...` (portable target: paths relative to the skill directory)
 
 ### 5. Internal terminology and jargon
 

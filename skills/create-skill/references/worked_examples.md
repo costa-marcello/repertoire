@@ -42,7 +42,7 @@ Three end-to-end runs of the create-skill workflow, step by step. SKILL.md has s
 
 **Step 4, init.**
 ```bash
-python scripts/init_skill.py brand-guidelines --path .claude/skills --resources references,assets
+python ${CLAUDE_SKILL_DIR}/scripts/init_skill.py brand-guidelines --path .claude/skills --resources references,assets
 ```
 Then copy the workspace evals over the skeletons.
 
@@ -94,7 +94,7 @@ Then copy the workspace evals over the skeletons.
 
 **Step 4, init.**
 ```bash
-python scripts/init_skill.py csv-report --path .claude/skills --fork --resources scripts
+python ${CLAUDE_SKILL_DIR}/scripts/init_skill.py csv-report --path .claude/skills --fork --resources scripts
 ```
 
 **Step 5, write.**

@@ -40,7 +40,7 @@ Each industry has hues users expect. Keep the expected hue so the product reads 
 | Gaming | Purple, cyan | Acid lime #C6FF3D and hot magenta #FF2E88 on near-black #0A0A0F | Loud, kinetic |
 | Education | Yellow, green | Deep teal #12464F with sunflower #F2B33D | Friendly, focused |
 
-Each pair above measures at least 4.5:1. Derive the full token set (background, surface, text, muted text, accent) from it, then check every new text pair with `scripts/contrast.py`.
+Each two-colour pair above measures at least 4.5:1; in the Gaming row, lime and magenta each pass on the near-black, but not on each other (2.96:1). Derive the full token set (background, surface, text, muted text, accent) from it, then check every new text pair with `scripts/contrast.py`.
 
 ## Typography Pairing Guide
 
@@ -69,6 +69,6 @@ Each pair above measures at least 4.5:1. Derive the full token set (background, 
 | Context | Adaptation |
 |---------|------------|
 | Mobile-first | Replace hover effects with tap feedback and focus states |
-| Performance-critical | Animate only `transform` and `opacity` |
+| Performance-critical | Fewer animations, and no animated `blur()` over a large area (`animation-patterns.md`, Performance Rules) |
 | Existing design systems | Adapt patterns to their tokens rather than inventing new ones |
 | RTL languages | Use logical CSS properties (`margin-inline-start`, `inset-inline-end`) instead of left/right |

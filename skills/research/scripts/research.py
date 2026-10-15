@@ -19,12 +19,19 @@ Options:
     --quick             Faster research with fewer sources (15-25 Reddit, 8-12 X)
     --deep              Comprehensive research with more sources (70-100 Reddit, 40-60 X)
     --debug             Enable verbose debug logging
+    --include-web       Also ask for web coverage: print the WEBSEARCH REQUIRED
+                        block alongside the Reddit/X results
+
+Time: the run stays under 10 minutes, so a 600000 ms shell timeout covers it.
+Each Responses API search is tried once (90-180 s timeout by depth), and
+Reddit enrichment stops at ENRICH_DEADLINE_SECONDS after the start.
 """
 
 import argparse
 import json
 import os
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
@@ -56,6 +63,14 @@ from lib import (
     websearch,
     xai_x,
 )
+
+
+# Seconds after the start at which Reddit enrichment stops, so the run ends
+# inside the skill's 600000 ms shell timeout. The model list (about 1.5
+# minutes at worst) and a Reddit search plus its retry (3 minutes each at
+# --deep) end by about 7.5 minutes; an enrichment request still in flight at
+# the deadline adds at most about 1.5 minutes, so the worst case is 8.5.
+ENRICH_DEADLINE_SECONDS = 420
 
 
 def load_fixture(name: str) -> dict:
@@ -194,8 +209,12 @@ def run_research(
     depth: str = "default",
     mock: bool = False,
     progress: ui.ProgressDisplay = None,
+    deadline: float = None,
 ) -> tuple:
     """Run the research pipeline.
+
+    deadline is a time.monotonic() value; Reddit enrichment stops once it
+    passes, and the threads not yet enriched keep no engagement metrics.
 
     Returns:
         Tuple of (reddit_items, x_items, web_needed, raw_openai, raw_xai, raw_reddit_enriched, reddit_error, x_error)
@@ -278,7 +297,11 @@ def run_research(
         if progress:
             progress.start_reddit_enrich(1, len(reddit_items))
 
+        skipped = 0
         for i, item in enumerate(reddit_items):
+            if deadline is not None and time.monotonic() > deadline:
+                skipped = len(reddit_items) - i
+                break
             if progress and i > 0:
                 progress.update_reddit_enrich(i + 1, len(reddit_items))
 
@@ -299,10 +322,16 @@ def run_research(
             progress.end_reddit_enrich()
 
         # Say why metrics are missing instead of leaving it silent
-        missing = sum(1 for item in reddit_items if not item.get("engagement"))
+        if skipped and progress:
+            progress.show_error(
+                f"Time limit reached: {skipped} of {len(reddit_items)} Reddit threads "
+                "were not enriched and have no engagement metrics"
+            )
+        tried = reddit_items[:len(reddit_items) - skipped]
+        missing = sum(1 for item in tried if not item.get("engagement"))
         if missing and progress:
             progress.show_error(
-                f"No engagement metrics for {missing} of {len(reddit_items)} Reddit threads: "
+                f"No engagement metrics for {missing} of {len(tried)} Reddit threads: "
                 "reddit.com did not return the thread data (rerun with --debug for details)"
             )
 
@@ -345,10 +374,11 @@ def main():
     parser.add_argument(
         "--include-web",
         action="store_true",
-        help="Include general web search alongside Reddit/X (lower weighted)",
+        help="Also print the WEBSEARCH REQUIRED block, asking for web coverage alongside Reddit/X",
     )
 
     args = parser.parse_args()
+    deadline = time.monotonic() + ENRICH_DEADLINE_SECONDS
 
     # Enable debug logging if requested
     if args.debug:
@@ -416,9 +446,9 @@ def main():
         mock_xai_models = load_fixture("models_xai_sample.json").get("data", [])
         selected_models = models.get_models(
             {
+                **config,
                 "OPENAI_API_KEY": "mock",
                 "XAI_API_KEY": "mock",
-                **config,
             },
             mock_openai_models,
             mock_xai_models,
@@ -455,6 +485,7 @@ def main():
         depth,
         args.mock,
         progress,
+        deadline,
     )
 
     # Processing phase

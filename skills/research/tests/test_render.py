@@ -69,6 +69,18 @@ class TestRenderCompact(unittest.TestCase):
 
         self.assertIn("XAI_API_KEY", result)
 
+    def test_says_no_reddit_threads_in_every_reddit_mode(self):
+        for mode in ("both", "reddit-only", "all", "reddit-web"):
+            report = schema.Report(
+                topic="test",
+                range_from="2026-01-01",
+                range_to="2026-01-31",
+                generated_at="2026-01-31T12:00:00Z",
+                mode=mode,
+            )
+            with self.subTest(mode=mode):
+                self.assertIn("No relevant Reddit threads", render.render_compact(report))
+
 
 class TestRenderContextSnippet(unittest.TestCase):
     def test_renders_snippet(self):

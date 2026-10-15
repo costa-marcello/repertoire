@@ -161,7 +161,7 @@ C4Container
     title Container Diagram - E-Commerce Platform
 
     Person(customer, "Customer")
-    Person(admin, "Admin")
+    Person(admin, "Administrator")
     System_Ext(payment, "Payment Gateway")
     System_Ext(email, "Email Service")
 
@@ -223,7 +223,7 @@ Zooms into a container to show its internal components.
 C4Component
     title Component Diagram for API Application
 
-    Container(web, "Web App", "React")
+    Container(web, "Web Application", "React")
     ContainerDb(db, "Database", "PostgreSQL")
     System_Ext(email, "Email System")
 
@@ -252,8 +252,8 @@ C4Component
 C4Component
     title Component Diagram - Order Service
 
-    Container(api_gateway, "API Gateway", "Node.js")
-    ContainerDb(postgres, "Database", "PostgreSQL")
+    Container(api_gateway, "API Gateway", "Node.js/Express")
+    ContainerDb(postgres, "Main Database", "PostgreSQL")
     ContainerQueue(queue, "Message Queue", "RabbitMQ")
     System_Ext(payment, "Payment Gateway")
     System_Ext(inventory, "Inventory Service")
@@ -448,8 +448,8 @@ C4Container
     Rel(api, order, "Routes to", "REST")
 
     Rel(order, events, "Publishes OrderCreated", "Kafka")
-    Rel(events, inventory, "Consumes events", "Kafka")
-    Rel(events, notification, "Consumes events", "Kafka")
+    Rel(inventory, events, "Consumes events", "Kafka")
+    Rel(notification, events, "Consumes events", "Kafka")
 
     Rel(order, db, "Persists", "SQL")
     Rel(inventory, db, "Persists", "SQL")

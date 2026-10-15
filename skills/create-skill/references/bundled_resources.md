@@ -12,7 +12,8 @@ What goes into a skill directory beside SKILL.md, how to decide what to bundle, 
 6. [evals/ and tests/](#evals-and-tests)
 7. [Naming files](#naming-files)
 8. [Privacy and paths](#privacy-and-paths)
-9. [Versioning](#versioning)
+9. [Skill folder fallback](#skill-folder-fallback)
+10. [Versioning](#versioning)
 
 ## Skill directory layout
 
@@ -70,10 +71,10 @@ For each eval case or concrete request, ask two questions: how would Claude do t
 - **Errors.** Catch specific exceptions, and print what failed and how to fix it. No bare `except:`, and no `except Exception: pass`.
 - **Constants.** Comment each constant with the reason for its value.
 - **Output encoding.** Use plain ASCII tags such as `[OK]` and `[FAIL]`, and write UTF-8 to stdout. Emoji crash under the Windows cp1252 console encoding when output is piped.
-- **Invocation.** Write commands with `python`; use `python3` only where `python` is not on the path (on Windows `python3` is often the Microsoft Store stub). In Claude Code and Cowork, reference scripts through `${CLAUDE_SKILL_DIR}/scripts/`; `frontmatter_reference.md` covers the variants. Inside a script, find bundled files from `Path(__file__).resolve().parent`.
+- **Invocation.** Write commands with `python`; use `python3` only where `python` is not on the path (on Windows `python3` is often the Microsoft Store stub). In Claude Code and Cowork, reference scripts through `${CLAUDE_SKILL_DIR}/scripts/`, behind the [skill-folder block](#skill-folder-fallback); `frontmatter_reference.md` covers the variants. Inside a script, find bundled files from `Path(__file__).resolve().parent`.
 - **Output.** Write results to files and print their paths; never open a window, browser, or viewer. Cowork has no display, and the user collects files from the outputs folder (M11).
 - **Network.** Disclose any network use, and its purpose, in SKILL.md (M10).
-- **Local services.** A script that needs a local stdio MCP server or a `localhost` service states a fallback in SKILL.md, because cloud Cowork sessions cannot reach them (M11).
+- **Local services.** A script that needs a local stdio MCP server or a `localhost` service states a fallback in SKILL.md, because a cloud Cowork session with no linked computer cannot reach them (M11).
 
 ## references/
 
@@ -111,9 +112,23 @@ Files used in the output and not read into context: templates, images, fonts, ic
 - secrets: read them from environment variables, not only from a home-directory dotfile (M11).
 
 **Use:**
-- paths relative to the skill directory, or `${CLAUDE_SKILL_DIR}/...` in Claude Code and Cowork;
+- `${CLAUDE_SKILL_DIR}/...` for the claude-code target (Claude Code and Cowork), and paths relative to the skill directory for the portable target, both behind the [skill-folder block](#skill-folder-fallback);
 - generic placeholders (`<project-root>`, `<user>`, `your-company`);
 - forward slashes, on Windows too (m11). Fenced blocks tagged `powershell`, `ps1`, `cmd`, or `bat` are exempt.
+
+## Skill folder fallback
+
+Claude Code fills in `${CLAUDE_SKILL_DIR}` when a skill loads. When a Cowork or claude.ai chat loads a skill and then moves to a cloud session, the skill can get a "Base directory for this skill" (and likely a `${CLAUDE_SKILL_DIR}`) that points at a folder that does not exist, such as `/mnt/skills/plugins/<plugin>:<skill>` ([claude-code#98790](https://github.com/anthropics/claude-code/issues/98790)), or a blank or unexpanded token; the plugin's files are still in the session, under `~/.claude/plugins/synced/`. So every skill that runs, reads, or copies a bundled file carries this block once in SKILL.md. Fill in the skill's name, a file two levels down that only this skill has (`scripts/<main>.py`, `references/<file>.md`, or `assets/<file>`), and what to do without the folder:
+
+```markdown
+Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file is missing there. Then use the "Base directory for this skill" if it holds `<marker>`, else the folder two levels above the last match Glob lists for `**/<name>/<marker>` in `~/.claude`, skipping `.trash`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, <fallback>
+```
+
+- **Where:** before the first step that uses a bundled file: a `## Skill folder` section, a `**Skill folder:**` bullet in an existing ground-rules list, or the opening paragraph of the first `## Step N` that needs it.
+- **Fallback:** a degraded path that still finishes the task (web-only research, a formula instead of a script), or a clear stop with the reason. A forked skill never asks the user here (M2).
+- **Exact token:** Claude Code rewrites only the literal `${CLAUDE_SKILL_DIR}`. A shell default such as `${CLAUDE_SKILL_DIR:-...}` is never rewritten, so Claude Code would take the fallback every time.
+- **Not M11:** the search names no install location of the skill's own folder. Never shorten it to `.claude/skills/<name>/`, which is M11.
+- **Sibling skills:** try `${CLAUDE_SKILL_DIR}/../<other-skill>/` first, then the last match Glob lists for `**/*<other-skill>/<a file only it has>` in `~/.claude`, then `/mnt/skills`. The `*` also matches the `<plugin>:<skill>` folder names that some sessions mount.
 
 ## Versioning
 

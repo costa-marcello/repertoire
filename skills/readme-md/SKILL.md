@@ -1,6 +1,6 @@
 ---
 name: readme-md
-description: Guides README creation, updates, and reviews with audience-matched templates. Use when writing READMEs for open source, personal, internal, or config projects, when a README is stale or missing sections, or when the user asks what a README should contain.
+description: Writes, updates, and reviews README files with audience-matched templates. Use when writing READMEs for open source, personal, internal, or config projects, when a README is stale or missing sections, or when the user asks what a README should contain. Not for CONTRIBUTING.md, CHANGELOG.md, CLAUDE.md, API reference docs, or docs sites.
 license: MIT
 argument-hint: "[task and project type]"
 ---
@@ -20,6 +20,10 @@ Identify the audience first. Match sections, depth, and tone to what that audien
 If the request line above has text, extract the task type (creating, adding, updating, reviewing) and project type (OSS, personal, internal, config) from it. If it is empty or still shows an unfilled placeholder, take them from the user's message instead. When either source gives the task, skip Step 1 and proceed to Step 2. If neither source gives the task, begin at Step 1.
 
 **Where the README goes:** write `README.md` in the root folder of the project it describes, the folder that holds its manifest (such as `package.json` or `pyproject.toml`). By default that is the working directory in Claude Code or the connected folder in Cowork; when the user names a subfolder (`packages/cli/`), it goes there. With no project folder (for example, a Cowork session with nothing connected), save it in the outputs folder. Always say where the file went.
+
+## Skill folder
+
+Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file is missing there. Then use the "Base directory for this skill" if it holds `references/section-checklist.md`, else the folder two levels above the last match Glob lists for `**/readme-md/references/section-checklist.md` in `~/.claude`, skipping `.trash`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, draft from the section lists in this file and say the templates were not found.
 
 ## Gotchas
 
@@ -140,19 +144,21 @@ npm install imgshrink
 imgshrink [options]
 ```
 
-**After (audience-focused; the Contributing and License sections are left out of this excerpt):**
+**After (audience-focused; an excerpt, so the template's other sections are left out):**
 ````markdown
 # imgshrink
 Shrink PNG and JPEG files without visible quality loss. Works on whole folders and skips files it can't make smaller.
 
-## Quick Start
+## Installation
 ```bash
 npm install -g imgshrink
-imgshrink photos/
 ```
 
-## Common Use Cases
+## Usage
 ```bash
+# Shrink every image in a folder
+imgshrink photos/
+
 # Preview the savings without writing any file
 imgshrink --dry-run photos/
 
@@ -202,18 +208,28 @@ auth:
 My config files.
 ```
 
-**After (answers future-you's questions):**
+**After (answers future-you's questions; an excerpt, so the template's other sections are left out):**
 ```markdown
 # tmux Config
 
-## What's Here
-- `tmux.conf` - Entry point, sources everything else
-- `conf/keys.conf` - All custom key bindings
-- `plugins/` - Plugins, installed by TPM (not committed)
+> Last reviewed: 2026-10-15
 
-## Key Choices
+tmux set up to feel like GNU screen: a `C-a` prefix, key bindings in their own file, and plugins managed by TPM.
+
+## What's Here
+| Path | Purpose |
+|------|---------|
+| `tmux.conf` | Entry point, sources everything else |
+| `conf/keys.conf` | All custom key bindings |
+| `plugins/` | Plugins, installed by TPM (not committed) |
+
+## Why This Setup
 - **Why TPM?** Installs and updates every plugin with one key press
 - **Why `C-a` as the prefix?** Kept from years of GNU screen
+
+## How to Extend
+- **Add a plugin:** append `set -g @plugin 'owner/repo'` to `tmux.conf`, then press `prefix + I`
+- **Add a key binding:** put it in `conf/keys.conf`, not in `tmux.conf`
 
 ## Gotchas
 - Press `prefix + I` after pulling changes, or new plugins stay missing
@@ -235,7 +251,7 @@ Handles users.
 Run `docker compose up`.
 ```
 
-**After (onboarding-ready):**
+**After (onboarding-ready; an excerpt, so the template's other sections, such as Architecture, Deployment, and Contributing, are left out):**
 ````markdown
 # User Service
 
@@ -243,17 +259,21 @@ Manages authentication, profiles, and role-based access for the platform.
 
 **Team**: #platform-eng | **On-call**: PagerDuty rotation
 
-## Dependencies
+## Overview
+
+Every service that needs to know who a user is, or what they may do, asks this one. It owns the user and role tables and signs the session tokens the other services check.
+
+### Dependencies
 - **Upstream**: PostgreSQL, Redis, Auth0
 - **Downstream**: Billing Service, Notification Service
 
-## Local Setup
+## Local Development Setup
 
 ### Prerequisites
 - Docker Desktop >= 4.x
 - Access to 1Password `Platform Eng` vault for env vars
 
-### Run
+### Running Locally
 
 ```bash
 cp .env.example .env        # then fill from 1Password
@@ -261,7 +281,7 @@ docker compose up -d
 curl http://localhost:3000/health   # expect {"status":"ok"}
 ```
 
-### Tests
+### Running Tests
 
 ```bash
 npm test                     # unit tests
@@ -271,7 +291,9 @@ npm run test:integration     # requires running Docker services
 ## Troubleshooting
 
 ### Auth0 callback fails locally
-**Fix**: Set `AUTH0_BASE_URL=http://localhost:3000` in `.env`. The default points to staging.
+- **Symptom**: Login redirects to staging instead of back to localhost
+- **Cause**: `AUTH0_BASE_URL` defaults to the staging URL
+- **Fix**: Set `AUTH0_BASE_URL=http://localhost:3000` in `.env`
 ````
 
 **Why better:** New team members can run the service in under 5 minutes. Troubleshooting section prevents the most common support question.

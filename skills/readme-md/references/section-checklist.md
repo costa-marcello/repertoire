@@ -5,7 +5,7 @@ Quick reference for which sections to include based on project type.
 | Section | OSS | Personal | Internal | Config |
 |---------|-----|----------|----------|--------|
 | Name/Description | Yes | Yes | Yes | Yes |
-| Badges | Yes | Optional | No | No |
+| Badges | If backed | Optional, if backed | No | No |
 | Installation | Yes | Yes | Yes | No |
 | Usage/Examples | Yes | Yes | Yes | Brief |
 | What's Here | No | No | No | Yes |
@@ -15,3 +15,5 @@ Quick reference for which sections to include based on project type.
 | Architecture | Optional | No | Yes | No |
 | Gotchas/Notes | Optional | Optional | Yes | Yes |
 | Last Reviewed | No | No | Optional | Yes |
+
+"If backed": add a badge only when something real backs it, such as a published package, a CI workflow file, or a license file.

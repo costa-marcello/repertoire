@@ -19,6 +19,7 @@ The guidance and research behind `rules.md` and the lenses. Cite these in report
 | Agent Skills overview | https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview | Progressive disclosure, where skills run, security |
 | Claude Code skills | https://code.claude.com/docs/en/skills | Frontmatter fields, `context: fork`, substitutions, and compaction (M2, M9, m12); dynamic context injection and `${CLAUDE_SKILL_DIR}` (M11) |
 | Claude Code subagents | https://code.claude.com/docs/en/sub-agents | What a forked skill's subagent can and cannot do (M2); the fresh subagents of a regression run (M12) |
+| Plugin skill paths in cloud sessions | https://github.com/anthropics/claude-code/issues/98790 | A base directory that does not exist after a chat moves to a cloud session (the skill-folder advisory under M11) |
 | Claude Code plugins | https://code.claude.com/docs/en/plugins | How plugins ship skills to Claude Code and Cowork, the default `claude-code` platform target (M11) |
 | Prompting best practices | https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices | XML tags and examples (S1, S2), emphasis (m15), reasoning extraction (M10) |
 | Equipping agents for the real world with Agent Skills | https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills | Design rationale for skills and progressive disclosure |

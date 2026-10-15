@@ -224,7 +224,7 @@ For rapid rule-by-rule review. **Only evaluate rules/patterns sections**, not fa
    - Check if referenced files exist
    - Check that each `@path` import resolves from the file that contains it
    - Verify architecture descriptions
-3. Score each criterion
+3. Score each criterion. In a `.claude/rules/` file or a subdirectory CLAUDE.md, mark Commands/workflows or Architecture clarity N/A when the file's scope has none, and rescale the rest to 100 (points earned / points available x 100)
 4. Calculate total and assign grade
 5. List specific issues found
 6. Propose concrete improvements
