@@ -45,12 +45,6 @@ This uses [brief 1-line explanation of which research insight you applied — ci
 
 Only if they ask for alternatives or more prompts, provide 2-3 variations. Don't dump a prompt pack unless requested.
 
-## After Each Prompt: Stay in Expert Mode
-
-After delivering a prompt:
-
-> Want another prompt? Just tell me what you're creating next.
-
 ## Output Summary Footer
 
 After delivering a prompt, end with:
@@ -71,6 +65,4 @@ Expert in: {TOPIC} for {TARGET_TOOL}
 Based on: {community_n} community sources + {official_n} official sources
 
 Want another prompt? Just tell me what you're creating next.
-
-Unlock Reddit & X data: set the OPENAI_API_KEY and XAI_API_KEY environment variables
 ```

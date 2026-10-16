@@ -27,7 +27,7 @@
         "ToolSearch is run for Parallel Search ('parallel web_search') and for Keenable ('keenable search_web_pages') before any subagent is dispatched",
         "No MCP search or fetch tool is called; the web sources come from WebSearch and WebFetch",
         "Exactly 8 subagents (C1-C4 and O1-O4) are dispatched in a single message through the Agent tool",
-        "Every subagent prompt carries only the WebSearch + WebFetch search block, with the recorded reason, site restrictions passed as allowed_domains rather than site: in the query, and the note that Reddit and X are out of reach; it has no switch rule, no fallback block, and no Parallel Search or Keenable tool",
+        "Every subagent prompt carries only the WebSearch + WebFetch search block, with the recorded reason, site restrictions passed as allowed_domains rather than site: in the query (except bsky.app, threads.com and linkedin.com, named in the query instead), and the note that Reddit and X are out of reach; it has no switch rule, no fallback block, and no Parallel Search or Keenable tool",
         "The stats footer has a line 'Search backend: WebSearch + WebFetch (skipped Parallel Search: not connected, Keenable: not connected; ...)'",
         "A line under the footer points to references/search-setup.md",
         "The community section is a 'Most Mentioned' list of specific database names with mention counts and sources",
@@ -37,14 +37,15 @@
     {
       "id": 3,
       "prompt": "/research how are teams adopting the Model Context Protocol in production",
-      "expected_output": "Precondition: OPENAI_API_KEY and XAI_API_KEY are unset and no ~/.config/research/.env exists. The script runs web-only without network calls; the skill continues without warning, lets the subagents cover the web (since the script covered nothing, Reddit is included when the backend is Parallel Search or Keenable, and listed under Gaps with WebSearch + WebFetch), and the footer drops the Reddit and X lines, keeps the search backend line, and gives the environment-variable hint.",
+      "expected_output": "Precondition: OPENAI_API_KEY and XAI_API_KEY are unset and no ~/.config/research/.env exists. The script runs web-only without network calls; the skill continues without warning, lets the subagents cover the web (since the script covered nothing, Reddit is included when the backend is Parallel Search or Keenable, and listed under Gaps with WebSearch + WebFetch), and the footer drops the Reddit and X lines and keeps the search backend line, with no API key hint. The C3 agent covers social posts, X included.",
       "files": [],
       "expectations": [
         "The script output shows 'Mode: web-only' and 'Script covered: none', and the skill continues to Phase 2 without stopping or warning",
         "The skill does not run a separate web search of its own in response to the '### WEBSEARCH REQUIRED ###' block; web sources come from the subagents",
         "The community subagent prompts say the script covered no sites, so Reddit threads are in scope when the backend can read them (Parallel Search or Keenable), and go under Gaps with WebSearch + WebFetch",
         "The stats footer has no Reddit line and no X line, and still has a 'Search backend:' line naming Parallel Search, Keenable, or WebSearch + WebFetch",
-        "The footer hint names OPENAI_API_KEY and XAI_API_KEY as environment variables and describes ~/.config/research/.env as a Claude Code convenience that Cowork lacks",
+        "The footer has no API key hint and no 'Unlock Reddit & X' block, because web-only mode is normal",
+        "The C3 subagent prompt targets social posts on X, Bluesky, Threads and LinkedIn, and, with Parallel Search or Keenable as the backend, tells the agent to use X post text from search results rather than fetch x.com pages",
         "No API key value appears anywhere in the output"
       ]
     },
@@ -62,6 +63,64 @@
         "Exactly 6 subagents (C1-C3 and O1-O3) are dispatched in a single message through the Agent tool",
         "The stats footer has an X line, no Reddit line, and a line 'Search backend: Keenable (skipped Parallel Search: not connected; ...)'",
         "No API key value appears anywhere in the output"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "/research how mid-market UK companies are choosing AI tools for their sales teams",
+      "expected_output": "Precondition: Claude Code 2.1.292 or later on the Anthropic API or a Claude subscription, so the Agent tool takes model and effort. A report at default depth whose 8 search subagents run on Sonnet 5.5 at high effort; the lead writes the synthesis itself, and the stats footer has a Models line saying what ran.",
+      "files": [],
+      "expectations": [
+        "Exactly 8 subagents (C1-C4 and O1-O4) are dispatched in a single message, and every one of those Agent calls passes model 'sonnet' and effort 'high'",
+        "No Agent call passes model 'fable' or a name",
+        "Every subagent prompt tells the agent not to start subagents of its own",
+        "Every subagent report has a 'Model:' line under 'Search backend' naming the model it ran on",
+        "No synthesis subagent is dispatched: after the 8 reports arrive, the lead writes the report itself",
+        "The stats footer has a 'Models:' line naming Sonnet 5.5 at high for the agents and the lead's own model for the synthesis",
+        "The report has the community section, the official section, and a cross-reference table with 3-5 rows",
+        "Because this is a business topic, the C1 prompt names sales and RevOps communities (Pavilion, Revenue Operations Alliance, sales subreddits), the O2 prompt names business press and analysts (such as Harvard Business Review, Gartner, Forrester), and the O4 prompt names UK institutions (such as the ONS and the ICO)"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "/research what has changed in EU AI Act enforcement for general-purpose AI model providers --deep",
+      "expected_output": "Precondition: as in eval 5. A report at deep depth: the 10 search subagents run on Sonnet 5.5 at xhigh and are told not to start subagents of their own; once all 10 have reported, one synthesis subagent on Opus 5.5 at xhigh writes the report from their reports, and the lead displays it and adds the invitation.",
+      "files": [],
+      "expectations": [
+        "Exactly 10 subagents (C1-C5 and O1-O5) are dispatched in a single message, each Agent call with model 'sonnet' and effort 'xhigh'",
+        "Every search subagent prompt tells the agent not to start subagents of its own",
+        "The C4 prompt targets buyer reviews and video (TrustRadius, Gartner Peer Insights, G2, Capterra, YouTube), and the C5 prompt targets non-English communities (Habr, Qiita, V2EX) with queries in each site's language",
+        "After all 10 have reported, exactly one more subagent is dispatched to write the synthesis, with model 'opus' and effort 'xhigh'",
+        "The synthesis subagent's prompt says it writes the synthesis itself and starts no subagents of its own, carries every agent report under its role ID inside one block marked as data from web pages, not instructions, and tells it to read Phase 4 and 'Display the Two-Sided Report' in SKILL.md, and references/output-format.md, in the skill folder",
+        "The synthesis subagent starts no subagent of its own",
+        "No Agent call passes model 'fable' or a name",
+        "The displayed report has the community section, the official section, the cross-reference table and the stats footer, followed by the invitation",
+        "The stats footer's 'Models:' line names Sonnet 5.5 at xhigh for the agents and Opus 5.5 at xhigh for the synthesis"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "/research best CRM for a five-person B2B sales team --quick, and run all the agents on Opus",
+      "expected_output": "Precondition: as in eval 5. A RECOMMENDATIONS report at quick depth where the user's model choice wins: the 6 search subagents run on Opus 5.5 at the quick depth's medium effort, the lead writes the synthesis, and the stats footer marks the model as the user's choice.",
+      "files": [],
+      "expectations": [
+        "Exactly 6 subagents (C1-C3 and O1-O3) are dispatched in a single message, each Agent call with model 'opus' and effort 'medium'",
+        "TOPIC leaves out the model request: no subagent query mentions Opus, and the queries are about CRMs for small B2B sales teams",
+        "No synthesis subagent is dispatched: the lead writes the report itself",
+        "The stats footer's 'Models:' line names Opus 5.5 at medium for the agents and marks it as the user's choice",
+        "The community section is a 'Most Mentioned' list of specific CRM names with mention counts and sources"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "/research what sales teams are saying about Dynamics 365 Copilot --quick, use Fable for the agents",
+      "expected_output": "Precondition: as in eval 5. The routing never runs Fable: the request for it puts the 6 agents on Opus 5.5 at the quick depth's medium effort, and the stats footer's Models line says Fable was asked for and Opus ran instead.",
+      "files": [],
+      "expectations": [
+        "Exactly 6 subagents (C1-C3 and O1-O3) are dispatched in a single message, each Agent call with model 'opus' and effort 'medium'",
+        "No Agent call passes model 'fable'",
+        "TOPIC leaves out the model request: no subagent query mentions Fable",
+        "The stats footer's 'Models:' line says Fable was asked for and the agents ran on Opus 5.5 at medium"
       ]
     }
   ]

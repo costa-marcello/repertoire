@@ -4,12 +4,13 @@
 
 ## Variables to Extract
 
-Before doing anything, parse the user's input for these four variables:
+Before doing anything, parse the user's input for these five variables:
 
 1. **TOPIC**: What they want to learn about
 2. **TARGET_TOOL** (if specified): Where they'll use the prompts (e.g., "Nano Banana Pro", "Midjourney")
 3. **QUERY_TYPE**: One of the four types below
 4. **DEPTH**: Controls the subagent count via flags
+5. **MODEL_CHOICE** (if specified): A model or effort level the user names for the agents
 
 ## Query Type Definitions
 
@@ -26,6 +27,10 @@ When two types match, PROMPTING wins over RECOMMENDATIONS: "best practices for R
 
 `--quick`, no flag (default), or `--deep`. Strip the flag from TOPIC. The same flag is passed to the script in Phase 1; the subagent count for each depth is in SKILL.md, Phase 2.
 
+## Model Choice
+
+Store a request to run the agents on a named model or effort level ("run all the agents on Opus", "use high effort") as MODEL_CHOICE, and strip it from TOPIC, as with the depth flag. "The user's choice wins" in `model-routing.md` says how the dispatch uses it, Fable included.
+
 ## Common Detection Patterns
 
 - `[topic] for [tool]` -> "web mockups for Nano Banana Pro" -> TOOL IS SPECIFIED
@@ -35,6 +40,6 @@ When two types match, PROMPTING wins over RECOMMENDATIONS: "best practices for R
 
 ## Variable Storage
 
-Store as: `TOPIC`, `TARGET_TOOL` (or "unknown"), `QUERY_TYPE`, `DEPTH`.
+Store as: `TOPIC`, `TARGET_TOOL` (or "unknown"), `QUERY_TYPE`, `DEPTH`, `MODEL_CHOICE` (or "none").
 
 If the tool is specified, use it. If not, run the research first; the invitation after the report decides whether to ask for one (see "Invitation" in `output-format.md`).

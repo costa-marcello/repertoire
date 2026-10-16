@@ -27,7 +27,7 @@ Phase 4 of SKILL.md weights the sources this way in the synthesis:
 | Expert blogs | MEDIUM-LOW | Individual perspective |
 | Misc community | MEDIUM-LOW | Volume varies |
 
-Reddit threads that a subagent found, because the script did not cover Reddit, lack the script's verified metrics; weight them as misc community.
+Reddit threads and X, Bluesky, Threads or LinkedIn posts that a subagent found, because the script did not cover them, lack the script's verified metrics: weight them as misc community. Weight YouTube reviews and buyer reviews (TrustRadius, Gartner Peer Insights, G2, Capterra) as misc community too.
 
 ## Report Template
 
@@ -41,7 +41,7 @@ Reddit threads that a subagent found, because the script did not cover Reddit, l
 #### Reddit & X (with engagement metrics)
 [From Python script — these have real upvotes, likes, reposts]
 
-#### Broader Community (HN, forums, blogs)
+#### Broader Community (Reddit, social posts, HN, forums, reviews, video)
 [From community subagents C1-C5]
 ```
 
@@ -124,21 +124,31 @@ Status definitions:
 
 ## Stats Footer
 
-Use real numbers from the research. The `Search backend` line is always present: it names `SEARCH_BACKEND` from SKILL.md, the backends skipped before it, and any agent that switched to a fallback mid-run.
+Use real numbers from the research. The `Models` and `Search backend` lines are always present. The `Search backend` line names `SEARCH_BACKEND` from SKILL.md, the backends skipped before it, and any agent that switched to a fallback mid-run.
 
 ```
 ---
 {AGENTS_LINE}
 ├─ Reddit: {n} threads | {upvotes} upvotes | {comments} comments
 ├─ X: {n} posts | {likes} likes | {reposts} reposts
-├─ Community web: {n} sources (HN, forums, blogs)
+├─ Community web: {n} sources (Reddit, social posts, HN, forums, reviews, video)
 ├─ Official web: {n} sources (docs, papers, reports)
 ├─ Agents dispatched: {total} ({C}C + {O}O)
+├─ Models: {MODELS}
 ├─ Search backend: {SEARCH_BACKEND}
 └─ Cross-reference: {agree} aligned, {disagree} divergent, {gaps} gaps
 ```
 
 `{AGENTS_LINE}` is `All agents reported back!` when every agent reported, else it counts the failures, as in `7 of 8 agents reported back; 1 agent failed (C4)`.
+
+`{MODELS}` names the model each agent reported on its "Model" line, with the effort level passed in its Agent call, then who wrote the synthesis, as set in `model-routing.md`. When a report says `not stated`, name the model passed instead. Write effort levels as the names passed (`medium`, `high`, `xhigh`), never as a number an agent's environment shows. Add `user's choice` when the user picked the setting, or `Fable asked for, Opus ran` when `MODEL_CHOICE` named Fable, and name any agent that ran on another model. For example:
+- `agents Sonnet 5.5 (high); synthesis by the lead, Opus 5.5`
+- `agents Sonnet 5.5 (xhigh); synthesis Opus 5.5 (xhigh)`
+- `agents Opus 5.5 (medium, user's choice); synthesis by the lead, Opus 5.5`
+- `agents Opus 5.5 (medium, Fable asked for, Opus ran); synthesis by the lead, Sonnet 5.5`
+- `agents Sonnet 5.5 (high), except O2 on Haiku 5.5; synthesis by the lead, Sonnet 5.5`
+- `agents Sonnet 5.5 (high, requested model could not be applied); synthesis by the lead, Opus 5.5`
+- `the session's model for all (the Agent tool here takes no model or effort); synthesis by the lead`
 
 `{SEARCH_BACKEND}` reads `<backend> (skipped <backend>: <reason>, ...; fallback: <switches, or none>)`. The `skipped` part lists each earlier backend in the chain with its reason (`not connected`, `rate-limited`, `out of credits`, or `error`), and is left out when Parallel Search answered. For example:
 - `Parallel Search (fallback: none)`
@@ -147,15 +157,9 @@ Use real numbers from the research. The `Search backend` line is always present:
 - `Keenable (skipped Parallel Search: rate-limited; fallback: O2 switched to WebSearch + WebFetch)`
 - `WebSearch + WebFetch (skipped Parallel Search: rate-limited, Keenable: not connected; fallback: none)`
 
-When the run used WebSearch + WebFetch, as the backend or as any agent's fallback, add one line under the footer: `Better search, Reddit included: connect Parallel Search or Keenable, see references/search-setup.md in the research skill.`
+When the run used WebSearch + WebFetch, as the backend or as any agent's fallback, add one line under the footer: `Better search, Reddit and X included: connect Parallel Search or Keenable, see references/search-setup.md in the research skill.`
 
-Drop the Reddit line when the script did not cover Reddit, and the X line when it did not cover X. **Web-only mode** (no Reddit/X API keys) drops both and adds:
-```
-Unlock Reddit & X data: set these environment variables
-  - OPENAI_API_KEY -> Reddit (real upvotes & comments)
-  - XAI_API_KEY -> X/Twitter (real likes & reposts)
-  (In Claude Code, ~/.config/research/.env also works; Cowork has no such file.)
-```
+Drop the Reddit line when the script did not cover Reddit, and the X line when it did not cover X. In web-only mode (no API keys) both lines go, and the agents' Reddit and X findings stay in the community section.
 
 ## Invitation
 

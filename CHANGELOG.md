@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+- The research skill's community agents now cover social posts and more communities. C2 searches Reddit and forums, including product user communities such as HubSpot Community and Spiceworks. C3 searches X, Bluesky, Threads and LinkedIn. C4 covers buyer reviews (TrustRadius, Gartner Peer Insights, G2, Capterra) and YouTube, and C5 covers non-English communities (Habr, Qiita, V2EX). X needs no API key: Parallel Search and Keenable results carry the text of public posts. LinkedIn posts and articles come through Keenable, because Parallel Search's LinkedIn filter returns other sites. For sales, marketing, CRM and market topics, the agents swap tech sources for sales communities (Pavilion, Revenue Operations Alliance, sales subreddits), business press and analysts (Harvard Business Review, Gartner, Forrester, diginomica, ComputerWeekly) and institutions (national statistics, regulators, professional bodies such as the Institute of Sales Professionals). The report footer no longer shows the "Unlock Reddit & X data" hint
+- The research skill now picks a model and effort level for each subagent instead of copying your session's: Sonnet 5.5 at medium for `--quick`, at high by default and at xhigh for `--deep`, where Opus 5.5 at xhigh then writes the report from the subagents' findings. A model you name in the request ("run all the agents on Opus") takes precedence, except Fable: the skill runs Opus 5.5 instead, which matches Fable on research for less than half the price. Each subagent says which model it ran on, and the report footer gains a `Models` line. Before, a session at max effort ran every subagent on Opus at max. The research skill's `references/model-routing.md` explains each setting and the benchmarks behind it
+
 ## [0.12.0] - 2026-10-15
 
 ### Added
@@ -277,6 +283,7 @@ All notable changes to this project will be documented in this file.
 - Fixed script invocations and variable names after skill rename
 - Fixed review-skill over-specification and deduplicated steps
 
+[Unreleased]: https://github.com/costa-marcello/repertoire/compare/v0.12.0...HEAD
 [0.12.0]: https://github.com/costa-marcello/repertoire/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/costa-marcello/repertoire/compare/v0.10.1...v0.11.0
 [0.10.1]: https://github.com/costa-marcello/repertoire/compare/v0.10.0...v0.10.1

@@ -116,7 +116,7 @@ Creates professional software diagrams using Mermaid syntax. Covers class diagra
 
 ### Research
 
-A single skill that turns Claude into a research orchestrator: it fans out parallel subagents across community and official sources, then reports where they agree and disagree.
+A single skill that turns Claude into a research lead: it fans out parallel subagents across community and official sources, then reports where they agree and disagree.
 
 <table>
 <tr>
@@ -128,7 +128,7 @@ A single skill that turns Claude into a research orchestrator: it fans out paral
 <td><strong>research</strong></td>
 <td>
 
-Dispatches 6-10 parallel subagents to research any topic over the last 60 days. Covers community sources (Hacker News, Lobsters, developer forums, blogs; Reddit with an OpenAI API key or a Parallel Search or Keenable connector, X with an xAI API key) and official sources (documentation, academic papers, industry publications) in a single run. Produces a two-sided report with community findings, official findings, a cross-reference table showing where they agree and disagree, and real Reddit and X engagement statistics when you set an OpenAI or xAI API key. Searches with Parallel Search or Keenable when you connect them, and with Claude's built-in web search otherwise. Supports three depth levels (quick, default, deep) and four query types (prompting, recommendations, news, general). After the report, it offers to write one tailored prompt in the format the research recommends, for prompting questions or when you name the tool the prompt is for; other questions get follow-up suggestions instead.
+Dispatches 6-10 parallel subagents to research any topic over the last 60 days. Covers community sources (Hacker News and tech forums, Reddit, X, Bluesky, Threads, LinkedIn, product user communities, review sites, YouTube and non-English forums; Reddit and X come through a Parallel Search or Keenable connector, or the optional API keys, and LinkedIn through Keenable) and official sources (documentation, academic papers, industry publications) in a single run. Produces a two-sided report with community findings, official findings, a cross-reference table showing where they agree and disagree, and real Reddit and X engagement statistics when you set an OpenAI or xAI API key. Searches with Parallel Search or Keenable when you connect them, and with Claude's built-in web search otherwise. Supports three depth levels (quick, default, deep) and four query types (prompting, recommendations, news, general). Its subagents run on Sonnet 5.5 at an effort level set by the depth, and on deep runs Opus 5.5 writes the report. After the report, it offers to write one tailored prompt in the format the research recommends, for prompting questions or when you name the tool the prompt is for; other questions get follow-up suggestions instead.
 
 </td>
 <td><code>/repertoire:research</code> + topic<br/><code>/repertoire:research best practices for RAG pipelines</code><br/><code>/repertoire:research what's new with React 19</code><br/><code>/repertoire:research Claude Code tips and tricks</code></td>

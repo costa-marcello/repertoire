@@ -2,19 +2,19 @@
 
 ## Contents
 
-1. [Orchestrator Prompting Primer](#orchestrator-prompting-primer)
+1. [Lead Prompting Primer](#lead-prompting-primer)
 2. [Search Tool Block](#search-tool-block)
 3. [Query Quality Protocol](#query-quality-protocol)
 4. [Community Agent Template](#community-agent-template)
 5. [Official Agent Template](#official-agent-template)
 6. [Query Generation by QUERY_TYPE](#query-generation-by-query_type)
 
-<!-- Templates used by the research skill orchestrator to construct subagent prompts.
+<!-- Templates the research lead uses to construct subagent prompts.
      Variables: {TOPIC}, {QUERY_TYPE}, {FOCUS}, {QUERIES}, {DATE_FROM}, {CURRENT_YEAR},
      {SCRIPT_SOURCES}, {MCP_TOOLS}; inside the search blocks also {SEARCH_TOOL},
      {FETCH_TOOL}, {PARALLEL_SESSION_ID}, {REASON} and {BACKEND} -->
 
-## Orchestrator Prompting Primer
+## Lead Prompting Primer
 
 You are the research lead, not a dispatcher. Subagent output quality is bounded by the prompts you hand them. Before filling any template, apply these four rules:
 
@@ -37,7 +37,7 @@ You are the research lead, not a dispatcher. Subagent output quality is bounded 
 
 1. the chosen backend's block;
 2. the switch rule;
-3. the block of each backend in `FALLBACK_CHAIN`, in order, under the heading `FALLBACK SEARCH TOOLS (use only after a switch, in this order)`.
+3. the block of each backend in `FALLBACK_CHAIN`, in order, under the heading `FALLBACK SEARCH TOOLS (use only after a switch, in this order, or for LinkedIn as SEARCH TOOLS says)`.
 
 When the chosen backend is WebSearch + WebFetch, `FALLBACK_CHAIN` is empty: skip parts 2 and 3, so `{MCP_TOOLS}` is the WebSearch + WebFetch block alone.
 
@@ -63,7 +63,14 @@ SEARCH TOOLS (backend: Parallel Search)
   quote, number or date to confirm). It returns excerpts, about 25,000
   characters per call in total. Set "full_content": true only for one to
   three URLs at a time: full pages can overflow the tool output limit.
-- Parallel can read reddit.com threads. x.com pages usually need a login.
+- Parallel can read reddit.com threads. Its results also carry the text
+  of public X posts, often with view and like counts: use what the results
+  show, and never fetch an x.com page, which needs a login. Bluesky
+  posts come through site:bsky.app the same way.
+- site:linkedin.com returns pages from other sites. When Keenable is
+  under FALLBACK SEARCH TOOLS, search LinkedIn with its search tool and
+  "site": "linkedin.com" (this is not a switch); otherwise list LinkedIn
+  under Gaps.
 - If these tools are not loaded yet, load them first with ToolSearch:
   "select:{SEARCH_TOOL},{FETCH_TOOL}"
 ```
@@ -81,7 +88,10 @@ SEARCH TOOLS (backend: Keenable)
   Keenable's indexed copy, which covers its search results; add
   "live": true for a page it has not indexed. Add "prompt" (for example
   "quote every sentence about X, with its date") to get only that part.
-- Keenable can read reddit.com threads. x.com pages usually need a login.
+- Keenable can read reddit.com threads. Its results also carry the text
+  of public X, Bluesky and Threads posts, and LinkedIn posts and
+  articles: search them with "site", use that text, and never fetch an
+  x.com page, which needs a login.
 - If these tools are not loaded yet, load them first with ToolSearch:
   "select:{SEARCH_TOOL},{FETCH_TOOL}"
 ```
@@ -97,7 +107,9 @@ SEARCH TOOLS (backend: WebSearch + WebFetch, because {REASON})
   dates before you report them.
 - These tools cannot reach Reddit (reddit.com searches fail and WebFetch
   refuses Reddit pages) or X (x.com refuses them). Do not spend queries
-  on either; when Reddit is in scope, list it under Gaps.
+  on either; when Reddit or X is in scope, list it under Gaps.
+- "allowed_domains" on bsky.app, threads.com or linkedin.com returned
+  unrelated pages in testing: name the platform in the query instead.
 - All agents share one budget of about 200 searches per session: run
   only the searches your queries need.
 - If these tools are not loaded yet, load them first with ToolSearch:
@@ -135,7 +147,7 @@ QUERY CRAFTING DISCIPLINE:
   ("tools", "tips", "best") to be specific to {TOPIC}.
 - Run each query once. If it returns fewer than 3 relevant results,
   reformulate ONCE and try again. Do not burn tokens on repeated reformulations.
-- Log the final queries you actually ran so the orchestrator can assess coverage.
+- Log the final queries you actually ran so the lead can assess coverage.
 ```
 
 ---
@@ -144,16 +156,17 @@ QUERY CRAFTING DISCIPLINE:
 
 ```
 ROLE: You are a domain investigator. Your job is NOT to dump links.
-It is to return evidence-backed findings the orchestrator can trust.
+It is to return evidence-backed findings the lead can trust.
 You are looking at what REAL PEOPLE are saying about {TOPIC} in online
-discussions and forums published from {DATE_FROM} to today.
+discussions, forums, social posts, reviews and videos published from
+{DATE_FROM} to today.
 
 CONTEXT:
 - Sites already covered by a separate script with real engagement metrics
   (upvotes, likes, reposts): {SCRIPT_SOURCES}. Do NOT search those sites.
-  Every site not listed is in scope, including Reddit when reddit.com is
-  not listed and your search tools can reach it (see SEARCH TOOLS); x.com
-  pages usually need a login, so prefer other sources over X.
+  Every site not listed is in scope, including Reddit and X when they are
+  in your focus area, not listed, and reachable with your search tools
+  (see SEARCH TOOLS).
 - You are searching for community voices beyond the sites listed above.
 - Date range: {DATE_FROM} to today
 - Current year: {CURRENT_YEAR}
@@ -183,6 +196,8 @@ SOURCE CREDIBILITY LADDER (tag each finding):
   credentialed expert blog, reputable community site)
 - Tier C: individual anecdote (single forum post, unverified blog,
   throwaway account, no corroboration)
+A social post, review or video with engagement counts or a named author
+is Tier B, and an anonymous single item is Tier C.
 Drop Tier C unless it corroborates Tier A or B.
 
 EVIDENCE REQUIREMENTS:
@@ -216,6 +231,9 @@ NEGATIVE INSTRUCTIONS:
 - Do NOT report confidence based on what you already know.
   Report only what the sources say.
 - Do NOT merge claims from different sources into a single bullet.
+- Do NOT start subagents of your own: the lead already runs the other
+  angles in parallel, and extra agents multiply the cost and the load on
+  the search backend.
 - If zero relevant results exist, return "No findings" — do not pad.
 
 MINIMUM THRESHOLD:
@@ -226,6 +244,7 @@ RETURN FORMAT (max 500 words):
 
 ### Search backend
 - [backend and tools you actually used; if you switched to a fallback backend, say which, after which query, and why]
+- Model: [the model name your environment states, such as "Sonnet 5.5", or "not stated"]
 
 ### Queries Run
 - [list each final query exactly as executed]
@@ -257,7 +276,7 @@ For each relevant result:
 
 ```
 ROLE: You are an authoritative source investigator. Your job is NOT to dump links.
-It is to return evidence-backed, primary-source findings the orchestrator can trust.
+It is to return evidence-backed, primary-source findings the lead can trust.
 You focus exclusively on OFFICIAL, INSTITUTIONAL, and EXPERT information about
 {TOPIC} published from {DATE_FROM} to today.
 
@@ -326,6 +345,9 @@ NEGATIVE INSTRUCTIONS:
   must come from a query run in THIS invocation.
 - Do NOT report opinions — leave opinion work to community agents.
 - Do NOT merge claims from different sources into a single bullet.
+- Do NOT start subagents of your own: the lead already runs the other
+  angles in parallel, and extra agents multiply the cost and the load on
+  the search backend.
 - If no authoritative sources exist for this topic, say so clearly.
 
 MINIMUM THRESHOLD:
@@ -335,6 +357,7 @@ RETURN FORMAT (max 500 words):
 
 ### Search backend
 - [backend and tools you actually used; if you switched to a fallback backend, say which, after which query, and why]
+- Model: [the model name your environment states, such as "Sonnet 5.5", or "not stated"]
 
 ### Queries Run
 - [list each final query exactly as executed]
@@ -367,7 +390,12 @@ For each relevant result:
 
 ## Query Generation by QUERY_TYPE
 
-`{CURRENT_YEAR}` is substituted by the orchestrator from the system date at dispatch time.
+`{CURRENT_YEAR}` is substituted by the lead from the system date at dispatch time.
+
+- **Covered sites:** drop any `site:` filter for a site in `SCRIPT_SOURCES`, and write another query for that angle.
+- **Business topics:** for a sales, marketing, CRM or market topic, swap the tech sites in these patterns for the business sources in `source-categories.md`, for example `site:reddit.com/r/sales`, `site:revenueoperationsalliance.com`, `site:diginomica.com` or `site:gartner.com`.
+- **C5 queries:** write them in each site's language (translate the topic's key terms), and tell the agent to report in English. For C5 this overrides the exact-terminology line in the template, and product and brand names stay as written.
+- **LinkedIn:** with Parallel Search as the backend, the agent runs `site:linkedin.com` queries with Keenable's search tool when Keenable is in `FALLBACK_CHAIN`, and lists LinkedIn under Gaps otherwise (see the Parallel Search block).
 
 ### RECOMMENDATIONS Queries
 
@@ -375,10 +403,10 @@ For each relevant result:
 | Agent | Query patterns |
 |-------|---------------|
 | C1 (HN/tech) | `"best {TOPIC}" site:news.ycombinator.com`, `"{TOPIC} recommendations" site:lobste.rs` |
-| C2 (broad) | `"what {TOPIC} do you use" forum`, `"{TOPIC} vs" comparison {CURRENT_YEAR}` |
-| C3 (niche) | `"{TOPIC} alternative to" {CURRENT_YEAR}`, `"{TOPIC} review" site:g2.com OR site:capterra.com` |
-| C4 (dev) | `"{TOPIC}" site:dev.to`, `"{TOPIC} experience" blog {CURRENT_YEAR}` |
-| C5 (intl) | `"best {TOPIC}" non-English community`, `"{TOPIC} adoption" international {CURRENT_YEAR}` |
+| C2 (Reddit, forums) | `"best {TOPIC}" site:reddit.com`, `"what {TOPIC} do you use" forum` |
+| C3 (social) | `"{TOPIC}" recommend site:x.com OR site:bsky.app`, `"{TOPIC}" site:linkedin.com {CURRENT_YEAR}` |
+| C4 (reviews, video) | `"{TOPIC}" site:trustradius.com OR site:gartner.com`, `"{TOPIC} review" site:youtube.com {CURRENT_YEAR}` |
+| C5 (non-English) | `"{TOPIC}" site:habr.com OR site:qiita.com`, `"{TOPIC}" site:v2ex.com {CURRENT_YEAR}` |
 
 **Official agents:**
 | Agent | Query patterns |
@@ -395,10 +423,10 @@ For each relevant result:
 | Agent | Query patterns |
 |-------|---------------|
 | C1 | `"{TOPIC} news" site:news.ycombinator.com`, `"{TOPIC} announcement" discussion` |
-| C2 | `"thoughts on {TOPIC}" {CURRENT_YEAR} forum`, `"{TOPIC} reaction" community` |
-| C3 | `"{TOPIC} impact" discussion {CURRENT_YEAR}`, `"{TOPIC} what does this mean"` |
-| C4 | `"{TOPIC} developer reaction" {CURRENT_YEAR}`, `"{TOPIC}" site:dev.to {CURRENT_YEAR}` |
-| C5 | `"{TOPIC} global reaction"`, `"{TOPIC}" international perspective {CURRENT_YEAR}` |
+| C2 | `"{TOPIC}" site:reddit.com {CURRENT_YEAR}`, `"thoughts on {TOPIC}" forum` |
+| C3 | `"{TOPIC}" site:x.com`, `"{TOPIC}" site:bsky.app OR site:threads.com` |
+| C4 | `"{TOPIC}" site:youtube.com {CURRENT_YEAR}`, `"{TOPIC} what does this mean"` |
+| C5 | `"{TOPIC}" site:habr.com OR site:qiita.com`, `"{TOPIC}" international reaction {CURRENT_YEAR}` |
 
 **Official agents:**
 | Agent | Query patterns |
@@ -415,10 +443,10 @@ For each relevant result:
 | Agent | Query patterns |
 |-------|---------------|
 | C1 | `"{TOPIC} prompts" site:news.ycombinator.com`, `"{TOPIC} techniques" discussion` |
-| C2 | `"{TOPIC} prompt examples" forum {CURRENT_YEAR}`, `"how to prompt {TOPIC}"` |
-| C3 | `"{TOPIC} tips tricks" {CURRENT_YEAR}`, `"{TOPIC} prompt template"` |
-| C4 | `"{TOPIC} workflow" site:dev.to`, `"{TOPIC} prompting guide" blog` |
-| C5 | `"{TOPIC} creative prompts" {CURRENT_YEAR}`, `"{TOPIC}" prompt gallery` |
+| C2 | `"{TOPIC} prompts" site:reddit.com`, `"how to prompt {TOPIC}" forum` |
+| C3 | `"{TOPIC} prompt" site:x.com OR site:threads.com`, `"{TOPIC} prompt tips" site:bsky.app` |
+| C4 | `"{TOPIC} prompting tutorial" site:youtube.com`, `"{TOPIC}" prompt gallery` |
+| C5 | `"{TOPIC}" prompt site:qiita.com OR site:habr.com`, `"{TOPIC} creative prompts" {CURRENT_YEAR}` |
 
 **Official agents:**
 | Agent | Query patterns |
@@ -435,10 +463,10 @@ For each relevant result:
 | Agent | Query patterns |
 |-------|---------------|
 | C1 | `"{TOPIC}" site:news.ycombinator.com {CURRENT_YEAR}`, `"{TOPIC}" site:lobste.rs` |
-| C2 | `"{TOPIC}" discussion forum {CURRENT_YEAR}`, `"{TOPIC} experience" community` |
-| C3 | `"{TOPIC} pros cons" {CURRENT_YEAR}`, `"{TOPIC}" comparison discussion` |
-| C4 | `"{TOPIC}" site:dev.to {CURRENT_YEAR}`, `"{TOPIC}" developer blog {CURRENT_YEAR}` |
-| C5 | `"{TOPIC}" global perspective {CURRENT_YEAR}`, `"{TOPIC}" international` |
+| C2 | `"{TOPIC}" site:reddit.com {CURRENT_YEAR}`, `"{TOPIC} experience" forum` |
+| C3 | `"{TOPIC}" site:x.com OR site:bsky.app`, `"{TOPIC}" site:linkedin.com {CURRENT_YEAR}` |
+| C4 | `"{TOPIC}" site:youtube.com {CURRENT_YEAR}`, `"{TOPIC} pros cons" review` |
+| C5 | `"{TOPIC}" site:habr.com OR site:qiita.com`, `"{TOPIC}" international {CURRENT_YEAR}` |
 
 **Official agents:**
 | Agent | Query patterns |

@@ -110,13 +110,6 @@ def render_compact(report: schema.Report, limit: int = 15, missing_keys: str = "
     if report.mode == "web-only":
         lines.append("**🌐 WEB-ONLY MODE** - no Reddit or X data; the research subagents cover the web")
         lines.append("")
-        lines.append("---")
-        lines.append("**⚡ Want better results?** Add API keys to unlock Reddit & X data:")
-        lines.append("- `OPENAI_API_KEY` → Reddit threads with real upvotes & comments")
-        lines.append("- `XAI_API_KEY` → X posts with real likes & reposts")
-        lines.append("- Set them as environment variables (in Claude Code, `~/.config/research/.env` also works; Cowork has no such file)")
-        lines.append("---")
-        lines.append("")
 
     lines.append(f"**Date Range:** {report.range_from} to {report.range_to}")
     lines.append(f"**Mode:** {report.mode}")

@@ -17,6 +17,8 @@ The research skill's subagents search the web with the first of these that answe
 2. **Keenable**, a remote MCP server at `api.keenable.ai`. It works without an account, and a free account raises its limits.
 3. Claude's built-in **WebSearch** and **WebFetch**, which need no setup.
 
+Both can read Reddit threads, and both return the text of public X posts: Parallel's results often show view and like counts, and Keenable's also cover Bluesky and Threads (checked 16 October 2026). So the community agents reach Reddit and X without any API key. LinkedIn posts and articles come only through Keenable: Parallel's `site:linkedin.com` returns pages from other sites.
+
 Parallel Search and Keenable are optional. Both run on their providers' servers, so they work in Claude Code, in Cowork, and in cloud sessions with no linked computer. Connect one or both: if the chosen backend runs out of credits or stays rate-limited mid-run, the subagents move to the next one in the chain. The report footer's `Search backend` line says which one a run used.
 
 Keep any API key in your own user configuration. Never put one in a repository or in a shared project file such as `.mcp.json`.
@@ -91,4 +93,4 @@ WebSearch and WebFetch need no setup, so they are always there, but they cover l
 | `rate-limited` | The keyless tier's limit: a rate-limit reply again after a 5-second retry, or Keenable's hourly cap. Connect the other backend too, so the subagents have a fallback. For Keenable, sign in through `/mcp-oauth` or add an API key; for Parallel, connect through `/mcp-oauth` with a Parallel account. |
 | `error`, with a sign-in or HTTP 401 message | The connector lost its sign-in. Reconnect it under Customize > Connectors, or run `/mcp` in Claude Code and sign in again. Parallel's `/mcp-oauth` URL refuses anonymous requests; use `/mcp` for keyless use. |
 | Keenable `out of credits` (HTTP 402) | Your account's allowance for the month is used up. It renews next month; until then, connect Keenable without the key or sign-in to use the keyless tier. |
-| `WebSearch + WebFetch`, with Reddit under Gaps | Expected with the built-in search, which cannot reach Reddit. Connect Parallel Search or Keenable. |
+| `WebSearch + WebFetch`, with Reddit or X under Gaps | Expected with the built-in search, which cannot reach Reddit or X. Connect Parallel Search or Keenable. |

@@ -435,10 +435,6 @@ def main():
     # Initialize progress display
     progress = ui.ProgressDisplay(args.topic, show_banner=True)
 
-    # Show promo for missing keys BEFORE research
-    if missing_keys != 'none':
-        progress.show_promo(missing_keys)
-
     # Select models
     if args.mock:
         # Use mock models
