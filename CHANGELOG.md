@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.13.0] - 2026-10-16
 
 ### Added
 - The research skill now asks before it searches. From your request it picks the questions that would change where or how it looks (at most 10, as options you click, with its recommendation first, chosen from what your instructions say about you, such as your region, your tools and what you already know), always settling how far back to search, which it takes from your request when you name a period. It then shows a short research brief and starts only when you click "Start the research". In a run nobody can answer, such as `claude -p`, it takes its recommended answers and lists them in the brief
@@ -295,7 +295,7 @@ All notable changes to this project will be documented in this file.
 - Fixed script invocations and variable names after skill rename
 - Fixed review-skill over-specification and deduplicated steps
 
-[Unreleased]: https://github.com/costa-marcello/repertoire/compare/v0.12.1...HEAD
+[0.13.0]: https://github.com/costa-marcello/repertoire/compare/v0.12.1...v0.13.0
 [0.12.1]: https://github.com/costa-marcello/repertoire/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/costa-marcello/repertoire/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/costa-marcello/repertoire/compare/v0.10.1...v0.11.0
