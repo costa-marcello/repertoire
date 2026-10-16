@@ -3,9 +3,9 @@
   <h1>Repertoire</h1>
   <p><strong>Skills for Claude Code and Cowork</strong></p>
 
-  [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-  [![Skills](https://img.shields.io/badge/Skills-9-8B5CF6)](skills/)
-  [![Plugin](https://img.shields.io/badge/Plugin-Claude_Code_%7C_Cowork-3B82F6)](.claude-plugin/plugin.json)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-0F3B2E.svg)](LICENSE)
+  [![Skills](https://img.shields.io/badge/Skills-9-E8452C)](skills/)
+  [![Plugin](https://img.shields.io/badge/Plugin-Claude_Code_%7C_Cowork-0F3B2E)](.claude-plugin/plugin.json)
 </div>
 
 ---
