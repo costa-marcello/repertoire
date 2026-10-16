@@ -4,13 +4,12 @@
 
 ## Variables to Extract
 
-Before doing anything, parse the user's input for these five variables:
+Before doing anything, parse the user's input for these four variables:
 
 1. **TOPIC**: What they want to learn about
-2. **TARGET_TOOL** (if specified): Where they'll use the prompts (e.g., "Nano Banana Pro", "Midjourney")
-3. **QUERY_TYPE**: One of the four types below
-4. **DEPTH**: Controls the subagent count via flags
-5. **MODEL_CHOICE** (if specified): A model or effort level the user names for the agents
+2. **QUERY_TYPE**: One of the four types below
+3. **DEPTH**: Controls the subagent count via flags
+4. **MODEL_CHOICE** (if specified): A model or effort level the user names for the agents
 
 ## Query Type Definitions
 
@@ -33,13 +32,10 @@ Store a request to run the agents on a named model or effort level ("run all the
 
 ## Common Detection Patterns
 
-- `[topic] for [tool]` -> "web mockups for Nano Banana Pro" -> TOOL IS SPECIFIED
-- `[topic] prompts for [tool]` -> "UI design prompts for Midjourney" -> TOOL IS SPECIFIED
-- Just `[topic]` -> "iOS design mockups" -> TOOL NOT SPECIFIED, that's OK
+- `[topic] prompts for [tool]` -> "UI design prompts for Midjourney" -> QUERY_TYPE = PROMPTING, and the tool stays in TOPIC
 - "best [topic]" or "top [topic]" -> QUERY_TYPE = RECOMMENDATIONS
+- A period in the request ("in the last 30 days", "since August") -> keep it as `PERIOD_DAYS` (`clarifying-questions.md` then skips the period question), and strip it from TOPIC
 
 ## Variable Storage
 
-Store as: `TOPIC`, `TARGET_TOOL` (or "unknown"), `QUERY_TYPE`, `DEPTH`, `MODEL_CHOICE` (or "none").
-
-If the tool is specified, use it. If not, run the research first; the invitation after the report decides whether to ask for one (see "Invitation" in `output-format.md`).
+Store as: `TOPIC`, `QUERY_TYPE`, `DEPTH`, `MODEL_CHOICE` (or "none"). The clarify step in SKILL.md then adds `PERIOD_DAYS` and `BRIEF` from the user's answers (see `clarifying-questions.md`).

@@ -182,8 +182,6 @@ class Report:
     reddit: List[RedditItem] = field(default_factory=list)
     x: List[XItem] = field(default_factory=list)
     web: List[WebSearchItem] = field(default_factory=list)
-    best_practices: List[str] = field(default_factory=list)
-    prompt_pack: List[str] = field(default_factory=list)
     context_snippet_md: str = ""
     # Status tracking
     reddit_error: Optional[str] = None
@@ -207,8 +205,6 @@ class Report:
             'reddit': [r.to_dict() for r in self.reddit],
             'x': [x.to_dict() for x in self.x],
             'web': [w.to_dict() for w in self.web],
-            'best_practices': self.best_practices,
-            'prompt_pack': self.prompt_pack,
             'context_snippet_md': self.context_snippet_md,
         }
         if self.reddit_error:
@@ -305,8 +301,6 @@ class Report:
             reddit=reddit_items,
             x=x_items,
             web=web_items,
-            best_practices=data.get('best_practices', []),
-            prompt_pack=data.get('prompt_pack', []),
             context_snippet_md=data.get('context_snippet_md', ''),
             reddit_error=data.get('reddit_error'),
             x_error=data.get('x_error'),

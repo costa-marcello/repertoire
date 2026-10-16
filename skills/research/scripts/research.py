@@ -3,7 +3,7 @@
 research - Research a topic on Reddit + X.
 
 Usage:
-    python research.py <topic> [options]
+    python research.py <topic> --days N [options]
     (use python3 where the python command is missing)
 
 Requires Python 3.9 or later; standard library only.
@@ -13,6 +13,8 @@ www.reddit.com (public thread JSON for engagement metrics). Only the sources
 whose API key is set are called; with no keys the script makes no requests.
 
 Options:
+    --days=N            How far back to search, in days (required; the research
+                        skill asks the user, and 3650 means any date)
     --mock              Use fixtures instead of real API calls
     --emit=MODE         Output mode: compact|json|md|context|path (default: compact)
     --sources=MODE      Source selection: auto|reddit|x|both (default: auto)
@@ -60,7 +62,6 @@ from lib import (
     schema,
     score,
     ui,
-    websearch,
     xai_x,
 )
 
@@ -343,6 +344,13 @@ def main():
         description="Research a topic on Reddit + X"
     )
     parser.add_argument("topic", nargs="?", help="Topic to research")
+    parser.add_argument(
+        "--days",
+        type=int,
+        required=True,
+        metavar="N",
+        help="How far back to search, in days (the research skill asks the user; 3650 means any date)",
+    )
     parser.add_argument("--mock", action="store_true", help="Use fixtures")
     parser.add_argument(
         "--emit",
@@ -378,6 +386,8 @@ def main():
     )
 
     args = parser.parse_args()
+    if args.days < 1:
+        parser.error("--days must be 1 or more")
     deadline = time.monotonic() + ENRICH_DEADLINE_SECONDS
 
     # Enable debug logging if requested
@@ -400,7 +410,7 @@ def main():
 
     if not args.topic:
         print("Error: Please provide a topic to research.", file=sys.stderr)
-        print("Usage: python research.py <topic> [options]", file=sys.stderr)
+        print("Usage: python research.py <topic> --days N [options]", file=sys.stderr)
         sys.exit(1)
 
     # Load config
@@ -426,8 +436,8 @@ def main():
                 print(f"Error: {error}", file=sys.stderr)
                 sys.exit(1)
 
-    # Get date range (the lookback window stated in SKILL.md)
-    from_date, to_date = dates.get_date_range(dates.LOOKBACK_DAYS)
+    # Get date range (the search period the user chose, passed as --days)
+    from_date, to_date = dates.get_date_range(args.days)
 
     # Check what keys are missing for promo messaging
     missing_keys = env.get_missing_keys(config)
@@ -497,8 +507,8 @@ def main():
     filtered_x = normalize.filter_by_date_range(normalized_x, from_date, to_date)
 
     # Score items
-    scored_reddit = score.score_reddit_items(filtered_reddit)
-    scored_x = score.score_x_items(filtered_x)
+    scored_reddit = score.score_reddit_items(filtered_reddit, max_days=args.days)
+    scored_x = score.score_x_items(filtered_x, max_days=args.days)
 
     # Sort items
     sorted_reddit = score.sort_items(scored_reddit)

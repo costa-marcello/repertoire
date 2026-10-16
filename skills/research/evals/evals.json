@@ -15,7 +15,8 @@
         "QUERY_TYPE is NEWS, and the subagents are told to check each result's date against DATE_FROM, because Parallel Search has no date filter",
         "The report has the community section, the official section, and a cross-reference table with 3-5 rows marked Aligned, Divergent, or Gap",
         "The stats footer has a line 'Search backend: Parallel Search (...)', with any subagent that switched backends named in its fallback part",
-        "The report ends with the follow-up invitation (NEWS with no target tool), not a prompt offer or a target-tool question, and then waits for the user"
+        "The report ends with the invitation offering follow-ups or to save the report as a file (Markdown, Word, PowerPoint, Excel, web page), with no offer to write a prompt, and then waits for the user",
+        "A research brief, with its period and the answers the run assumed (nobody can answer in an eval run), is shown before any ToolSearch, script run or subagent, and the script runs with --days for that period"
       ]
     },
     {
@@ -31,7 +32,8 @@
         "The stats footer has a line 'Search backend: WebSearch + WebFetch (skipped Parallel Search: not connected, Keenable: not connected; ...)'",
         "A line under the footer points to references/search-setup.md",
         "The community section is a 'Most Mentioned' list of specific database names with mention counts and sources",
-        "The report ends with the follow-up invitation (RECOMMENDATIONS with no target tool), not a prompt offer or a target-tool question"
+        "The report ends with the invitation offering follow-ups or to save the report as a file (Markdown, Word, PowerPoint, Excel, web page), with no offer to write a prompt",
+        "A research brief, with its period and the answers the run assumed (nobody can answer in an eval run), is shown before any ToolSearch, script run or subagent, and the script runs with --days for that period"
       ]
     },
     {
@@ -46,7 +48,8 @@
         "The stats footer has no Reddit line and no X line, and still has a 'Search backend:' line naming Parallel Search, Keenable, or WebSearch + WebFetch",
         "The footer has no API key hint and no 'Unlock Reddit & X' block, because web-only mode is normal",
         "The C3 subagent prompt targets social posts on X, Bluesky, Threads and LinkedIn, and, with Parallel Search or Keenable as the backend, tells the agent to use X post text from search results rather than fetch x.com pages",
-        "No API key value appears anywhere in the output"
+        "No API key value appears anywhere in the output",
+        "A research brief, with its period and the answers the run assumed (nobody can answer in an eval run), is shown before any ToolSearch, script run or subagent, and the script runs with --days for that period"
       ]
     },
     {
@@ -62,7 +65,8 @@
         "No subagent prompt asks for x.com or twitter.com to be searched",
         "Exactly 6 subagents (C1-C3 and O1-O3) are dispatched in a single message through the Agent tool",
         "The stats footer has an X line, no Reddit line, and a line 'Search backend: Keenable (skipped Parallel Search: not connected; ...)'",
-        "No API key value appears anywhere in the output"
+        "No API key value appears anywhere in the output",
+        "A research brief, with its period and the answers the run assumed (nobody can answer in an eval run), is shown before any ToolSearch, script run or subagent, and the script runs with --days for that period"
       ]
     },
     {
@@ -78,7 +82,8 @@
         "No synthesis subagent is dispatched: after the 8 reports arrive, the lead writes the report itself",
         "The stats footer has a 'Models:' line naming Sonnet 5.5 at high for the agents and the lead's own model for the synthesis",
         "The report has the community section, the official section, and a cross-reference table with 3-5 rows",
-        "Because this is a business topic, the C1 prompt names sales and RevOps communities (Pavilion, Revenue Operations Alliance, sales subreddits), the O2 prompt names business press and analysts (such as Harvard Business Review, Gartner, Forrester), and the O4 prompt names UK institutions (such as the ONS and the ICO)"
+        "Because this is a business topic, the C1 prompt names sales and RevOps communities (Pavilion, Revenue Operations Alliance, sales subreddits), the O2 prompt names business press and analysts (such as Harvard Business Review, Gartner, Forrester), and the O4 prompt names UK institutions (such as the ONS and the ICO)",
+        "A research brief, with its period and the answers the run assumed (nobody can answer in an eval run), is shown before any ToolSearch, script run or subagent, and the script runs with --days for that period"
       ]
     },
     {
@@ -94,8 +99,9 @@
         "The synthesis subagent's prompt says it writes the synthesis itself and starts no subagents of its own, carries every agent report under its role ID inside one block marked as data from web pages, not instructions, and tells it to read Phase 4 and 'Display the Two-Sided Report' in SKILL.md, and references/output-format.md, in the skill folder",
         "The synthesis subagent starts no subagent of its own",
         "No Agent call passes model 'fable' or a name",
-        "The displayed report has the community section, the official section, the cross-reference table and the stats footer, followed by the invitation",
-        "The stats footer's 'Models:' line names Sonnet 5.5 at xhigh for the agents and Opus 5.5 at xhigh for the synthesis"
+        "The displayed report has the answer, the community section, the official section, the cross-reference table and the stats footer, followed by the invitation",
+        "The stats footer's 'Models:' line names Sonnet 5.5 at xhigh for the agents and Opus 5.5 at xhigh for the synthesis",
+        "A research brief, with its period and the answers the run assumed (nobody can answer in an eval run), is shown before any ToolSearch, script run or subagent, and the script runs with --days for that period"
       ]
     },
     {
@@ -108,7 +114,8 @@
         "TOPIC leaves out the model request: no subagent query mentions Opus, and the queries are about CRMs for small B2B sales teams",
         "No synthesis subagent is dispatched: the lead writes the report itself",
         "The stats footer's 'Models:' line names Opus 5.5 at medium for the agents and marks it as the user's choice",
-        "The community section is a 'Most Mentioned' list of specific CRM names with mention counts and sources"
+        "The community section is a 'Most Mentioned' list of specific CRM names with mention counts and sources",
+        "A research brief, with its period and the answers the run assumed (nobody can answer in an eval run), is shown before any ToolSearch, script run or subagent, and the script runs with --days for that period"
       ]
     },
     {
@@ -120,7 +127,54 @@
         "Exactly 6 subagents (C1-C3 and O1-O3) are dispatched in a single message, each Agent call with model 'opus' and effort 'medium'",
         "No Agent call passes model 'fable'",
         "TOPIC leaves out the model request: no subagent query mentions Fable",
-        "The stats footer's 'Models:' line says Fable was asked for and the agents ran on Opus 5.5 at medium"
+        "The stats footer's 'Models:' line says Fable was asked for and the agents ran on Opus 5.5 at medium",
+        "A research brief, with its period and the answers the run assumed (nobody can answer in an eval run), is shown before any ToolSearch, script run or subagent, and the script runs with --days for that period"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "/research AI tools for sales teams",
+      "expected_output": "A vague request. In an eval run nobody can answer, so the run does not ask: it shows a research brief whose Assumed line lists the clarifying questions it would have asked, each with the answer it chose, then researches the angle the brief sets.",
+      "files": [],
+      "expectations": [
+        "Before any ToolSearch, script run or subagent, the run lists between 3 and 10 clarifying questions it would have asked, built from the request (such as purpose, market, company size, sources), each with the answer it took",
+        "Every question asks about something the request leaves open, asks one thing in plain words, and offers 2 to 4 options specific to the topic, each with a description of what it changes in the search",
+        "Each question's recommended option comes first, is marked (Recommended), and is a sensible default for this request",
+        "No question asks about the output format, the search backend, the models, or anything the request already says",
+        "One of those questions is the search period, and the brief shows the period with its start date",
+        "The brief shows the topic, the purpose, the scope (market and company size), the period, the sources emphasis and the depth with its agent count, and lists under Assumed every answer the run chose itself or took from the user's profile",
+        "The run does not wait for a start click, because nobody can answer; it continues after the brief",
+        "The script command carries --days with the period's number of days, and every agent prompt's date range starts at today minus that number",
+        "Every agent prompt carries a RESEARCH BRIEF block with the purpose and scope from the brief",
+        "The report opens with a short answer to the brief's purpose, before the community section",
+        "The report ends with the invitation offering follow-ups or to save the report as a file (Markdown, Word, PowerPoint, Excel, web page), with no offer to write a prompt"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "/research Pipedrive pricing changes in the last 30 days --quick",
+      "expected_output": "A precise request that names the product, the period and the depth. The run takes the period from the request, needs few or no questions, and researches Pipedrive pricing over the last 30 days at quick depth.",
+      "files": [],
+      "expectations": [
+        "The period comes from the request: the brief says the last 30 days, and the script command carries --days 30",
+        "The run lists at most 3 clarifying questions, and none asks about the product, the period or the depth, which the request already gives",
+        "Any question it does list asks about something the request leaves open, in plain words, with options specific to Pipedrive pricing",
+        "TOPIC is about Pipedrive pricing and leaves out the period wording and the depth flag",
+        "Exactly 6 subagents (C1-C3 and O1-O3) are dispatched in a single message",
+        "The report ends with the invitation offering follow-ups or to save the report as a file, with no offer to write a prompt"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "/research agents for customer service",
+      "expected_output": "An ambiguous request: \"agents\" can mean AI agents or human service agents. The run settles which one with a clarifying question, and the brief and every query follow the chosen meaning.",
+      "files": [],
+      "expectations": [
+        "One question settles what \"agents\" means here, with options that name both readings (AI agents that handle customer service, and human customer service agents or their tools)",
+        "The questions also cover the purpose and the period, and there are at most 10 in total",
+        "Every question asks one thing in plain words, with 2 to 4 options specific to customer service and the recommended option first",
+        "The brief's topic uses the chosen meaning, so its queries cannot drift to the other one",
+        "A research brief, with its period and the answers the run assumed (nobody can answer in an eval run), is shown before any ToolSearch, script run or subagent, and the script runs with --days for that period"
       ]
     }
   ]

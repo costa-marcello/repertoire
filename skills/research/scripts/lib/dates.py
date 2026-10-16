@@ -3,17 +3,21 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
 
-# The research lookback window in days. SKILL.md ("Lookback window") states
-# this default once; everything else in the skill links to it.
-LOOKBACK_DAYS = 60
+def get_date_range(days: int) -> Tuple[str, str]:
+    """Get the date range for the last N days.
 
-
-def get_date_range(days: int = LOOKBACK_DAYS) -> Tuple[str, str]:
-    """Get the date range for the last N days (default: LOOKBACK_DAYS).
+    Args:
+        days: How far back to look, in days (1 or more). The caller passes
+            the --days value the user chose; there is no default.
 
     Returns:
         Tuple of (from_date, to_date) as YYYY-MM-DD strings
+
+    Raises:
+        ValueError: If days is less than 1
     """
+    if days < 1:
+        raise ValueError(f"days must be 1 or more, got {days}")
     today = datetime.now(timezone.utc).date()
     from_date = today - timedelta(days=days)
     return from_date.isoformat(), today.isoformat()
@@ -111,10 +115,11 @@ def days_ago(date_str: Optional[str]) -> Optional[int]:
         return None
 
 
-def recency_score(date_str: Optional[str], max_days: int = LOOKBACK_DAYS) -> int:
+def recency_score(date_str: Optional[str], max_days: int) -> int:
     """Calculate recency score (0-100).
 
-    0 days ago = 100, max_days ago = 0, clamped.
+    0 days ago = 100, max_days ago = 0, clamped. max_days is the run's
+    --days value (the width of the search period); there is no default.
     """
     age = days_ago(date_str)
     if age is None:

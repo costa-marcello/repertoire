@@ -84,7 +84,7 @@ Subagents searching official sources look for verified facts, announcements, doc
 ## Domain Quality Signals
 
 When evaluating sources, prefer:
-- **Recency**: Content published inside the lookback window (`{DATE_FROM}` to today; the default is set once in SKILL.md, "Lookback window")
+- **Recency**: Content published inside the search period (`{DATE_FROM}` to today; the user sets it before each run, see SKILL.md, "Search period")
 - **Specificity**: Sources that discuss the exact topic, not tangentially related
 - **Engagement**: Community sources with replies/votes > silent posts
 - **Authority**: Official sources from the actual project/org, not third-party summaries

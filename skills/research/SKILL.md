@@ -10,13 +10,14 @@ argument-hint: "[topic] [--quick|--deep]"
 # research: Deep Research Any Topic
 
 <example>
-Input: `/research best Claude Code skills`
+Input: `/research best Claude Code skills`; the user clicks "Last 60 days", then "Start the research".
 Output: Two-sided report with:
+- Answer: two or three sentences that open the report, with the strongest evidence and its main caveat
 - Community: "Most mentioned: /commit (5x, r/ClaudeAI + HN), remotion skill (4x, X + Dev.to)..."
 - Official: "Anthropic docs highlight /pr, /review as recommended workflows..."
 - Cross-reference: 3 aligned, 1 divergent, 1 gap
 - Stats: 12 Reddit threads (847 upvotes) + 8 X posts + 6 community + 4 official sources, Models: agents Sonnet 5.5 (high); synthesis by the lead, Opus 5.5, Search backend: Parallel Search (fallback: none)
-Then offers follow-ups (no prompt offer: this is RECOMMENDATIONS with no target tool) and waits for the user.
+Then offers follow-ups or to save the report as a file, and waits for the user.
 </example>
 
 <example>
@@ -35,9 +36,9 @@ Meanwhile, C1 says "Tool A recommended (12 upvotes on HN)" but O1 says
 "Divergent" with both views attributed.
 </example>
 
-## Lookback window
+## Search period
 
-The default lookback window is **60 days**, set once as `LOOKBACK_DAYS` in `scripts/lib/dates.py`. The script drops Reddit and X results dated outside that window, and the subagents get `{DATE_FROM}` = today minus 60 days. Everywhere else in this skill, "the lookback window" means this setting. Only Keenable filters by date (`published_after`); with Parallel Search and the built-in search, the subagents check each date against `{DATE_FROM}` themselves.
+No period is fixed: before every run the user settles how far back to search (see Clarify the Request), stored as `PERIOD_DAYS`. The script gets `--days {PERIOD_DAYS}` and drops Reddit and X results dated outside the period, and the subagents get `{DATE_FROM}` = today minus `PERIOD_DAYS`. Only Keenable filters by date (`published_after`); with Parallel Search and the built-in search, the subagents check each date against `{DATE_FROM}` themselves.
 
 ## Gotchas
 
@@ -56,17 +57,26 @@ Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file is m
 
 **User input:** $ARGUMENTS
 
-Extract five variables from the user input before proceeding:
+Extract four variables from the user input before proceeding:
 
 | Variable | Extract | Example |
 |----------|---------|---------|
 | `TOPIC` | What they want to learn about | "web app mockups", "Claude Code skills" |
-| `TARGET_TOOL` | Where they'll use prompts (or "unknown") | "Nano Banana Pro", "Midjourney" |
 | `QUERY_TYPE` | PROMPTING \| RECOMMENDATIONS \| NEWS \| GENERAL | Auto-detect from phrasing |
 | `DEPTH` | `--quick` \| default \| `--deep` | Flag in user input |
 | `MODEL_CHOICE` | A model or effort level named for the agents (or "none") | "run the agents on Opus" |
 
-See `references/intent-parsing.md` for query type definitions, detection patterns, and variable storage rules. Do not ask about the target tool before the research; the invitation after the report decides whether to ask.
+See `references/intent-parsing.md` for query type definitions, detection patterns, and variable storage rules.
+
+## Clarify the Request
+
+One run spends 6 to 10 agents, and a run aimed at the wrong angle wastes them all, so settle the angle before any ToolSearch, script run or agent. Follow `references/clarifying-questions.md`:
+
+1. Ask with AskUserQuestion, so the user can click, the questions whose answers would change where or how the agents search, chosen from the user's own words: at most 10, up to 4 per call, the recommended option first. The period is always settled: ask it unless the request names one, and store it as `PERIOD_DAYS`.
+2. Write the research brief (`BRIEF`) and ask "Start the research with this brief?". Search nothing until the user picks Start; after a change, update the brief and ask again.
+3. When nobody can answer (`claude -p`, a subagent, a scheduled task), skip the questions: take the recommended answers, list them as assumptions in the brief, and continue.
+
+Without that file, ask at least the purpose and the period the same way.
 
 ## Choose the Search Backend
 
@@ -86,7 +96,7 @@ Build the `{MCP_TOOLS}` block from "Search Tool Block" in `references/subagent-p
 The script adds Reddit and X data with real engagement metrics, which web search cannot provide. It needs Python 3.9 or later and only the standard library. Run it with a timeout of 600000 ms, the shell tool's maximum: one API call can take three minutes, and the script stops adding Reddit metrics in time to finish inside that limit:
 
 ```bash
-python "${CLAUDE_SKILL_DIR}/scripts/research.py" "{TOPIC}" --emit=compact
+python "${CLAUDE_SKILL_DIR}/scripts/research.py" "{TOPIC}" --days {PERIOD_DAYS} --emit=compact
 ```
 
 Add `--quick` or `--deep` to match `DEPTH`. If the shell reports that `python` is not found, run the same command with `python3`.
@@ -153,7 +163,7 @@ Agent count by depth: `--quick` = 6 (3C + 3O) | default = 8 (4C + 4O) | `--deep`
 
 ### Step 3: Dispatch
 
-For each agent, fill the matching template with `{TOPIC}`, `{QUERY_TYPE}`, `{FOCUS}`, `{QUERIES}` (3-5 queries from the Query Generation tables, with `{CURRENT_YEAR}` taken from the system date), `{DATE_FROM}` (start of the lookback window), `{CURRENT_YEAR}`, `{SCRIPT_SOURCES}`, and `{MCP_TOOLS}`.
+For each agent, fill the matching template with `{TOPIC}`, `{QUERY_TYPE}`, `{FOCUS}`, `{QUERIES}` (3-5 queries from the Query Generation tables, with `{CURRENT_YEAR}` taken from the system date), `{DATE_FROM}` (today minus `PERIOD_DAYS`), `{CURRENT_YEAR}`, `{SCRIPT_SOURCES}`, `{BRIEF}`, and `{MCP_TOOLS}`.
 
 Dispatch every agent in a single message, as parallel calls to the Agent tool, each with `subagent_type: "general-purpose"`, the `model` and `effort` for `DEPTH` and `MODEL_CHOICE` from "Settings by depth" in `references/model-routing.md` (without that file, `sonnet` at `high`), and a description naming its role (for example `"C1: HN + tech forums"`, `"O2: industry pubs"`). Sequential dispatch multiplies the wait. The agents run in the background, and each one's report arrives automatically when it finishes; do not poll them.
 
@@ -170,7 +180,7 @@ Synthesize SCRIPT_DATA, COMMUNITY_FINDINGS, and OFFICIAL_FINDINGS into one two-s
 
 ### Weighting
 
-Weight each source by the table in "Source Weighting" in `references/output-format.md`: script-verified Reddit and X data first, then HN, official docs and papers, then publications, blogs and misc community. Weight lower any finding an agent flagged as contradicted or backed only by Tier C sources.
+Weight each source by the table in "Source Weighting" in `references/output-format.md`: script-verified Reddit and X data first, then HN, official docs and papers, then publications, blogs and misc community. Weight lower any finding an agent flagged as contradicted or backed only by Tier C sources. Drop any finding the brief's Exclude line rules out.
 
 ### Cross-Reference Analysis
 
@@ -191,7 +201,6 @@ GOOD: "Most mentioned: /commit (5 mentions, r/ClaudeAI + HN), remotion skill (4x
 </example>
 
 For all query types, identify from the actual research output:
-- **Prompt format**: does the research recommend JSON, structured params, natural language, or keywords? Deliver prompts in that format later.
 - The top 3-5 patterns or techniques that appeared across multiple sources
 - Specific keywords, structures, or approaches the sources mention
 - Common pitfalls the sources mention
@@ -202,23 +211,14 @@ Before displaying, trace every specific claim (names, numbers, quotes, version s
 
 Use the templates in `references/output-format.md`, in this order, and do not output any "Sources:" lists:
 
-1. **What the Community Says**: SCRIPT_DATA (Reddit/X) plus COMMUNITY_FINDINGS, in the section that matches QUERY_TYPE.
-2. **What the Official Sources Say**: key findings with authority attribution, recent official changes with dates, gaps in official coverage.
-3. **Where They Agree and Disagree**: the cross-reference table (3-5 rows).
-4. **Stats footer**: real numbers only. It always includes the `Models` and `Search backend` lines, so the reader knows which models ran, which backend produced the web sources, and which agents switched. It drops the Reddit or X line when the script did not cover that site.
-5. **Invitation**: for PROMPTING, or when the user named a TARGET_TOOL, offer to write a prompt (asking which tool if it is still unknown); for the other query types, offer follow-ups instead.
+1. **Answer**: two or three sentences that answer the brief's purpose, with the strongest evidence and its main caveat.
+2. **What the Community Says**: SCRIPT_DATA (Reddit/X) plus COMMUNITY_FINDINGS, in the section that matches QUERY_TYPE.
+3. **What the Official Sources Say**: key findings with authority attribution, recent official changes with dates, gaps in official coverage.
+4. **Where They Agree and Disagree**: the cross-reference table (3-5 rows).
+5. **Stats footer**: real numbers only. It always includes the `Models` and `Search backend` lines, so the reader knows which models ran, which backend produced the web sources, and which agents switched. It drops the Reddit or X line when the script did not cover that site.
+6. **Invitation**: offer follow-ups, or to save the report as a file, as in "Invitation" in `references/output-format.md`. Write a file only in the format the user picks.
 
 Patterns must be actual insights from the research, not generic advice. After the invitation, wait for the user to respond.
-
-<example>
-Fallback run: ToolSearch finds Parallel Search and Keenable. The Parallel test call is rate-limited again after its retry; Keenable's answers.
-Every subagent gets the Keenable block, then the switch rule and the WebSearch + WebFetch block. Mid-run, O2 gets two Keenable rate-limit replies in a row and finishes with WebSearch.
-Footer: "├─ Search backend: Keenable (skipped Parallel Search: rate-limited; fallback: O2 switched to WebSearch + WebFetch)", then the search-setup pointer.
-</example>
-
-## Prompt Generation
-
-When the user shares their vision, write ONE tailored prompt using expertise from both community and official sources, in the format the research recommends (JSON, structured params, natural language, keywords). See `references/prompt-generation.md` for the protocol, the quality checklist, and the footer.
 
 ## Context Memory
 

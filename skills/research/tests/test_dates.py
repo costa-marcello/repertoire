@@ -92,22 +92,28 @@ class TestDaysAgo(unittest.TestCase):
 class TestRecencyScore(unittest.TestCase):
     def test_today_is_100(self):
         today = datetime.now(timezone.utc).date().isoformat()
-        result = dates.recency_score(today)
+        result = dates.recency_score(today, 60)
         self.assertEqual(result, 100)
 
     def test_60_days_ago_is_0(self):
         old_date = (datetime.now(timezone.utc).date() - timedelta(days=60)).isoformat()
-        result = dates.recency_score(old_date)
+        result = dates.recency_score(old_date, 60)
         self.assertEqual(result, 0)
 
     def test_30_days_ago_is_50(self):
         mid_date = (datetime.now(timezone.utc).date() - timedelta(days=30)).isoformat()
-        result = dates.recency_score(mid_date)
+        result = dates.recency_score(mid_date, 60)
         self.assertEqual(result, 50)
 
     def test_none_date_is_0(self):
-        result = dates.recency_score(None)
+        result = dates.recency_score(None, 60)
         self.assertEqual(result, 0)
+
+    def test_score_scales_with_max_days(self):
+        # The same 30-day-old date scores higher in a wider window.
+        mid_date = (datetime.now(timezone.utc).date() - timedelta(days=30)).isoformat()
+        self.assertEqual(dates.recency_score(mid_date, 120), 75)
+        self.assertEqual(dates.recency_score(mid_date, 30), 0)
 
 
 if __name__ == "__main__":

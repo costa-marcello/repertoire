@@ -113,11 +113,13 @@ def normalize_to_100(values: List[float], default: float = 50) -> List[float]:
     return result
 
 
-def score_reddit_items(items: List[schema.RedditItem]) -> List[schema.RedditItem]:
+def score_reddit_items(items: List[schema.RedditItem], *, max_days: int) -> List[schema.RedditItem]:
     """Compute scores for Reddit items.
 
     Args:
         items: List of Reddit items
+        max_days: The run's search period in days (the --days value);
+            an item this old or older gets a recency score of 0
 
     Returns:
         Items with updated scores
@@ -136,7 +138,7 @@ def score_reddit_items(items: List[schema.RedditItem]) -> List[schema.RedditItem
         rel_score = int(item.relevance * 100)
 
         # Recency subscore
-        rec_score = dates.recency_score(item.date)
+        rec_score = dates.recency_score(item.date, max_days)
 
         # Engagement subscore
         if eng_normalized[i] is not None:
@@ -173,11 +175,13 @@ def score_reddit_items(items: List[schema.RedditItem]) -> List[schema.RedditItem
     return items
 
 
-def score_x_items(items: List[schema.XItem]) -> List[schema.XItem]:
+def score_x_items(items: List[schema.XItem], *, max_days: int) -> List[schema.XItem]:
     """Compute scores for X items.
 
     Args:
         items: List of X items
+        max_days: The run's search period in days (the --days value);
+            an item this old or older gets a recency score of 0
 
     Returns:
         Items with updated scores
@@ -196,7 +200,7 @@ def score_x_items(items: List[schema.XItem]) -> List[schema.XItem]:
         rel_score = int(item.relevance * 100)
 
         # Recency subscore
-        rec_score = dates.recency_score(item.date)
+        rec_score = dates.recency_score(item.date, max_days)
 
         # Engagement subscore
         if eng_normalized[i] is not None:
@@ -233,7 +237,7 @@ def score_x_items(items: List[schema.XItem]) -> List[schema.XItem]:
     return items
 
 
-def score_websearch_items(items: List[schema.WebSearchItem]) -> List[schema.WebSearchItem]:
+def score_websearch_items(items: List[schema.WebSearchItem], *, max_days: int) -> List[schema.WebSearchItem]:
     """Compute scores for WebSearch items WITHOUT engagement metrics.
 
     Uses reweighted formula: 55% relevance + 45% recency - 15pt source penalty.
@@ -246,6 +250,8 @@ def score_websearch_items(items: List[schema.WebSearchItem]) -> List[schema.WebS
 
     Args:
         items: List of WebSearch items
+        max_days: The run's search period in days (the --days value);
+            an item this old or older gets a recency score of 0
 
     Returns:
         Items with updated scores
@@ -258,7 +264,7 @@ def score_websearch_items(items: List[schema.WebSearchItem]) -> List[schema.WebS
         rel_score = int(item.relevance * 100)
 
         # Recency subscore
-        rec_score = dates.recency_score(item.date)
+        rec_score = dates.recency_score(item.date, max_days)
 
         # Store subscores (engagement is 0 for WebSearch - no data)
         item.subs = schema.SubScores(

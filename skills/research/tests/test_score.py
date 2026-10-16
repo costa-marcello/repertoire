@@ -103,7 +103,7 @@ class TestScoreRedditItems(unittest.TestCase):
             ),
         ]
 
-        result = score.score_reddit_items(items)
+        result = score.score_reddit_items(items, max_days=60)
 
         self.assertEqual(len(result), 2)
         self.assertGreater(result[0].score, 0)
@@ -112,7 +112,7 @@ class TestScoreRedditItems(unittest.TestCase):
         self.assertGreater(result[0].score, result[1].score)
 
     def test_empty_list(self):
-        result = score.score_reddit_items([])
+        result = score.score_reddit_items([], max_days=60)
         self.assertEqual(result, [])
 
 
@@ -132,7 +132,7 @@ class TestScoreXItems(unittest.TestCase):
             ),
         ]
 
-        result = score.score_x_items(items)
+        result = score.score_x_items(items, max_days=60)
 
         self.assertEqual(len(result), 1)
         self.assertGreater(result[0].score, 0)

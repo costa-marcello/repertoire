@@ -262,7 +262,7 @@ def render_context_snippet(report: schema.Report) -> str:
     lines.append("")
     lines.append("## Summary")
     lines.append("")
-    lines.append("*See full report for best practices, prompt pack, and detailed sources.*")
+    lines.append("*See the full report for the sources.*")
     lines.append("")
 
     return "\n".join(lines)
@@ -356,17 +356,6 @@ def render_full_report(report: schema.Report) -> str:
             lines.append("")
             lines.append(f"> {item.snippet}")
             lines.append("")
-
-    # Placeholders for Claude synthesis
-    lines.append("## Best Practices")
-    lines.append("")
-    lines.append("*To be synthesized by Claude*")
-    lines.append("")
-
-    lines.append("## Prompt Pack")
-    lines.append("")
-    lines.append("*To be synthesized by Claude*")
-    lines.append("")
 
     return "\n".join(lines)
 

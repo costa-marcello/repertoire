@@ -8,9 +8,10 @@
 4. [Cross-Reference Table](#cross-reference-table)
 5. [Stats Footer](#stats-footer)
 6. [Invitation](#invitation)
+7. [Saving the Report](#saving-the-report)
 
-<!-- Template for the two-sided research report produced by the research skill.
-     The footer after a generated prompt lives in prompt-generation.md. -->
+<!-- Template for the two-sided research report produced by the research skill,
+     its closing invitation, and how to save it as a file -->
 
 ## Source Weighting
 
@@ -33,6 +34,8 @@ Reddit threads and X, Bluesky, Threads or LinkedIn posts that a subagent found, 
 
 ```
 ## Research Report: {TOPIC}
+
+**Answer:** [two or three sentences that answer the brief's purpose: the strongest evidence and its main caveat]
 
 ### What the Community Says
 
@@ -163,29 +166,27 @@ Drop the Reddit line when the script did not cover Reddit, and the X line when i
 
 ## Invitation
 
-Pick the invitation by `QUERY_TYPE` and `TARGET_TOOL`. Only a prompting request, or a named tool, gets a prompt offer.
-
-**PROMPTING, or any query type with a named TARGET_TOOL:**
+Every query type ends with the same invitation:
 ```
 ---
-Share your vision for what you want to create and I'll write a thoughtful prompt
-you can copy-paste directly into {TARGET_TOOL}.
+Want to go further? I can dig deeper on a finding, compare two options, or
+check for anything newer on {TOPIC}. Or I can save this report as a file:
+Markdown, Word, PowerPoint, Excel (the sources and the cross-reference table),
+or a web page.
 ```
 
-If QUERY_TYPE is PROMPTING and TARGET_TOOL is still unknown, ask instead:
-```
-What tool will you use these prompts with?
+Then wait for the user. A request for a prompt, like any other follow-up, is answered from the research (see `context-memory.md`).
 
-Options:
-1. [Most relevant tool based on research]
-2. [Second most relevant tool based on research]
-3. Other (tell me)
-```
+## Saving the Report
 
-**RECOMMENDATIONS, NEWS, or GENERAL with TARGET_TOOL unknown:** offer follow-ups, not a prompt:
-```
----
-Ask me anything about {TOPIC}: I can go deeper on a finding, compare two
-options side by side, or check for anything newer. If you plan to use this
-with an AI tool, name it and I'll write a prompt for it.
-```
+Write a file only in the format the user picks, and say where it went: in Cowork, the outputs folder; elsewhere, the current working folder. Name it `research-<topic slug>-<YYYY-MM-DD>` with the format's extension, adding `-2`, `-3` and so on if that name exists. Change the layout, never the findings.
+
+| Format | How |
+|--------|-----|
+| Markdown | Write the report as displayed to a `.md` file |
+| Word | Use the host's Word document skill (`.docx`), with the report's sections as headings |
+| PowerPoint | Use the host's PowerPoint skill (`.pptx`): one slide for the answer, one per section, one for the cross-reference table |
+| Excel | Use the host's spreadsheet skill (`.xlsx`): one sheet listing each source the agents reported (title, URL, date, community or official, agent, tier), one with the cross-reference table |
+| Web page | Use the Artifact tool when the session has it, else write an `.html` file |
+
+The Word, PowerPoint and Excel skills are Anthropic's document skills, which Cowork includes and Claude Code has when signed in with a claude.ai account. When the one a format needs is not available, say so and offer Markdown instead, or a `.csv` file for the Excel content.

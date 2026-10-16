@@ -11,14 +11,14 @@
 
 <!-- Templates the research lead uses to construct subagent prompts.
      Variables: {TOPIC}, {QUERY_TYPE}, {FOCUS}, {QUERIES}, {DATE_FROM}, {CURRENT_YEAR},
-     {SCRIPT_SOURCES}, {MCP_TOOLS}; inside the search blocks also {SEARCH_TOOL},
+     {SCRIPT_SOURCES}, {BRIEF}, {MCP_TOOLS}; inside the search blocks also {SEARCH_TOOL},
      {FETCH_TOOL}, {PARALLEL_SESSION_ID}, {REASON} and {BACKEND} -->
 
 ## Lead Prompting Primer
 
 You are the research lead, not a dispatcher. Subagent output quality is bounded by the prompts you hand them. Before filling any template, apply these four rules:
 
-1. **Topic-specific queries, not category queries.** Rewrite any query that could apply to a whole category of tools.
+1. **Topic-specific queries, not category queries.** Rewrite any query that could apply to a whole category of tools, and fold in the brief's scope (market, segment, named products) while keeping its exclusions out.
    - BAD: `"best image generation models 2026"`
    - GOOD: `"Nano Banana Pro photorealistic people fine-tuning tips"`
 2. **Diversify angles across the 3-5 queries.** Each query for one agent probes a different angle (recommendations, critiques, how-to, comparisons, pitfalls). Duplicate queries waste an agent slot.
@@ -40,6 +40,8 @@ You are the research lead, not a dispatcher. Subagent output quality is bounded 
 3. the block of each backend in `FALLBACK_CHAIN`, in order, under the heading `FALLBACK SEARCH TOOLS (use only after a switch, in this order, or for LinkedIn as SEARCH TOOLS says)`.
 
 When the chosen backend is WebSearch + WebFetch, `FALLBACK_CHAIN` is empty: skip parts 2 and 3, so `{MCP_TOOLS}` is the WebSearch + WebFetch block alone.
+
+For example, when ToolSearch finds both connectors but Parallel's test call is rate-limited again after its retry and Keenable's answers, every subagent gets the Keenable block, then the switch rule and the WebSearch + WebFetch block. If O2 then gets two Keenable rate-limit replies in a row and finishes with WebSearch, the footer reads `Search backend: Keenable (skipped Parallel Search: rate-limited; fallback: O2 switched to WebSearch + WebFetch)`, followed by the search-setup pointer.
 
 Fill `{SEARCH_TOOL}` and `{FETCH_TOOL}` in each block with the full tool names ToolSearch returned for that backend, such as `mcp__parallel-search__web_search` and `mcp__parallel-search__web_fetch`, or `mcp__keenable__search_web_pages` and `mcp__keenable__fetch_page_content`. A connector added in Claude gets another prefix (for example `mcp__claude_ai_Parallel_Search__web_search`), and so does a Claude Code plugin's server (`mcp__plugin_<plugin>_<server>__`), so copy the names; never rebuild them. Fill `{PARALLEL_SESSION_ID}` with the run's one ID from SKILL.md, the same one the test call used, so every agent sends the same value.
 
@@ -172,6 +174,10 @@ CONTEXT:
 - Current year: {CURRENT_YEAR}
 - Query type: {QUERY_TYPE}
 
+RESEARCH BRIEF (what the user wants this research for; aim every query
+and finding at it, and leave out what it excludes):
+{BRIEF}
+
 YOUR FOCUS AREA: {FOCUS}
 
 {MCP_TOOLS}
@@ -286,6 +292,10 @@ CONTEXT:
 - Date range: {DATE_FROM} to today
 - Current year: {CURRENT_YEAR}
 - Query type: {QUERY_TYPE}
+
+RESEARCH BRIEF (what the user wants this research for; aim every query
+and finding at it, and leave out what it excludes):
+{BRIEF}
 
 YOUR FOCUS AREA: {FOCUS}
 
