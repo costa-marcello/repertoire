@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.14.0] - 2026-10-20
 
 ### Changed
 - **BREAKING**: Renamed the frontend-design skill to ui-craft, so it no longer shares a name with Anthropic's own frontend-design skill. Run it as `/repertoire:ui-craft` (or `/ui-craft` when installed on its own)
@@ -304,7 +304,7 @@ All notable changes to this project will be documented in this file.
 - Fixed script invocations and variable names after skill rename
 - Fixed review-skill over-specification and deduplicated steps
 
-[Unreleased]: https://github.com/costa-marcello/repertoire/compare/v0.13.0...HEAD
+[0.14.0]: https://github.com/costa-marcello/repertoire/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/costa-marcello/repertoire/compare/v0.12.1...v0.13.0
 [0.12.1]: https://github.com/costa-marcello/repertoire/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/costa-marcello/repertoire/compare/v0.11.0...v0.12.0
