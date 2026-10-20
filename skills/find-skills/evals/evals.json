@@ -17,13 +17,13 @@
     },
     {
       "id": 2,
-      "prompt": "I'm using Cowork. Find me a skill that writes changelogs and makes tagged releases, and install it.",
-      "expected_output": "Recommends Repertoire's changelog skill as /repertoire:changelog (or /changelog when installed on its own). If the session already lists it, tells the user to run it. Otherwise tells the user to add the costa-marcello/repertoire marketplace in Customize > Plugins (Add > Add marketplace > Add from a repository) and install the repertoire plugin, and explains that an install inside the Cowork session would be lost when the session ends. Runs no npx skills add or ccpm install either way.",
+      "prompt": "I'm using Cowork. Find me a skill that writes README files, and install it.",
+      "expected_output": "Recommends Repertoire's readme-md skill as /repertoire:readme-md (or /readme-md when installed on its own). If the session already lists it, tells the user to run it. Otherwise tells the user to add the costa-marcello/repertoire marketplace in Customize > Plugins (Add > Add marketplace > Add from a repository) and install the repertoire plugin, and explains that an install inside the Cowork session would be lost when the session ends. Runs no npx skills add or ccpm install either way.",
       "files": [],
       "expectations": [
-        "Recommends Repertoire's changelog skill, naming it /repertoire:changelog first and /changelog second",
-        "Checks whether changelog is already listed in the session; if it is, tells the user to run it instead of installing anything",
-        "When changelog is not listed, tells the user to add the costa-marcello/repertoire marketplace through Customize > Plugins (Add > Add marketplace) and install the repertoire plugin, and explains that a skill installed inside the Cowork session would be lost when the session ends",
+        "Recommends Repertoire's readme-md skill, naming it /repertoire:readme-md first and /readme-md second",
+        "Checks whether readme-md is already listed in the session; if it is, tells the user to run it instead of installing anything",
+        "When readme-md is not listed, tells the user to add the costa-marcello/repertoire marketplace through Customize > Plugins (Add > Add marketplace) and install the repertoire plugin, and explains that a skill installed inside the Cowork session would be lost when the session ends",
         "Does not run npx skills add or ccpm install",
         "Does not claim that it installed the skill"
       ]

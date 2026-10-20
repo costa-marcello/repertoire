@@ -1,10 +1,10 @@
 ---
-name: frontend-design
+name: ui-craft
 description: "Creates and improves distinctive, production-grade frontend interfaces that avoid generic AI aesthetics, with tone, colour, and typography guides by product type, 30+ UX rules, chart-type selection for UI dashboards, and notes for 10 tech stacks. Use when designing or restyling components, pages, or dashboards, choosing palettes and font pairings, adding motion, or improving an interface that looks generic."
 license: MIT
 ---
 
-# Frontend Design Intelligence
+# UI Craft
 
 Create distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. Write real working code with deliberate aesthetic choices and careful detail.
 
@@ -20,7 +20,7 @@ Skip for backend logic, database work, auth flows, DevOps, algorithms, CLI tools
 
 ## Skill folder
 
-Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file is missing there. Then use the "Base directory for this skill" if it holds `scripts/contrast.py`, else the folder two levels above the last match Glob lists for `**/frontend-design/scripts/contrast.py` in `~/.claude`, skipping `.trash`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, work from this file, compute each contrast ratio with the WCAG luminance formula instead of the script, and say in the delivery note that the reference files were not read.
+Use `${CLAUDE_SKILL_DIR}` unless it is blank, unexpanded, or a bundled file is missing there. Then use the "Base directory for this skill" if it holds `scripts/contrast.py`, else the folder two levels above the last match Glob lists for `**/ui-craft/scripts/contrast.py` in `~/.claude`, skipping `.trash`. That folder replaces `CLAUDE_SKILL_DIR` and anchors every relative bundled path. If nothing matches, work from this file, compute each contrast ratio with the WCAG luminance formula instead of the script, and say in the delivery note that the reference files were not read.
 
 ## Design Thinking
 
@@ -47,7 +47,7 @@ Before coding, understand the context and commit to one bold aesthetic direction
 Copy this and fill it in before writing code:
 
 ```text
-Frontend Design Progress:
+UI Craft Progress:
 - [ ] Purpose: _____
 - [ ] Tone: _____
 - [ ] Differentiator: _____

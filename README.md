@@ -4,7 +4,7 @@
   <p><strong>Skills for Claude Code and Cowork</strong></p>
 
   [![License: MIT](https://img.shields.io/badge/License-MIT-0F3B2E.svg)](LICENSE)
-  [![Skills](https://img.shields.io/badge/Skills-9-E8452C)](skills/)
+  [![Skills](https://img.shields.io/badge/Skills-7-E8452C)](skills/)
   [![Plugin](https://img.shields.io/badge/Plugin-Claude_Code_%7C_Cowork-0F3B2E)](.claude-plugin/plugin.json)
 </div>
 
@@ -12,11 +12,11 @@
 
 ## The problem
 
-Claude is powerful out of the box. But ask it to cut a clean release, design an interface that doesn't look like every other AI demo, research a topic across community and official sources, or write a skill of your own, and you hit the same wall: Claude has general knowledge about these tasks but lacks the deep, step-by-step workflows that produce professional results.
+Claude is powerful out of the box. But ask it to design an interface that doesn't look like every other AI demo, research a topic across community and official sources, keep a README or CLAUDE.md accurate, or write a skill of your own, and you hit the same wall: Claude has general knowledge about these tasks but lacks the deep, step-by-step workflows that produce professional results.
 
 You end up writing long prompts, correcting mistakes, and re-doing work. Every session starts from zero.
 
-**Repertoire fixes this.** It gives Claude 9 specialist skills, each containing the exact workflows, decision trees, reference materials, and quality checks needed to do one job well. It ships as one plugin for **Claude Code** and **Cowork**: both get every skill with its full frontmatter, and where Cowork lacks something, such as git credentials or files in your home folder, the skill says so and gives you the step to finish.
+**Repertoire fixes this.** It gives Claude 7 specialist skills, each containing the exact workflows, decision trees, reference materials, and quality checks needed to do one job well. It ships as one plugin for **Claude Code** and **Cowork**: both get every skill with its full frontmatter, and where Cowork lacks something, such as files in your home folder or a local tool, the skill says so and gives you the step to finish.
 
 ## Why these skills are different
 
@@ -25,7 +25,7 @@ Most skills are thin wrappers around a single prompt. Repertoire skills are stru
 | What makes them different | Why it matters |
 |--------------------------|----------------|
 | **Decision trees, not just prompts** | Each skill contains branching workflows that adapt to what you actually need. claudia-md alone has six modes, from a quick audit to a full restructure of your CLAUDE.md files. |
-| **Bundled reference materials** | Skills carry their own documentation. The frontend-design skill includes 30+ UX rules, 25+ chart types, style guides by industry, and notes for 10 tech stacks. This knowledge loads on demand without bloating your context window. |
+| **Bundled reference materials** | Skills carry their own documentation. The ui-craft skill includes 30+ UX rules, 25+ chart types, style guides by industry, and notes for 10 tech stacks. This knowledge loads on demand without bloating your context window. |
 | **Enforced quality gates** | Every skill is graded by review-skill against one rule catalog built from Anthropic's skill guidance, the Agent Skills spec, and Claude Code's loader rules, with house conventions reported separately and never graded. The catalog checks that each skill also runs in Cowork, and a regression mode re-runs a skill's own test cases after a change. |
 | **Fork only when it helps** | A skill runs inline, where it can use your conversation and ask you questions, or in a forked subagent (`context: fork`) that works in isolation and returns only its result. review-skill checks that forked skills are self-contained tasks that never need your input or the conversation's history. |
 | **Multi-agent orchestration** | The research skill first asks the clickable questions it needs to aim the search, then dispatches 6-10 parallel subagents across Hacker News and forums, Reddit and X (with Parallel Search or Keenable), review sites, YouTube, official docs, and academic papers, and adds Reddit and X engagement data when you set an OpenAI or xAI API key. Each subagent runs on the model and effort level its depth calls for, and the skill then cross-references what they find. This is not a single-prompt tool. |
@@ -40,15 +40,15 @@ Most skills are thin wrappers around a single prompt. Repertoire skills are stru
 /plugin install repertoire@repertoire
 ```
 
-Skills then run as `/repertoire:<skill>`, for example `/repertoire:changelog` or `/repertoire:research`. Claude also picks a skill on its own when your request matches its description. To update, run `/plugin marketplace update repertoire`.
+Skills then run as `/repertoire:<skill>`, for example `/repertoire:ui-craft` or `/repertoire:research`. Claude also picks a skill on its own when your request matches its description. To update, run `/plugin marketplace update repertoire`.
 
 To install a single skill instead of the plugin:
 
 ```bash
-npx skills add costa-marcello/repertoire -s changelog
+npx skills add costa-marcello/repertoire -s ui-craft
 ```
 
-A skill installed this way runs as `/<skill>`, for example `/changelog`.
+A skill installed this way runs as `/<skill>`, for example `/ui-craft`.
 
 ### Cowork
 
@@ -73,11 +73,11 @@ Repertoire used to ship docx, pdf, pptx, and xlsx skills. They are gone, because
 
 ---
 
-## All 9 skills
+## All 7 skills
 
-### Development
+### Design
 
-Three skills that cover releases, UI implementation, and visual documentation.
+One skill for interfaces that look designed, not generated.
 
 <table>
 <tr>
@@ -86,31 +86,13 @@ Three skills that cover releases, UI implementation, and visual documentation.
 <th>How to use</th>
 </tr>
 <tr>
-<td><strong>changelog</strong></td>
+<td><strong>ui-craft</strong></td>
 <td>
 
-Creates a versioned release in one flow: gathers the commits since the last tag, writes a dated Keep a Changelog entry, then commits, tags, and pushes. Auto-detects the next semantic version from commit types (breaking, feat, fix; while the major version is 0, a breaking change bumps the minor version) or accepts an explicit one (`/repertoire:changelog v2.0.0`), follows the last tag's `v` style, and stops with "No release needed" when only docs, test, ci, or chore commits landed and CHANGELOG.md has nothing under `[Unreleased]`. An optional second argument names the repository folder, since the skill runs in a forked subagent. Translates developer commit messages into user-friendly descriptions. Runs pre-flight checks (clean working directory, branch on origin and in sync, no detached HEAD, no duplicate tags) before git operations. When the push fails, for example in a Cowork session without git credentials, it keeps the commit and tag local and prints the commands to finish the release. Follows Keep a Changelog format and Conventional Commits conventions.
+Creates distinctive, production-grade frontend interfaces (components, pages, and dashboards) that avoid generic "AI slop" aesthetics. This is not a component library. It is a design intelligence system with 30+ prioritised UX rules, 25+ chart type references, style and colour guides organised by industry, typography pairing recommendations, and notes for 10 tech stacks. Every build starts with a design thinking checklist (purpose, tone, differentiator, constraints) and ends with a polish verification. Avoids Inter and Roboto (Inter only for data dashboards), purple gradients on white, and predictable layouts, respects `prefers-reduced-motion`, and checks colour contrast with a bundled script instead of a browser. Adapts to whatever framework you use (React, Vue, vanilla HTML/CSS) and respects existing UI libraries in your project.
 
 </td>
-<td><code>/repertoire:changelog</code> — release with the auto-detected version<br/><code>/repertoire:changelog v2.0.0</code> — release with an explicit version<br/><code>/repertoire:changelog v2.0.0 ~/code/app</code> — release another repository<br/>Commits, tags, and pushes after pre-flight checks.</td>
-</tr>
-<tr>
-<td><strong>frontend-design</strong></td>
-<td>
-
-Creates distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. This is not a component library. It is a design intelligence system with 30+ prioritised UX rules, 25+ chart type references, style and colour guides organised by industry, typography pairing recommendations, and notes for 10 tech stacks. Every build starts with a design thinking checklist (purpose, tone, differentiator, constraints) and ends with a polish verification. Avoids Inter and Roboto (Inter only for data dashboards), purple gradients on white, and predictable layouts, respects `prefers-reduced-motion`, and checks colour contrast with a bundled script instead of a browser. Adapts to whatever framework you use (React, Vue, vanilla HTML/CSS) and respects existing UI libraries in your project.
-
-</td>
-<td><code>/repertoire:frontend-design</code> + describe interface<br/>"design a dashboard for a fintech app"<br/>"build a landing page that feels premium"<br/>"improve the visual design of this component"</td>
-</tr>
-<tr>
-<td><strong>mermaid-diagrams</strong></td>
-<td>
-
-Creates professional software diagrams using Mermaid syntax. Covers class diagrams, sequence diagrams, flowcharts (basic and advanced), entity-relationship diagrams, C4 architecture diagrams, state machines, git graphs, Gantt charts, and pie and quadrant charts. Flowcharts, sequence, class, ER, and C4 diagrams each have their own reference file with syntax patterns and examples; state, git graph, Gantt, pie, and quadrant diagrams share one. Also includes theming and advanced feature references. Useful for documenting architecture, database schemas, API flows, and deployment pipelines as code. Renders diagrams to SVG, PNG, or PDF files with the headless mermaid-cli, or returns the Mermaid code when nothing can render.
-
-</td>
-<td><code>/repertoire:mermaid-diagrams</code> + describe diagram<br/>"sequence diagram for the auth flow"<br/>"ERD for user and orders tables"<br/>"flowchart of the deployment pipeline"</td>
+<td><code>/repertoire:ui-craft</code> + describe interface<br/>"design a dashboard for a fintech app"<br/>"build a landing page that feels premium"<br/>"improve the visual design of this component"</td>
 </tr>
 </table>
 
@@ -170,7 +152,7 @@ Guides README creation and improvement with audience-matched templates. Identifi
 Builds new skills, and updates existing ones, evals first: it writes three realistic test cases and ten trigger prompts, runs Claude without the skill to see what it gets wrong, then writes the smallest skill that closes those gaps. It authors to the same rule catalog review-skill grades against, scaffolds with `init_skill.py`, and validates in three layers (a fast validator, with-skill eval runs, and an independent review-skill pass) until the skill reaches Grade A. It decides whether a skill should run inline or forked, and covers the current Claude Code frontmatter fields, sanitisation for sharing, a secret scan, and packaging for claude.ai. If you want to package your own workflows as reusable skills, start here.
 
 </td>
-<td><code>/repertoire:create-skill</code> + name and purpose<br/><code>/repertoire:create-skill csv-report summarise a CSV</code><br/>"turn the release steps we just did into a skill"<br/>"the changelog skill misses merge commits, fix it"</td>
+<td><code>/repertoire:create-skill</code> + name and purpose<br/><code>/repertoire:create-skill csv-report summarise a CSV</code><br/>"turn the release steps we just did into a skill"<br/>"my release skill misses merge commits, fix it"</td>
 </tr>
 <tr>
 <td><strong>review-skill</strong></td>
@@ -201,11 +183,9 @@ Discovers and installs skills and plugins from the open agent skills ecosystem (
   marketplace.json       # The marketplace: lists the repertoire plugin
   plugin.json            # The repertoire plugin itself, the repo's only plugin.json
 skills/
-  changelog/
+  ui-craft/
     SKILL.md             # Frontmatter + prompt (the skill itself)
     evals/               # Test cases and trigger queries (not shipped in zips)
-  frontend-design/
-    SKILL.md
     references/          # Deep reference docs, loaded on demand
       style-guide.md     # Styles, colours, typography by industry
       ui-rules.md        # 30+ UX rules by priority
@@ -223,20 +203,19 @@ The plugin loads every skill under `skills/`. Claude Code and Cowork make each o
 
 ```text
 /repertoire:research quantum computing            # Asks what it needs, then researches quantum computing
-/repertoire:changelog                             # Versioned release: entry, commit, tag, push
-/repertoire:changelog v2.0.0                      # Same, with an explicit version
+/repertoire:ui-craft a pricing page for a SaaS   # Design and build an interface
 /repertoire:review-skill skills/my-skill          # Review and fix a specific skill
 ```
 
-The `references/` pattern is what keeps skills fast. Each SKILL.md stays under 400 lines and 20,000 characters, Repertoire's house target, which sits under the 500-line limit that review-skill grades, while deep reference materials load only when the skill needs them. The frontend-design skill, for example, has 30+ UX rules and 25+ chart types available, but they only enter the context window when the skill reaches for them.
+The `references/` pattern is what keeps skills fast. Each SKILL.md stays under 400 lines and 20,000 characters, Repertoire's house target, which sits under the 500-line limit that review-skill grades, while deep reference materials load only when the skill needs them. The ui-craft skill, for example, has 30+ UX rules and 25+ chart types available, but they only enter the context window when the skill reaches for them.
 
 ---
 
 ## Prerequisites
 
 - **Claude Code** or **Cowork**
-- **Python** for the skills that bundle scripts: 3.10 or later for create-skill (and review-skill, which runs create-skill's validator), 3.9 or later for research, and any Python 3 for frontend-design's contrast checker; create-skill's validator also needs PyYAML (`python -m pip install pyyaml`); working on Repertoire itself needs 3.12 or later (`scripts/link_user_skills.py` and `tests/plugin`)
-- **Node.js** for `npx skills add` (22.20 or later) and for mermaid-diagrams' rendered images, which run mermaid-cli through `npx`
+- **Python** for the skills that bundle scripts: 3.10 or later for create-skill (and review-skill, which runs create-skill's validator), 3.9 or later for research, and any Python 3 for ui-craft's contrast checker; create-skill's validator also needs PyYAML (`python -m pip install pyyaml`); working on Repertoire itself needs 3.12 or later (`scripts/link_user_skills.py` and `tests/plugin`)
+- **Node.js** 22.20 or later for `npx skills add`
 - Optionally, a **Parallel Search** or **Keenable** connector for better web search in the research skill
 
 ---

@@ -140,7 +140,7 @@ def print_next_steps(link: Path) -> None:
     print()
     print("Next steps:")
     print("  1. Start a new Claude Code session, or run /reload-plugins in an open one.")
-    print("  2. Run the skills as /repertoire:<skill>, for example /repertoire:changelog.")
+    print("  2. Run the skills as /repertoire:<skill>, for example /repertoire:research.")
     print("  3. `claude plugin list` shows the plugin as repertoire@skills-dir.")
     print("  4. Don't also install repertoire@repertoire from the marketplace on this")
     print("     machine: an installed plugin outranks this link, so the live checkout")

@@ -124,7 +124,7 @@ python ${CLAUDE_SKILL_DIR}/scripts/init_skill.py csv-report --path .claude/skill
 **Request:** "The changelog skill said 'No release needed' on our repo, but we merged four PRs since the last tag. Fix it."
 
 **Step 1, intent.**
-- This is an update, so first find the source copy. The invoked copy sits under `~/.claude/plugins/cache/`, so locate the source repository (`skills/changelog/` in the kit) and edit there.
+- This is an update, so first find the source copy. The invoked copy sits under `~/.claude/plugins/cache/`, so locate the source repository (`skills/changelog/` in the plugin repository) and edit there.
 - Read `changelog/SKILL.md` and `changelog/references/changelog_format.md` in full.
 - Snapshot the skill to `changelog-workspace/skill-snapshot/`.
 - Root cause: the PR titles live only in merge commits. The subject is "Merge pull request #41 from org/feat-export", the body is "feat: add CSV export", and the skill drops every merge commit.

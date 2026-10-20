@@ -37,14 +37,12 @@ Before searching, check the skills listed in your own context. That list already
 
 | Skill | Use it for |
 |-------|------------|
-| changelog | Changelogs and tagged releases |
 | claudia-md | Auditing, improving, and generating CLAUDE.md files |
 | create-skill | Building and updating skills, with evals |
-| frontend-design | Distinctive, production-grade frontend interfaces |
-| mermaid-diagrams | Software diagrams in Mermaid |
 | readme-md | Writing, updating, and reviewing READMEs |
 | research | Researching a topic across many sources |
 | review-skill | Grading and fixing skills |
+| ui-craft | Distinctive, production-grade frontend interfaces |
 
 This list can lag behind the repository; the README at https://github.com/costa-marcello/repertoire is current. To install Repertoire, see [Step 5](#step-5-install).
 
@@ -144,12 +142,12 @@ If verification fails, read the install command's output, run the install once m
 </example>
 
 <example>
-**User asks in Cowork: "find me a skill that writes changelogs and install it"**
+**User asks in Cowork: "find me a skill that writes READMEs and install it"**
 
-1. Repertoire's changelog matches: `/repertoire:changelog` with the plugin, or `/changelog` on its own.
-2. Check your context: if `repertoire:changelog` or `changelog` is listed, tell the user to run it; there is nothing to install.
+1. Repertoire's readme-md matches: `/repertoire:readme-md` with the plugin, or `/readme-md` on its own.
+2. Check your context: if `repertoire:readme-md` or `readme-md` is listed, tell the user to run it; there is nothing to install.
 3. Not listed: do not run `npx skills add` or `ccpm install`, because the install would vanish with the session. Tell the user: Customize > Plugins, Add > Add marketplace > Add from a repository, enter `costa-marcello/repertoire`, and install the `repertoire` plugin.
-4. Verify: in a new session, the user checks that `changelog` is listed.
+4. Verify: in a new session, the user checks that `readme-md` is listed.
 </example>
 
 <example>
